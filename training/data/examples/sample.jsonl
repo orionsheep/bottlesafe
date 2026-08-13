@@ -1,0 +1,2 @@
+{"image":"replace-with-real-image.jpg","group_id":"sku-example-001","answer":{"product":{"name":"示例清洁剂","brand":null,"category":"清洁剂","barcode":null,"manufacturer":null},"visual_evidence":["示例占位数据，训练前必须替换"],"hazards":[],"ingredients":[],"signal_words":[],"safe_storage":["按产品标签要求存放并远离儿童"],"do_not_mix_with":[],"first_aid":{"ingestion":"联系当地中毒咨询机构或急救","inhalation":null,"eye_contact":null,"skin_contact":null},"uncertainties":["这是格式示例，不是真实标注"],"needs_more_images":["产品正面和背面标签"],"risk_level":"unknown","summary":"示例数据，不可用于正式训练。"}}
+

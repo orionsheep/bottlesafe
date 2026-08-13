@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家庭化学品安全档案 · 原型</title>
+<style>
+:root{
+  --paper:#F6F1E7;
+  --paper-deep:#EFE8D8;
+  --card:#FFFCF4;
+  --ink:#211D16;
+  --ink-soft:#6B6353;
+  --line:#211D16;
+  --low:#2E7D52;
+  --medium:#C88A00;
+  --high:#E4572E;
+  --critical:#A61C30;
+  --unknown:#8A8272;
+  --shadow:6px 6px 0 rgba(33,29,22,.9);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.65;
+  background-image:radial-gradient(rgba(33,29,22,.055) 1px,transparent 1px);
+  background-size:22px 22px;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column;
+}
+.serif{font-family:"Songti SC","STSong",serif;}
+.mono{font-family:"SF Mono",Menlo,monospace;}
+
+/* ---------- 顶栏 ---------- */
+header{
+  border-bottom:2px solid var(--line);
+  background:var(--card);
+  position:sticky;top:0;z-index:50;
+}
+.hwrap{
+  max-width:1180px;margin:0 auto;padding:0 28px;
+  display:flex;align-items:stretch;gap:0;
+}
+.brand{display:flex;align-items:center;gap:14px;padding:18px 28px 18px 0;border-right:2px solid var(--line);}
+.brand-mark{
+  width:44px;height:44px;border:2px solid var(--line);background:var(--high);
+  display:grid;place-items:center;box-shadow:3px 3px 0 var(--ink);flex:none;
+}
+.brand-mark svg{width:26px;height:26px;}
+.brand h1{font-size:21px;font-weight:900;letter-spacing:.02em;line-height:1.2;}
+.brand .sub{font-size:10.5px;letter-spacing:.22em;color:var(--ink-soft);text-transform:uppercase;}
+nav{display:flex;margin-left:auto;}
+nav button{
+  border:none;border-left:2px solid var(--line);background:transparent;
+  padding:0 30px;font-size:15px;font-weight:700;cursor:pointer;color:var(--ink-soft);
+  font-family:inherit;position:relative;transition:background .15s,color .15s;
+}
+nav button .idx{display:block;font-size:10px;letter-spacing:.2em;font-weight:500;margin-bottom:2px;}
+nav button.active{background:var(--ink);color:var(--paper);}
+nav button:not(.active):hover{background:var(--paper-deep);color:var(--ink);}
+
+/* ---------- 布局 ---------- */
+main{max-width:1180px;width:100%;margin:0 auto;padding:26px 28px;flex:1;min-height:0;overflow:hidden;}
+.view{display:none;animation:fadeUp .35s ease both;}
+.view.on{display:flex;flex-direction:column;height:100%;min-height:0;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+.section-head{display:flex;align-items:baseline;gap:16px;margin-bottom:18px;flex-wrap:wrap;flex:none;}
+.section-head h2{font-size:34px;font-weight:900;letter-spacing:.01em;}
+.section-head .en{font-size:11px;letter-spacing:.28em;color:var(--ink-soft);text-transform:uppercase;}
+.section-head .rule{flex:1;height:2px;background:var(--line);min-width:60px;align-self:center;}
+
+/* ---------- 识别页 ---------- */
+.scan-grid{display:grid;grid-template-columns:400px 1fr;gap:28px;flex:1;min-height:0;}
+.scan-grid>div{overflow-y:auto;min-height:0;padding:4px 10px 24px 4px;scrollbar-width:thin;}
+
+/* 窄屏：单列，整栏一起滚动 */
+@media(max-width:920px){
+  .scan-grid{display:block;overflow-y:auto;scrollbar-width:thin;}
+  .scan-grid>div{overflow:visible;padding:0 10px 24px 4px;}
+  .scan-grid>div:first-child{margin-bottom:24px;}
+}
+
+/* 低高度屏：压缩各模块，保证一屏放得下 */
+@media(max-height:820px){
+  .brand{padding:10px 20px 10px 0;}
+  .brand-mark{width:36px;height:36px;}
+  .brand-mark svg{width:20px;height:20px;}
+  .brand h1{font-size:17px;}
+  .brand .sub{font-size:9px;}
+  nav button{padding:0 20px;font-size:13.5px;}
+  main{padding:14px 20px;}
+  .section-head{margin-bottom:12px;}
+  .section-head h2{font-size:24px;}
+  .dropzone{min-height:180px;padding:20px 18px;gap:8px;}
+  .dropzone .dz-icon{width:52px;height:52px;}
+  .dropzone .dz-icon svg{width:26px;height:26px;}
+  .btn{padding:9px 18px;font-size:13.5px;}
+  .btn-block{margin-top:12px;}
+  .tips-card{margin-top:14px;}
+  .tips-card li{font-size:12.5px;padding:3px 0 3px 20px;}
+  .tips-card li::before{top:10px;}
+  .result-empty{min-height:220px;}
+  .result-empty .ghost-num{font-size:60px;}
+  .risk-banner .rb-level{font-size:26px;}
+  .stat{padding:12px 16px;}
+  .stat .s-num{font-size:28px;}
+  .fwrap{padding:10px 20px;}
+  .fwrap p{font-size:11.5px;}
+}
+
+/* 超窄屏：进一步收缩 */
+@media(max-width:560px){
+  .brand .sub{display:none;}
+  .brand h1{font-size:15px;}
+  nav button{padding:0 14px;font-size:12.5px;}
+  .risk-banner{flex-direction:column;align-items:flex-start;gap:10px;}
+  .risk-banner .rb-summary{margin-left:0;max-width:100%;}
+  .hazard-item{grid-template-columns:84px 1fr;}
+}
+
+.dropzone{
+  border:2px dashed var(--ink);background:var(--card);min-height:300px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:36px 24px;text-align:center;cursor:pointer;transition:background .15s,transform .15s;
+  position:relative;
+}
+.dropzone:hover,.dropzone.drag{background:var(--paper-deep);}
+.dropzone .dz-icon{
+  width:72px;height:72px;border:2px solid var(--line);background:var(--paper);
+  display:grid;place-items:center;box-shadow:4px 4px 0 var(--ink);
+}
+.dropzone .dz-icon svg{width:36px;height:36px;}
+.dropzone .dz-title{font-size:17px;font-weight:700;}
+.dropzone .dz-hint{font-size:12.5px;color:var(--ink-soft);max-width:260px;}
+.dropzone input{display:none;}
+.dz-preview{width:100%;display:none;}
+.dz-preview img{width:100%;border:2px solid var(--line);display:block;box-shadow:var(--shadow);}
+.dz-preview .re-pick{margin-top:12px;font-size:12.5px;color:var(--ink-soft);}
+
+.tips-card{border:2px solid var(--line);background:var(--card);margin-top:22px;box-shadow:var(--shadow);}
+.tips-card .tc-head{border-bottom:2px solid var(--line);padding:10px 16px;font-size:11px;letter-spacing:.2em;font-weight:600;background:var(--paper-deep);}
+.tips-card ul{list-style:none;padding:12px 16px;}
+.tips-card li{padding:5px 0 5px 22px;position:relative;font-size:13.5px;color:var(--ink-soft);}
+.tips-card li::before{content:"";position:absolute;left:4px;top:13px;width:8px;height:8px;background:var(--high);}
+
+.btn{
+  display:inline-flex;align-items:center;gap:10px;border:2px solid var(--line);
+  background:var(--ink);color:var(--paper);padding:13px 26px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;box-shadow:4px 4px 0 rgba(33,29,22,.35);
+  transition:transform .1s,box-shadow .1s;letter-spacing:.04em;
+}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 rgba(33,29,22,.35);}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(33,29,22,.35);}
+.btn.ghost{background:var(--card);color:var(--ink);}
+.btn.accent{background:var(--high);}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-block{width:100%;justify-content:center;margin-top:18px;}
+
+/* 扫描动画 */
+.scanning{position:relative;overflow:hidden;}
+.scan-line{
+  position:absolute;left:0;right:0;height:3px;background:var(--high);
+  box-shadow:0 0 18px 4px rgba(228,87,46,.55);top:0;
+  animation:scanmove 1.4s ease-in-out infinite;z-index:5;
+}
+@keyframes scanmove{0%{top:0;}50%{top:calc(100% - 3px);}100%{top:0;}}
+.scan-status{margin-top:14px;font-size:12.5px;letter-spacing:.08em;color:var(--ink-soft);min-height:20px;}
+.scan-status .dot{animation:blink 1s steps(2) infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* 空结果态 */
+.result-empty{
+  border:2px solid var(--line);background:var(--card);min-height:320px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  color:var(--ink-soft);box-shadow:var(--shadow);text-align:center;padding:40px;
+}
+.result-empty .ghost-num{font-size:88px;font-weight:900;color:var(--paper-deep);line-height:1;}
+.result-empty p{max-width:300px;font-size:13.5px;}
+
+/* 结果面板 */
+.result{display:none;flex-direction:column;gap:22px;}
+.result.on{display:flex;animation:fadeUp .4s ease both;}
+.risk-banner{
+  border:2px solid var(--line);padding:20px 24px;display:flex;align-items:center;gap:20px;
+  box-shadow:var(--shadow);color:#fff;
+}
+.risk-banner .rb-label{font-size:11px;letter-spacing:.3em;opacity:.85;}
+.risk-banner .rb-level{font-size:34px;font-weight:900;line-height:1.1;}
+.risk-banner .rb-summary{margin-left:auto;max-width:52%;font-size:13.5px;line-height:1.6;opacity:.95;}
+.risk-low{background:var(--low);} .risk-medium{background:var(--medium);}
+.risk-high{background:var(--high);} .risk-critical{background:var(--critical);}
+.risk-unknown{background:var(--unknown);}
+
+.panel{border:2px solid var(--line);background:var(--card);box-shadow:var(--shadow);}
+.panel-head{
+  border-bottom:2px solid var(--line);padding:11px 18px;display:flex;align-items:center;gap:12px;
+  background:var(--paper-deep);
+}
+.panel-head .ph-cn{font-weight:900;font-size:16px;}
+.panel-head .ph-en{font-size:10px;letter-spacing:.24em;color:var(--ink-soft);text-transform:uppercase;}
+.panel-head .ph-tag{margin-left:auto;font-size:11px;color:var(--ink-soft);}
+.panel-body{padding:18px;}
+
+.kv-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-top:1px solid rgba(33,29,22,.15);border-left:1px solid rgba(33,29,22,.15);}
+.kv{border-right:1px solid rgba(33,29,22,.15);border-bottom:1px solid rgba(33,29,22,.15);padding:10px 14px;}
+.kv .k{font-size:10.5px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:3px;}
+.kv .v{font-weight:700;font-size:15px;word-break:break-all;}
+.kv .v.none{color:var(--ink-soft);font-weight:400;}
+
+.evidence-list{list-style:none;margin-top:14px;}
+.evidence-list li{
+  font-size:13px;color:var(--ink-soft);padding:7px 0 7px 26px;position:relative;
+  border-bottom:1px dashed rgba(33,29,22,.2);
+}
+.evidence-list li::before{content:"§";position:absolute;left:4px;font-family:"SF Mono",Menlo,monospace;color:var(--high);font-weight:600;}
+
+.hazard-item{
+  border:2px solid var(--line);margin-bottom:12px;background:#fff;
+  display:grid;grid-template-columns:110px 1fr;overflow:hidden;
+}
+.hazard-item .hz-sev{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:#fff;padding:14px 8px;text-align:center;
+}
+.hazard-item .hz-sev .cn{font-weight:900;font-size:17px;}
+.hazard-item .hz-sev .conf{font-size:10.5px;font-family:"SF Mono",Menlo,monospace;opacity:.9;}
+.hazard-item .hz-body{padding:12px 16px;}
+.hazard-item .hz-type{font-weight:800;font-size:15px;margin-bottom:3px;}
+.hazard-item .hz-ev{font-size:13px;color:var(--ink-soft);}
+.sev-low{background:var(--low);} .sev-medium{background:var(--medium);}
+.sev-high{background:var(--high);} .sev-critical{background:var(--critical);}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  border:1.5px solid var(--line);background:#fff;padding:5px 12px;font-size:13px;font-weight:600;
+}
+.chip.warn{background:#FBE9E2;border-color:var(--high);color:var(--high);}
+.chip.sig{background:var(--ink);color:var(--paper);}
+
+.mix-warning{
+  border:2px solid var(--critical);background:repeating-linear-gradient(-45deg,#FDF2F3,#FDF2F3 14px,#F9E4E7 14px,#F9E4E7 28px);
+  padding:16px 18px;
+}
+.mix-warning .mw-title{color:var(--critical);font-weight:900;font-size:16px;display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mix-warning .chips .chip{background:#fff;border-color:var(--critical);color:var(--critical);}
+
+.aid-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.aid-cell{border:1.5px solid var(--line);background:#fff;padding:12px 14px;}
+.aid-cell .ac-k{font-size:11px;letter-spacing:.16em;font-weight:600;color:var(--high);margin-bottom:4px;}
+.aid-cell .ac-v{font-size:13px;line-height:1.55;}
+.aid-cell.empty .ac-v{color:var(--ink-soft);}
+@media(max-width:640px){.aid-grid,.kv-grid{grid-template-columns:1fr;}}
+
+.note-list{list-style:none;}
+.note-list li{
+  font-family:"SF Mono",Menlo,monospace;font-size:12.5px;color:var(--ink-soft);
+  padding:8px 0 8px 20px;position:relative;border-bottom:1px dashed rgba(33,29,22,.2);
+}
+.note-list li::before{content:">";position:absolute;left:2px;color:var(--medium);font-weight:600;}
+
+.result-actions{display:flex;gap:14px;flex-wrap:wrap;}
+
+/* ---------- 档案页 ---------- */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);border:2px solid var(--line);background:var(--card);box-shadow:var(--shadow);margin-bottom:24px;flex:none;}
+.stat{padding:18px 22px;border-right:2px solid var(--line);}
+.stat:last-child{border-right:none;}
+.stat .s-num{font-size:38px;font-weight:900;line-height:1;font-family:"Songti SC","STSong",serif;}
+.stat .s-label{font-size:11px;letter-spacing:.2em;color:var(--ink-soft);margin-top:6px;text-transform:uppercase;}
+.stat.c-crit .s-num{color:var(--critical);} .stat.c-high .s-num{color:var(--high);}
+.stat.c-med .s-num{color:var(--medium);} 
+@media(max-width:720px){.stats-strip{grid-template-columns:repeat(2,1fr);}.stat:nth-child(2){border-right:none;}.stat:nth-child(-n+2){border-bottom:2px solid var(--line);}}
+
+.arch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px;flex:1;min-height:0;overflow-y:auto;align-content:start;padding:4px 10px 24px 4px;scrollbar-width:thin;}
+.arch-card{
+  border:2px solid var(--line);background:var(--card);box-shadow:var(--shadow);
+  cursor:pointer;transition:transform .15s;overflow:hidden;
+}
+.arch-card:hover{transform:translate(-3px,-3px);}
+.arch-card .ac-img{height:150px;border-bottom:2px solid var(--line);display:grid;place-items:center;font-size:44px;background:var(--paper-deep);position:relative;}
+.arch-card .ac-risk{
+  position:absolute;top:10px;right:10px;color:#fff;font-size:11px;font-weight:700;
+  padding:3px 10px;border:1.5px solid var(--line);letter-spacing:.1em;
+}
+.arch-card .ac-body{padding:14px 16px 16px;}
+.arch-card .ac-name{font-weight:900;font-size:16.5px;margin-bottom:2px;}
+.arch-card .ac-meta{font-size:12px;color:var(--ink-soft);font-family:"SF Mono",Menlo,monospace;}
+.arch-card .ac-cat{display:inline-block;margin-top:9px;font-size:11.5px;border:1.5px solid var(--line);padding:2px 9px;background:#fff;}
+
+/* 详情弹窗 */
+.modal-mask{
+  position:fixed;inset:0;background:rgba(33,29,22,.55);z-index:100;display:none;
+  align-items:center;justify-content:center;padding:24px;
+}
+.modal-mask.on{display:flex;animation:fadeUp .25s ease both;}
+.modal{
+  background:var(--paper);border:2px solid var(--line);max-width:760px;width:100%;
+  max-height:88vh;overflow-y:auto;box-shadow:10px 10px 0 rgba(0,0,0,.35);
+}
+.modal .m-head{
+  position:sticky;top:0;background:var(--card);border-bottom:2px solid var(--line);
+  padding:16px 22px;display:flex;align-items:center;gap:14px;z-index:2;
+}
+.modal .m-head h3{font-size:20px;font-weight:900;}
+.modal .m-close{
+  margin-left:auto;border:2px solid var(--line);background:var(--card);width:36px;height:36px;
+  font-size:17px;cursor:pointer;font-weight:700;font-family:inherit;
+}
+.modal .m-close:hover{background:var(--ink);color:var(--paper);}
+.modal .m-body{padding:22px;display:flex;flex-direction:column;gap:20px;}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translate(-50%,80px);z-index:200;
+  background:var(--ink);color:var(--paper);border:2px solid var(--line);
+  padding:13px 26px;font-weight:700;box-shadow:var(--shadow);opacity:0;transition:all .3s;
+}
+.toast.on{transform:translate(-50%,0);opacity:1;}
+
+footer{
+  border-top:2px solid var(--line);background:var(--card);flex:none;
+}
+.fwrap{max-width:1180px;margin:0 auto;padding:22px 28px;display:flex;gap:18px;align-items:flex-start;}
+.fwrap .warn-ico{flex:none;width:34px;height:34px;border:2px solid var(--line);background:var(--medium);display:grid;place-items:center;color:#fff;font-weight:900;font-family:"Songti SC","STSong",serif;}
+.fwrap p{font-size:12.5px;color:var(--ink-soft);max-width:820px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FFFCF4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 3h6M10 3v5L4.5 18a2.4 2.4 0 0 0 2.1 3.5h10.8a2.4 2.4 0 0 0 2.1-3.5L14 8V3"/>
+          <path d="M7.5 14h9"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="serif">家庭化学品安全档案</h1>
+        <div class="sub mono">Home Chemical Safety · Qwen3-VL</div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" data-view="scan"><span class="idx mono">01</span>拍照识别</button>
+      <button data-view="archive"><span class="idx mono">02</span>家庭档案</button>
+      <button id="apiBadge" title="后端服务状态" style="cursor:default;"><span class="idx mono">STATUS</span><span id="apiBadgeText">离线演示</span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= 识别视图 ================= -->
+  <section class="view on" id="view-scan">
+    <div class="section-head">
+      <h2 class="serif">拍照识别</h2>
+      <span class="en mono">Identify &amp; Assess</span>
+      <div class="rule"></div>
+    </div>
+
+    <div class="scan-grid">
+      <div>
+        <div class="dropzone" id="dropzone" role="button" tabindex="0">
+          <input type="file" id="fileInput" accept="image/*">
+          <div class="dz-inner" id="dzInner">
+            <div class="dz-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#211D16" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <div class="dz-title">点击或拖入产品照片</div>
+            <div class="dz-hint">建议拍摄瓶身正面标签；成分表、警示语和条码可后续补拍</div>
+          </div>
+          <div class="dz-preview" id="dzPreview">
+            <img id="previewImg" alt="预览">
+            <div class="re-pick">点击重新选择图片</div>
+          </div>
+        </div>
+        <div class="scan-status mono" id="scanStatus"></div>
+        <button class="btn accent btn-block" id="btnAnalyze" disabled>开始识别</button>
+        <button class="btn ghost btn-block" id="btnDemo">没有照片？用示例演示</button>
+
+        <div class="tips-card">
+          <div class="tc-head mono">拍摄建议 · TIPS</div>
+          <ul>
+            <li>光线充足，标签正对镜头，避免反光</li>
+            <li>成分表、警示图标单独补拍更清晰</li>
+            <li>条码照片可大幅提升数据库匹配率</li>
+            <li>包装破损、无标签的产品请谨慎处理</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="resultCol">
+        <div class="result-empty" id="resultEmpty">
+          <div class="ghost-num serif">?</div>
+          <p>识别结果将在这里展示：产品信息、风险等级、储存建议、禁忌混用与急救指引。</p>
+        </div>
+
+        <div class="result" id="result">
+          <div class="risk-banner" id="riskBanner">
+            <div>
+              <div class="rb-label mono">风险等级 · RISK</div>
+              <div class="rb-level serif" id="rbLevel">高</div>
+            </div>
+            <div class="rb-summary" id="rbSummary"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="ph-cn serif">产品信息</span><span class="ph-en mono">Product</span><span class="ph-tag mono" id="pdCat"></span></div>
+            <div class="panel-body">
+              <div class="kv-grid" id="pdGrid"></div>
+              <ul class="evidence-list" id="pdEvidence"></ul>
+            </div>
+          </div>
+
+          <div class="panel" id="hazardPanel">
+            <div class="panel-head"><span class="ph-cn serif">识别到的风险</span><span class="ph-en mono">Hazards</span><span class="ph-tag mono" id="hzCount"></span></div>
+            <div class="panel-body" id="hzList"></div>
+          </div>
+
+          <div class="panel" id="mixPanel">
+            <div class="panel-head"><span class="ph-cn serif">严禁混用</span><span class="ph-en mono">Do Not Mix</span></div>
+            <div class="panel-body">
+              <div class="mix-warning">
+                <div class="mw-title">⚠ 以下组合可能产生有毒气体或剧烈反应</div>
+                <div class="chips" id="mixChips"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="ph-cn serif">成分与信号词</span><span class="ph-en mono">Ingredients</span></div>
+            <div class="panel-body">
+              <div class="chips" id="ingChips" style="margin-bottom:14px;"></div>
+              <div class="chips" id="sigChips"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="ph-cn serif">安全储存</span><span class="ph-en mono">Storage</span></div>
+            <div class="panel-body"><div class="chips" id="storeChips"></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="ph-cn serif">急性暴露处理</span><span class="ph-en mono">First Aid</span><span class="ph-tag">仅作参考，紧急情况请立即就医</span></div>
+            <div class="panel-body"><div class="aid-grid" id="aidGrid"></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><span class="ph-cn serif">不确定性与补拍建议</span><span class="ph-en mono">Uncertainties</span></div>
+            <div class="panel-body">
+              <ul class="note-list" id="uncList"></ul>
+              <ul class="note-list" id="moreList"></ul>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button class="btn" id="btnSave">＋ 存入家庭档案</button>
+            <button class="btn ghost" id="btnReset">识别下一件</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 档案视图 ================= -->
+  <section class="view" id="view-archive">
+    <div class="section-head">
+      <h2 class="serif">家庭档案</h2>
+      <span class="en mono">Household Archive</span>
+      <div class="rule"></div>
+    </div>
+
+    <div class="stats-strip" id="statsStrip"></div>
+    <div class="arch-grid" id="archGrid"></div>
+  </section>
+</main>
+
+<!-- 详情弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="m-head">
+      <h3 class="serif" id="mTitle">详情</h3>
+      <button class="m-close" id="mClose">✕</button>
+    </div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div class="fwrap">
+    <div class="warn-ico">!</div>
+    <p>本系统的识别结果仅用于家庭风险筛查与安全教育，不能替代产品标签、SDS（安全数据表）、医生或中毒控制中心的意见。发生误食、吸入或眼睛/皮肤接触时，请立即联系当地急救或中毒咨询机构。高风险建议需经化学安全专业人员复核。</p>
+  </div>
+</footer>
+
+<script>
+/* ============ 与后端 ChemicalAnalysis schema 对齐的模拟数据 ============ */
+const RISK_CN = {low:"低", medium:"中", high:"高", critical:"严重", unknown:"未知"};
+const SEV_CN = {low:"低", medium:"中", high:"高", critical:"严重"};
+const AID_KEYS = {ingestion:"误食 INGESTION", inhalation:"吸入 INHALATION", eye_contact:"眼睛接触 EYE", skin_contact:"皮肤接触 SKIN"};
+
+const DEMO_RESULT = {
+  product:{name:"含氯漂白剂", brand:null, category:"漂白剂", barcode:null, manufacturer:null},
+  visual_evidence:["瓶身可见“漂白剂”字样","标签印有腐蚀性警示图标","白色不透明塑料瓶，带儿童安全盖"],
+  hazards:[
+    {type:"corrosive", severity:"high", evidence:"标签提示腐蚀/刺激", confidence:0.9},
+    {type:"toxic_gas_risk", severity:"critical", evidence:"含氯产品，与酸或氨混合产生有毒气体", confidence:0.85}
+  ],
+  ingredients:[{name:"次氯酸钠", source:"label", confidence:0.85}],
+  signal_words:["危险"],
+  safe_storage:["上锁并远离儿童和宠物","与酸性清洁剂分开存放","存放于阴凉通风处，避免阳光直射"],
+  do_not_mix_with:["酸性清洁剂","含氨清洁剂","洁厕灵"],
+  first_aid:{
+    ingestion:"不要催吐，立即联系中毒咨询机构或急救",
+    inhalation:"转移至空气新鲜处，如不适立即就医",
+    eye_contact:"持续用流动清水冲洗至少15分钟并就医",
+    skin_contact:"脱去污染衣物并用大量清水冲洗"
+  },
+  uncertainties:["无法仅凭正面照片确认完整浓度","品牌与生产商信息被遮挡"],
+  needs_more_images:["背面成分和警示标签","条码"],
+  risk_level:"high",
+  summary:"疑似含氯漂白剂，严禁与酸或氨类产品混合。应上锁存放，远离儿童。"
+};
+
+let archive = [
+  {id:1, icon:"🧴", analysis:DEMO_RESULT, date:"2026-08-09"},
+  {id:2, icon:"🍽️", analysis:{
+    product:{name:"洗洁精（柠檬香型）", brand:"立白", category:"餐具洗涤剂", barcode:"6920174700011", manufacturer:"广州立白"},
+    visual_evidence:["正面标签完整可读","条码清晰"],
+    hazards:[{type:"irritant", severity:"low", evidence:"标签提示对眼睛有轻微刺激", confidence:0.8}],
+    ingredients:[{name:"表面活性剂", source:"label", confidence:0.9}],
+    signal_words:[], safe_storage:["避免儿童误饮","勿置于食品旁"],
+    do_not_mix_with:[],
+    first_aid:{ingestion:"饮足量温水，如不适就医", inhalation:null, eye_contact:"用清水冲洗", skin_contact:null},
+    uncertainties:[], needs_more_images:[],
+    risk_level:"low", summary:"普通餐具洗涤剂，风险较低，注意避免儿童误饮。"
+  }, date:"2026-08-08"},
+  {id:3, icon:"🚽", analysis:{
+    product:{name:"洁厕灵（酸性）", brand:null, category:"卫浴清洁剂", barcode:null, manufacturer:null},
+    visual_evidence:["标签标注“盐酸”成分","有腐蚀性警示图标"],
+    hazards:[
+      {type:"corrosive", severity:"high", evidence:"含盐酸，标签提示腐蚀性", confidence:0.92},
+      {type:"toxic_gas_risk", severity:"critical", evidence:"与含氯漂白剂混合产生氯气", confidence:0.9}
+    ],
+    ingredients:[{name:"盐酸", source:"label", confidence:0.9}],
+    signal_words:["危险"],
+    safe_storage:["与漂白剂分柜存放","上锁"],
+    do_not_mix_with:["含氯漂白剂","84消毒液"],
+    first_aid:{ingestion:"不要催吐，立即就医", inhalation:"转移至新鲜空气处", eye_contact:"冲洗15分钟以上并就医", skin_contact:"大量清水冲洗"},
+    uncertainties:["浓度未知"], needs_more_images:["背面标签"],
+    risk_level:"critical", summary:"酸性洁厕剂，与任何含氯产品混用会产生氯气，务必分开存放。"
+  }, date:"2026-08-07"},
+  {id:4, icon:"🦟", analysis:{
+    product:{name:"杀虫气雾剂", brand:"雷达", category:"杀虫剂", barcode:"6901234500028", manufacturer:"庄臣"},
+    visual_evidence:["压力罐包装","易燃标识可见"],
+    hazards:[{type:"flammable", severity:"medium", evidence:"压力罐，标签提示远离火源", confidence:0.88}],
+    ingredients:[{name:"拟除虫菊酯", source:"label", confidence:0.8}],
+    signal_words:["警告"],
+    safe_storage:["远离火源与高温","避免阳光暴晒罐体"],
+    do_not_mix_with:[],
+    first_aid:{ingestion:"立即就医", inhalation:"转移至空气新鲜处", eye_contact:"清水冲洗", skin_contact:"肥皂水清洗"},
+    uncertainties:[], needs_more_images:[],
+    risk_level:"medium", summary:"压力罐杀虫剂，易燃，使用后注意通风。"
+  }, date:"2026-08-05"}
+];
+
+/* ============ 视图切换 ============ */
+const navBtns = document.querySelectorAll("nav button[data-view]");
+navBtns.forEach(b => b.addEventListener("click", () => {
+  navBtns.forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
+  document.getElementById("view-" + b.dataset.view).classList.add("on");
+  if (b.dataset.view === "archive") renderArchive();
+}));
+
+/* ============ 后端连接状态 ============ */
+let apiReady = false;
+let selectedFile = null;      // 当前选中的图片文件（真实识别用）
+let lastAnalysis = null;      // 最近一次识别结果（存档用）
+let lastImagePath = null;     // 服务端已保存的图片路径
+
+async function checkApi(){
+  const badge = document.getElementById("apiBadgeText");
+  try {
+    const res = await fetch("/api/status");
+    const s = await res.json();
+    if (s.status === "ready") { apiReady = true; badge.textContent = "模型已连接"; }
+    else if (s.status === "loading") { badge.textContent = "模型加载中…"; setTimeout(checkApi, 5000); }
+    else { badge.textContent = "演示模式"; }
+  } catch { badge.textContent = "离线演示"; }
+}
+checkApi();
+
+/* ============ 上传与演示 ============ */
+const dz = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const dzInner = document.getElementById("dzInner");
+const dzPreview = document.getElementById("dzPreview");
+const previewImg = document.getElementById("previewImg");
+const btnAnalyze = document.getElementById("btnAnalyze");
+const btnDemo = document.getElementById("btnDemo");
+const scanStatus = document.getElementById("scanStatus");
+let hasImage = false;
+
+dz.addEventListener("click", e => { if (e.target !== fileInput) fileInput.click(); });
+fileInput.addEventListener("click", e => e.stopPropagation());
+dz.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+/* 阻止浏览器把拖到页面其他位置的文件当作导航打开 */
+["dragover","drop"].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
+
+fileInput.addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  selectedFile = f;
+  if (previewImg.src) URL.revokeObjectURL(previewImg.src);
+  previewImg.src = URL.createObjectURL(f);
+  dzInner.style.display = "none";
+  dzPreview.style.display = "block";
+  hasImage = true; btnAnalyze.disabled = false;
+});
+["dragover","dragleave","drop"].forEach(ev => dz.addEventListener(ev, e => {
+  e.preventDefault();
+  e.stopPropagation();
+  dz.classList.toggle("drag", ev === "dragover");
+  if (ev === "drop" && e.dataTransfer.files && e.dataTransfer.files[0]) {
+    fileInput.files = e.dataTransfer.files;
+    fileInput.dispatchEvent(new Event("change"));
+  }
+}));
+
+btnDemo.addEventListener("click", () => {
+  dzInner.style.display = "flex";
+  dzPreview.style.display = "none";
+  selectedFile = null;
+  hasImage = true; btnAnalyze.disabled = false;
+  runAnalysis();
+});
+btnAnalyze.addEventListener("click", runAnalysis);
+
+function runAnalysis(){
+  if (!hasImage) return;
+  if (apiReady && selectedFile) { runRealAnalysis(); return; }
+  dz.classList.add("scanning");
+  const line = document.createElement("div");
+  line.className = "scan-line"; dz.appendChild(line);
+  document.getElementById("resultEmpty").style.display = "none";
+  document.getElementById("result").classList.remove("on");
+  const steps = ["加载模型 Qwen3-VL-4B …","提取标签文字与警示图标 …","评估风险并生成结构化结果 …"];
+  let i = 0;
+  scanStatus.textContent = steps[0];
+  const timer = setInterval(() => {
+    i++;
+    if (i < steps.length) { scanStatus.textContent = steps[i]; }
+    else {
+      clearInterval(timer);
+      dz.classList.remove("scanning"); line.remove();
+      scanStatus.innerHTML = "识别完成 <span class='dot'>✓</span>";
+      lastAnalysis = DEMO_RESULT; lastImagePath = null;
+      renderResult(DEMO_RESULT);
+    }
+  }, 850);
+}
+
+/* 调用 FastAPI 后端做真实识别 */
+async function runRealAnalysis(){
+  dz.classList.add("scanning");
+  const line = document.createElement("div");
+  line.className = "scan-line"; dz.appendChild(line);
+  document.getElementById("resultEmpty").style.display = "none";
+  document.getElementById("result").classList.remove("on");
+  scanStatus.textContent = "模型推理中，请稍候（约 30–90 秒）…";
+  btnAnalyze.disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append("image", selectedFile);
+    const res = await fetch("/api/analyze", {method: "POST", body: fd});
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || ("HTTP " + res.status));
+    lastAnalysis = data.analysis; lastImagePath = data.image_path;
+    scanStatus.innerHTML = "识别完成 <span class='dot'>✓</span>";
+    renderResult(data.analysis);
+  } catch (err) {
+    scanStatus.textContent = "";
+    showToast("识别失败：" + err.message);
+    document.getElementById("resultEmpty").style.display = "flex";
+  } finally {
+    dz.classList.remove("scanning"); line.remove();
+    btnAnalyze.disabled = false;
+  }
+}
+
+/* ============ 渲染识别结果 ============ */
+function esc(s){ return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function renderResult(a){
+  const banner = document.getElementById("riskBanner");
+  banner.className = "risk-banner risk-" + a.risk_level;
+  document.getElementById("rbLevel").textContent = RISK_CN[a.risk_level];
+  document.getElementById("rbSummary").textContent = a.summary;
+
+  document.getElementById("pdCat").textContent = a.product.category ? "类别：" + a.product.category : "";
+  const kv = [["产品名称",a.product.name],["品牌",a.product.brand],["条码",a.product.barcode],["生产商",a.product.manufacturer]];
+  document.getElementById("pdGrid").innerHTML = kv.map(([k,v]) =>
+    `<div class="kv"><div class="k mono">${k}</div><div class="v ${v?"":"none"}">${v?esc(v):"未识别"}</div></div>`).join("");
+  document.getElementById("pdEvidence").innerHTML = a.visual_evidence.map(e => `<li>${esc(e)}</li>`).join("");
+
+  document.getElementById("hzCount").textContent = a.hazards.length + " 项";
+  document.getElementById("hzList").innerHTML = a.hazards.length
+    ? a.hazards.map(h => `
+      <div class="hazard-item">
+        <div class="hz-sev sev-${h.severity}"><span class="cn">${SEV_CN[h.severity]}</span><span class="conf">${(h.confidence*100).toFixed(0)}%</span></div>
+        <div class="hz-body"><div class="hz-type">${esc(h.type)}</div><div class="hz-ev">${esc(h.evidence)}</div></div>
+      </div>`).join("")
+    : `<div style="color:var(--ink-soft);font-size:13.5px;">未识别到明显风险。</div>`;
+
+  document.getElementById("mixPanel").style.display = a.do_not_mix_with.length ? "" : "none";
+  document.getElementById("mixChips").innerHTML = a.do_not_mix_with.map(m => `<span class="chip">✕ ${esc(m)}</span>`).join("");
+
+  document.getElementById("ingChips").innerHTML = a.ingredients.map(g =>
+    `<span class="chip">${esc(g.name)} <span class="mono" style="font-size:11px;color:var(--ink-soft);">${g.source}·${(g.confidence*100).toFixed(0)}%</span></span>`).join("") || `<span style="color:var(--ink-soft);font-size:13px;">未提取到成分信息</span>`;
+  document.getElementById("sigChips").innerHTML = a.signal_words.map(s => `<span class="chip sig">「${esc(s)}」</span>`).join("");
+  document.getElementById("storeChips").innerHTML = a.safe_storage.map(s => `<span class="chip">✓ ${esc(s)}</span>`).join("") || `<span style="color:var(--ink-soft);font-size:13px;">无</span>`;
+
+  document.getElementById("aidGrid").innerHTML = Object.entries(AID_KEYS).map(([k,label]) => {
+    const v = a.first_aid[k];
+    return `<div class="aid-cell ${v?"":"empty"}"><div class="ac-k mono">${label}</div><div class="ac-v">${v?esc(v):"—"}</div></div>`;
+  }).join("");
+
+  document.getElementById("uncList").innerHTML = a.uncertainties.map(u => `<li>${esc(u)}</li>`).join("");
+  document.getElementById("moreList").innerHTML = a.needs_more_images.map(m => `<li>建议补拍：${esc(m)}</li>`).join("");
+
+  document.getElementById("result").classList.add("on");
+  document.getElementById("resultCol").scrollTo({top:0, behavior:"smooth"});
+}
+
+document.getElementById("btnReset").addEventListener("click", () => {
+  document.getElementById("result").classList.remove("on");
+  document.getElementById("resultEmpty").style.display = "flex";
+  dzInner.style.display = "flex"; dzPreview.style.display = "none";
+  fileInput.value = ""; hasImage = false; btnAnalyze.disabled = true;
+  selectedFile = null; lastAnalysis = null; lastImagePath = null;
+  scanStatus.textContent = "";
+});
+
+/* ============ 家庭档案 ============ */
+async function fetchArchive(){
+  if (!apiReady) return null;
+  try {
+    const res = await fetch("/api/household/items");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.items.map(r => ({
+      id: r.id, server: true,
+      icon: "🧪",
+      image: r.image_path ? "/" + r.image_path : null,
+      analysis: JSON.parse(r.analysis_json),
+      date: (r.created_at || "").slice(0, 10),
+    }));
+  } catch { return null; }
+}
+
+async function renderArchive(){
+  const serverItems = await fetchArchive();
+  const items = serverItems !== null ? serverItems : archive;
+  const cnt = {critical:0, high:0, medium:0, low:0, unknown:0};
+  items.forEach(x => cnt[x.analysis.risk_level]++);
+  document.getElementById("statsStrip").innerHTML = `
+    <div class="stat c-crit"><div class="s-num">${cnt.critical + cnt.high}</div><div class="s-label mono">高风险物品</div></div>
+    <div class="stat c-med"><div class="s-num">${cnt.medium}</div><div class="s-label mono">中风险</div></div>
+    <div class="stat"><div class="s-num" style="color:var(--low);">${cnt.low}</div><div class="s-label mono">低风险</div></div>
+    <div class="stat"><div class="s-num">${items.length}</div><div class="s-label mono">档案总数</div></div>`;
+  document.getElementById("archGrid").innerHTML = items.length ? items.map(x => `
+    <div class="arch-card" data-id="${x.id}">
+      <div class="ac-img">${x.image ? `<img src="${esc(x.image)}" style="width:100%;height:100%;object-fit:contain;">` : x.icon}<span class="ac-risk risk-${x.analysis.risk_level}">${RISK_CN[x.analysis.risk_level]}风险</span></div>
+      <div class="ac-body">
+        <div class="ac-name serif">${esc(x.analysis.product.name || "未命名")}</div>
+        <div class="ac-meta">${x.date} · #${String(x.id).padStart(3,"0")}</div>
+        <span class="ac-cat">${esc(x.analysis.product.category || "未分类")}</span>
+      </div>
+    </div>`).join("") : `<div style="color:var(--ink-soft);font-size:14px;padding:30px 6px;">档案还是空的，去「拍照识别」录入第一件化学品吧。</div>`;
+  document.querySelectorAll(".arch-card").forEach(c => c.addEventListener("click", () => openModal(+c.dataset.id, items)));
+}
+
+async function openModal(id, items){
+  const list = items || (await fetchArchive()) || archive;
+  const x = list.find(a => a.id === id);
+  if (!x) return;
+  const a = x.analysis;
+  document.getElementById("mTitle").textContent = a.product.name || "未命名物品";
+  const aidMap = AID_KEYS;
+  document.getElementById("mBody").innerHTML = `
+    ${x.image ? `<div class="panel"><div class="panel-body" style="padding:10px;"><img src="${esc(x.image)}" style="width:100%;max-height:280px;object-fit:contain;display:block;"></div></div>` : ""}
+    <div class="risk-banner risk-${a.risk_level}" style="box-shadow:none;">
+      <div><div class="rb-label mono">风险等级</div><div class="rb-level serif">${RISK_CN[a.risk_level]}</div></div>
+      <div class="rb-summary">${esc(a.summary)}</div>
+    </div>
+    <div class="panel"><div class="panel-head"><span class="ph-cn serif">风险项</span></div>
+      <div class="panel-body">${a.hazards.map(h => `
+        <div class="hazard-item"><div class="hz-sev sev-${h.severity}"><span class="cn">${SEV_CN[h.severity]}</span></div>
+        <div class="hz-body"><div class="hz-type">${esc(h.type)}</div><div class="hz-ev">${esc(h.evidence)}</div></div></div>`).join("") || "无"}</div></div>
+    ${a.do_not_mix_with.length ? `<div class="mix-warning"><div class="mw-title">⚠ 严禁与以下物品混用/混存</div><div class="chips">${a.do_not_mix_with.map(m=>`<span class="chip">✕ ${esc(m)}</span>`).join("")}</div></div>` : ""}
+    <div class="panel"><div class="panel-head"><span class="ph-cn serif">储存建议</span></div>
+      <div class="panel-body"><div class="chips">${a.safe_storage.map(s=>`<span class="chip">✓ ${esc(s)}</span>`).join("") || "—"}</div></div></div>
+    <div class="panel"><div class="panel-head"><span class="ph-cn serif">急性暴露处理</span><span class="ph-tag">紧急情况请立即就医</span></div>
+      <div class="panel-body"><div class="aid-grid">${Object.entries(aidMap).map(([k,l]) => {
+        const v = a.first_aid[k];
+        return `<div class="aid-cell ${v?"":"empty"}"><div class="ac-k mono">${l}</div><div class="ac-v">${v?esc(v):"—"}</div></div>`;
+      }).join("")}</div></div></div>
+    ${x.server ? `<button class="btn ghost" id="btnDel" style="align-self:flex-start;">从档案中删除</button>` : ""}`;
+  document.getElementById("modalMask").classList.add("on");
+  if (x.server) {
+    document.getElementById("btnDel").addEventListener("click", async () => {
+      if (!confirm("确定从家庭档案中删除这条记录？")) return;
+      await fetch("/api/household/items/" + x.id, {method: "DELETE"});
+      document.getElementById("modalMask").classList.remove("on");
+      showToast("已删除");
+      renderArchive();
+    });
+  }
+}
+document.getElementById("mClose").addEventListener("click", () => document.getElementById("modalMask").classList.remove("on"));
+document.getElementById("modalMask").addEventListener("click", e => { if (e.target.id === "modalMask") e.target.classList.remove("on"); });
+
+/* ============ 存档 & Toast ============ */
+const toast = document.getElementById("toast");
+function showToast(msg){
+  toast.textContent = msg; toast.classList.add("on");
+  setTimeout(() => toast.classList.remove("on"), 2400);
+}
+document.getElementById("btnSave").addEventListener("click", async () => {
+  if (apiReady && lastAnalysis) {
+    try {
+      const res = await fetch("/api/household/items", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({analysis: lastAnalysis, image_path: lastImagePath}),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      showToast("已存入家庭档案");
+      return;
+    } catch (err) {
+      showToast("存档失败：" + err.message);
+      return;
+    }
+  }
+  archive.unshift({id: Math.max(...archive.map(x=>x.id)) + 1, icon:"🧪", analysis:DEMO_RESULT, date:"2026-08-10"});
+  showToast("已存入家庭档案（演示数据）");
+});
+</script>
+</body>
+</html>

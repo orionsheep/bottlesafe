@@ -1,0 +1,28 @@
+# 系统
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv*/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+.wrangler/
+
+# 运行产物
+*.db
+*.log
+*.pid
+data/uploads/
+
+# 环境与密钥
+.env
+.env.*

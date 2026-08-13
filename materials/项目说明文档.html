@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>瓶安 · 家庭化学品安全识别助手 · 项目说明文档</title>
+<style>
+  body { font-family: "PingFang SC", "Songti SC", serif; max-width: 800px; margin: 40px auto; padding: 0 32px; color: #1a1a1a; line-height: 1.75; font-size: 15px; }
+  h1 { font-size: 30px; line-height: 1.3; border-bottom: 3px solid #2f6b4f; padding-bottom: 14px; }
+  h1 small { display:block; font-size: 15px; color: #666; font-weight: normal; margin-top: 8px; }
+  h2 { font-size: 20px; color: #2f6b4f; margin-top: 36px; border-left: 5px solid #2f6b4f; padding-left: 10px; }
+  h3 { font-size: 16px; margin-top: 20px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+  th { background: #eef4f0; }
+  .tag { display: inline-block; background: #eef4f0; color: #2f6b4f; border-radius: 4px; padding: 1px 8px; margin-right: 6px; font-size: 13px; }
+  .flow { background:#f7f7f5; border:1px solid #e0e0dc; border-radius:8px; padding:14px 18px; font-family: Menlo, monospace; font-size: 13px; white-space: pre; overflow-x:auto;}
+  blockquote { border-left: 4px solid #c9a; margin: 12px 0; padding: 6px 16px; background: #faf8f4; color:#444; }
+  footer { margin-top: 48px; color:#888; font-size: 13px; border-top: 1px solid #ddd; padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>瓶安 · 家庭化学品安全识别助手
+<small>「小有可为 2026 — AI 向善创新挑战赛」项目说明文档 · 赛道：绿色发展：与自然共生 · 作品类型：应用类</small>
+</h1>
+
+<h2>一、项目简介</h2>
+<p>家里的清洁剂、消毒液、杀虫剂、管道疏通剂……每个家庭平均存放 <b>20 种以上</b>化学品，但绝大多数人从未读懂过标签上的警示语。误服、混用（如洁厕灵 + 84 消毒液产生氯气）、错误存放导致的家庭中毒事件中，<b>儿童与老人是最大的受害群体</b>；而随意倾倒的废弃化学品，也在持续伤害土壤与水体。</p>
+<p><b>「瓶安」（家庭化学品安全识别助手）</b>是一个「拍照即懂」的 AI 应用：用手机对家中任意化学品拍一张照片，AI 在数秒内读懂标签，输出<b>成分解析、危害等级、急救指引、安全存放建议、禁忌混用清单</b>，并自动建立家庭化学品安全档案。让每个家庭不需要任何化学知识，也能安全地与化学品共处。</p>
+
+<h2>二、核心功能</h2>
+<table>
+<tr><th>功能</th><th>说明</th></tr>
+<tr><td>📷 拍照识别</td><td>上传/拍摄产品照片，AI 自动识别产品名称、品牌、类别、成分（含标签小字提取）</td></tr>
+<tr><td>⚠️ 危害评估</td><td>输出结构化危害清单（类型/严重度/证据/置信度）与整体风险等级（低/中/高/危急）</td></tr>
+<tr><td>🚑 急救指引</td><td>针对误服、吸入、眼睛接触、皮肤接触四种场景给出即时处置建议</td></tr>
+<tr><td>🚫 禁忌混用警示</td><td>明确列出不可与之混合的其他家用化学品（如含氯漂白剂 × 酸性清洁剂）</td></tr>
+<tr><td>🏠 家庭安全档案</td><td>识别结果一键存入家庭数据库，形成可随时查阅的家庭化学品台账</td></tr>
+<tr><td>🌐 中英双语</td><td>网站全站中英文双语，服务更广泛人群</td></tr>
+</table>
+
+<h2>三、项目亮点</h2>
+<h3>1. 自研微调模型，而非套壳调用</h3>
+<p>我们基于开源视觉大模型 <b>Qwen3-VL</b>，自建 <b>300 组家庭化学品标注数据集</b>（覆盖清洁剂、消毒剂、杀虫剂等高频品类，含多角度实拍标签），采用 <b>QLoRA</b> 方法完成微调训练，显著提升了模型在化学品标签识别、危害判断上的专业性与谨慎度。微调权重已在魔搭社区开源：<b>modelscope.cn/models/OrionSheep/chemical-safety-qwen3vl-lora</b></p>
+<h3>2. 严格的结构化输出与安全兜底</h3>
+<p>模型输出遵循自定义 JSON Schema（产品信息/危害/成分/急救/存放/禁忌/不确定性声明），配备输出归一化校验层，识别不确定时明确提示「需要补拍」而非编造答案——<b>在安全领域，宁可说不知道，不可说错</b>。</p>
+<h3>3. 极低成本可复制的公益部署</h3>
+<p>方案支持 GPU 云端、免费推理 API、本地量化（GGUF 4-bit，实测 Apple 芯片 7~11 秒/张）三种推理模式，公益组织可用几乎为零的成本部署使用。</p>
+<h3>4. 绿色发展的双重价值</h3>
+<p>向内守护家庭成员健康（防误服/防混用中毒），向外减少化学品误弃对环境的伤害（提供安全存放与处置建议），实现「家庭安全 + 环境友好」双重公益价值。</p>
+
+<h2>四、技术方案</h2>
+<div class="flow">用户拍照上传
+   │
+   ▼
+前端（React 双语网站） ──▶ 后端 FastAPI ──▶ Qwen3-VL 微调模型（QLoRA）
+                              │                    │
+                              ▼                    ▼
+                        SQLite 家庭档案 ◀── JSON Schema 校验与归一化
+                              │
+                              ▼
+              危害评估 + 急救指引 + 存放建议 + 禁忌清单</div>
+<table>
+<tr><th>层</th><th>技术选型</th></tr>
+<tr><td>模型</td><td>Qwen3-VL（视觉语言大模型）+ QLoRA 微调（自建 300 组标注数据）</td></tr>
+<tr><td>推理</td><td>transformers + PEFT；支持 4-bit 量化 / bf16；GGUF/llama.cpp 端侧推理</td></tr>
+<tr><td>后端</td><td>Python · FastAPI · SQLite（家庭化学品档案库）· Pydantic Schema 校验</td></tr>
+<tr><td>前端</td><td>React · 中英双语 i18n · 响应式设计（手机/平板/桌面）</td></tr>
+<tr><td>部署</td><td>Docker 单容器（nginx + uvicorn + node）；支持魔搭创空间/云服务器/本地</td></tr>
+</table>
+
+<h2>五、社会价值与应用场景</h2>
+<table>
+<tr><th>场景</th><th>价值</th></tr>
+<tr><td>有儿童/老人的家庭</td><td>快速判断家中化学品风险，误接触时第一时间获得正确急救指引</td></tr>
+<tr><td>社区公益科普</td><td>社区工作者用它开展家庭化学品安全排查与科普活动</td></tr>
+<tr><td>环保处置引导</td><td>指导居民正确存放与处置废弃化学品，减少环境污染</td></tr>
+<tr><td>视障/低文化人群</td><td>看不清、读不懂标签的人群也能「拍一下就明白」</td></tr>
+</table>
+
+<blockquote>我们相信：AI 向善不一定是宏大的叙事，也可以是帮一位奶奶看懂一瓶消毒液的标签。</blockquote>
+
+<footer>瓶安 · 家庭化学品安全识别助手 · 2026 小有可为 AI 向善创新挑战赛参赛材料</footer>
+</body>
+</html>

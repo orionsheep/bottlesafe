@@ -1,0 +1,13 @@
+# 构建上下文 = 拼接完成项目 根目录；排除一切本机垃圾
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.venv*
+**/.wrangler
+**/dist
+**/*.log
+**/backend.pid
+backend/data
+deploy
+studio/README.md
+.git

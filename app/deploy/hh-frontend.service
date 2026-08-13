@@ -1,0 +1,13 @@
+[Unit]
+Description=Home Hazard Frontend (vinext production server)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/hh/frontend
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

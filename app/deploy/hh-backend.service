@@ -1,0 +1,15 @@
+[Unit]
+Description=Home Hazard Backend (Qwen3-VL-4B + LoRA public-300-final)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/hh/backend
+Environment="CHEM_MODEL_PATH=/opt/hh/models/Qwen3-VL-4B-Instruct"
+Environment="CHEM_ADAPTER=/opt/hh/adapters/public-300-final"
+Environment="CHEM_DB=/opt/hh/backend/data/chemicals.db"
+ExecStart=/opt/hh/venv/bin/python -m uvicorn src.web.app:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
