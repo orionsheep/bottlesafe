@@ -6,7 +6,7 @@
 
 - **在线体验**：https://bottlesafe.orionsheep.com
 - **微调模型（LoRA）**：https://modelscope.cn/models/OrionSheep/chemical-safety-qwen3vl-lora
-- **演示视频**：见 [Releases](../../releases) 中的 `演示视频_成片_v2.mp4`
+- **演示视频**：见 [Releases](../../releases) 中的 `bottlesafe-demo-video-v2.mp4`
 
 ## 这是什么
 
