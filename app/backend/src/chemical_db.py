@@ -18,6 +18,13 @@ CREATE TABLE IF NOT EXISTS household_items (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(product_id) REFERENCES products(id)
 );
+CREATE TABLE IF NOT EXISTS checkins (
+  id INTEGER PRIMARY KEY, household_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  overall_risk TEXT NOT NULL DEFAULT 'unknown',
+  item_count INTEGER NOT NULL DEFAULT 0,
+  report_json TEXT NOT NULL DEFAULT '{}'
+);
 """
 
 
@@ -58,6 +65,71 @@ class ChemicalDB:
         )
         self.conn.commit()
         return int(cur.lastrowid)
+
+    def list_household(self, household_id: str) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT * FROM household_items WHERE household_id = ? ORDER BY id",
+            (household_id,),
+        ).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            try:
+                d["analysis"] = json.loads(d.pop("analysis_json"))
+            except json.JSONDecodeError:
+                d["analysis"] = {}
+            out.append(d)
+        return out
+
+    # ---------------- 排查快照（长期档案时间线） ----------------
+
+    def add_checkin(self, household_id: str, overall_risk: str, item_count: int, report: dict) -> int:
+        cur = self.conn.execute(
+            "INSERT INTO checkins(household_id, overall_risk, item_count, report_json) VALUES(?,?,?,?)",
+            (household_id, overall_risk, item_count, json.dumps(report, ensure_ascii=False)),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid)
+
+    def list_checkins(self, household_id: str, limit: int = 50) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT id, created_at, overall_risk, item_count FROM checkins "
+            "WHERE household_id = ? ORDER BY id DESC LIMIT ?",
+            (household_id, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def latest_checkin(self, household_id: str, before_id: int | None = None) -> dict | None:
+        """before_id 为 None 时返回最近一次；否则返回该次之前（不含）的最近一次。"""
+        if before_id is None:
+            row = self.conn.execute(
+                "SELECT id, created_at, overall_risk, item_count, report_json FROM checkins "
+                "WHERE household_id = ? ORDER BY id DESC LIMIT 1", (household_id,)).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT id, created_at, overall_risk, item_count, report_json FROM checkins "
+                "WHERE household_id = ? AND id < ? ORDER BY id DESC LIMIT 1",
+                (household_id, before_id)).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        try:
+            d["report"] = json.loads(d.pop("report_json"))
+        except json.JSONDecodeError:
+            d["report"] = {}
+        return d
+
+    def count_items_newer_than(self, household_id: str, since: str | None) -> int:
+        """某时刻之后新入档的物品数（since 为 None 表示全部）。"""
+        if since is None:
+            row = self.conn.execute(
+                "SELECT COUNT(*) AS n FROM household_items WHERE household_id = ?",
+                (household_id,)).fetchone()
+        else:
+            row = self.conn.execute(
+                "SELECT COUNT(*) AS n FROM household_items WHERE household_id = ? AND created_at > ?",
+                (household_id, since)).fetchone()
+        return int(row["n"])
 
     def upsert_product(self, barcode: str | None, name: str, brand: str | None = None, manufacturer: str | None = None, category: str | None = None, safety: dict | None = None) -> int:
         self.conn.execute(

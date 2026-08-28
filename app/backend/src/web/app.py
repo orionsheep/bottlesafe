@@ -46,6 +46,7 @@ DB_PATH = os.environ.get("CHEM_DB", str(BASE_DIR / "data" / "chemicals.db"))
 HOUSEHOLD_ID = os.environ.get("CHEM_HOUSEHOLD", "home-001")
 
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+_RISK_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 
 # local=本地加载模型（GPU）；api=调魔搭免费推理 API（创空间免费 CPU 演示用）
 BACKEND_MODE = os.environ.get("CHEM_BACKEND", "local")
@@ -169,6 +170,100 @@ def uploaded_file(filename: str):
     if not path.is_file():
         raise HTTPException(status_code=404, detail="图片不存在")
     return FileResponse(path)
+
+
+# ---------------- 方向② 全屋评估报告（每次生成即一次排查快照） ----------------
+
+@app.post("/api/household/report")
+def household_report():
+    from ..report_gen import generate_report
+
+    with ChemicalDB(DB_PATH) as db:
+        items = db.list_household(HOUSEHOLD_ID)
+        if not items:
+            raise HTTPException(status_code=400, detail="家庭档案为空，先识别并存入几件物品再生成报告")
+        report, local = generate_report(items, HOUSEHOLD_ID)
+        checkin_id = db.add_checkin(HOUSEHOLD_ID, report["overall_risk"], len(items), report)
+        prev = db.latest_checkin(HOUSEHOLD_ID, before_id=checkin_id)
+    report["checkin_id"] = checkin_id
+    report["prev_risk"] = prev["overall_risk"] if prev else None
+    return report
+
+
+# ---------------- 方向④ 长期档案：时间线 + 复检提醒 ----------------
+
+_RECHECK_DAYS = 180
+
+
+@app.get("/api/household/timeline")
+def household_timeline():
+    from datetime import datetime, timedelta
+
+    with ChemicalDB(DB_PATH) as db:
+        checkins = db.list_checkins(HOUSEHOLD_ID)
+        latest = db.latest_checkin(HOUSEHOLD_ID)
+        n_items = db.count_items_newer_than(HOUSEHOLD_ID, None)
+        n_new = db.count_items_newer_than(HOUSEHOLD_ID, latest["created_at"]) if latest else n_items
+
+    timeline = []
+    prev_risk = None
+    for c in reversed(checkins):  # 旧→新，便于计算趋势
+        trend = None
+        if prev_risk is not None and c["overall_risk"] in _RISK_ORDER and prev_risk in _RISK_ORDER:
+            diff = _RISK_ORDER[c["overall_risk"]] - _RISK_ORDER[prev_risk]
+            trend = "up" if diff > 0 else ("down" if diff < 0 else "flat")
+        timeline.append({**c, "trend": trend})
+        prev_risk = c["overall_risk"]
+    timeline.reverse()  # 新→旧
+
+    reminders = []
+    if latest:
+        try:
+            last_dt = datetime.fromisoformat(latest["created_at"])
+            days = (datetime.now() - last_dt).days
+        except ValueError:
+            days = None
+        if days is not None and days >= _RECHECK_DAYS:
+            reminders.append(f"距上次全屋排查已 {days} 天，建议再做一次")
+        if n_new > 0:
+            reminders.append(f"上次排查后有 {n_new} 件新物品入档，尚未纳入评估")
+    elif n_items == 0:
+        reminders.append("还没有任何档案，先拍照识别一件家里的化学品吧")
+    else:
+        reminders.append("还没有生成过全屋报告，点「生成全屋报告」建立基线")
+
+    return {"checkins": timeline, "reminders": reminders, "n_items": n_items}
+
+
+# ---------------- 方向③ 知识图谱多维解读 + 方向① 问答（语音转文字后进入） ----------------
+
+from ..kg import query as kg_query  # noqa: E402
+
+
+@app.get("/api/kg/query")
+def kg_endpoint(mode: str = "auto", q: str = ""):
+    if not q.strip():
+        raise HTTPException(status_code=400, detail="q 不能为空")
+    with ChemicalDB(DB_PATH) as db:
+        items = db.list_household(HOUSEHOLD_ID)
+    return kg_query(mode, q, items)
+
+
+class AskBody(BaseModel):
+    question: str
+    mode: str = "auto"
+
+
+@app.post("/api/ask")
+def ask(body: AskBody):
+    q = body.question.strip()
+    if not q:
+        raise HTTPException(status_code=400, detail="问题不能为空")
+    with ChemicalDB(DB_PATH) as db:
+        items = db.list_household(HOUSEHOLD_ID)
+    from ..report_gen import answer_question
+
+    return answer_question(q, body.mode, items)
 
 
 # ---------------- 前端静态页面（放最后，避免覆盖 API 路由） ----------------

@@ -127,6 +127,28 @@ export const SCAN_COPY = {
       error: "Model failed to load",
       offline: "Backend not running (expected at 127.0.0.1:8000)",
     } as Record<string, string>,
+    // ---- 方向① 语音问答 ----
+    voiceNo: "/ 06 — ASK BY VOICE", voiceTitle: "Ask by voice",
+    voiceHint: "Tap the mic and speak — e.g. “My skin turned red”, “What's risky in the kitchen?”, “We have a baby at home”.",
+    micStart: "Hold to speak", micListening: "Listening…", micUnsupported: "Voice input needs Chrome/Edge",
+    askBtn: "Ask →", asking: "Thinking…",
+    chipSymptom: "Symptom", chipScene: "Room", chipPeople: "Family",
+    chips: ["Skin red & itchy", "Coughing at home", "Kitchen risks", "Bathroom risks", "We have a baby", "Safe for pets?"],
+    relatedItems: "Related items in your archive", noRelated: "No matching item in your archive yet.",
+    speak: "Read aloud", stopSpeak: "Stop", graphFacts: "Knowledge-graph clues",
+    // ---- 方向② 全屋报告 ----
+    reportNo: "/ 07 — WHOLE-HOME REPORT", reportTitle: "Whole-home safety report",
+    reportHint: "One tap scans every archived item, flags dangerous combinations and drafts a plain-language action plan.",
+    genReport: "Generate report →", genReportBusy: "Analyzing your home…",
+    overallRisk: "Overall risk", improved: "improved since last check", worsened: "worsened since last check", unchanged: "unchanged since last check", firstCheck: "baseline established",
+    radarTitle: "Hazard profile", crossTitle: "Dangerous combinations found", noCross: "No dangerous pairs detected in your archive. Keep incompatible products apart anyway.",
+    actionsTitle: "Do these first", winsTitle: "Quick wins today", reassureLabel: "Good news",
+    printReport: "Print / Save PDF", disclaimer: "Screening reference only — not a substitute for product labels, SDS or professional advice.",
+    emptyArchiveReport: "Your archive is empty — scan & save a few products first.",
+    // ---- 方向④ 时间线 ----
+    tlNo: "/ 08 — OVER TIME", tlTitle: "Your safety timeline",
+    tlEmpty: "No check-ins yet. Generate your first whole-home report to start the timeline.",
+    tlItems: "items", remindTitle: "Reminders",
   },
   zh: {
     back: "返回",
@@ -151,5 +173,27 @@ export const SCAN_COPY = {
     remove: "删除", unnamed: "未命名",
     footer: "识别结果仅供安全参考，切勿替代产品背标、SDS 或专业医疗建议。",
     status: {} as Record<string, string>, // 中文直接显示后端 detail
+    // ---- 方向① 语音问答 ----
+    voiceNo: "/ 06 — 开口即问", voiceTitle: "语音问答，问完就懂",
+    voiceHint: "点麦克风直接说：“皮肤发红还痒”、“厨房有什么危险”、“家有宝宝要注意什么”。",
+    micStart: "点我说话", micListening: "在听…请讲", micUnsupported: "语音识别需要 Chrome / Edge 浏览器",
+    askBtn: "提问 →", asking: "思考中…",
+    chipSymptom: "按症状", chipScene: "按空间", chipPeople: "按家人",
+    chips: ["皮肤发红还痒", "总在家咳嗉", "厨房有什么危险", "卫生间有什么危险", "家有宝宝", "养猫要注意什么"],
+    relatedItems: "家中相关物品", noRelated: "档案里还没有匹配的物品。",
+    speak: "朗读回答", stopSpeak: "停止朗读", graphFacts: "知识图谱线索",
+    // ---- 方向② 全屋报告 ----
+    reportNo: "/ 07 — 全屋体检", reportTitle: "全屋安全报告",
+    reportHint: "一键汇总全部已存档物品，标出危险组合与重点隐患，生成通俗的行动清单。",
+    genReport: "生成全屋报告 →", genReportBusy: "正在分析你的家…",
+    overallRisk: "总体风险", improved: "较上次排查改善 ✓", worsened: "较上次排查上升 ⚠", unchanged: "与上次排查持平", firstCheck: "基线已建立 ✓",
+    radarTitle: "风险画像", crossTitle: "发现的危险组合", noCross: "未发现同框禁忌组合；仍建议把不相容的产品分开存放。",
+    actionsTitle: "先做这几件事", winsTitle: "今天就能做的小改动", reassureLabel: "安心一句话",
+    printReport: "打印 / 存 PDF", disclaimer: "本报告仅供家庭风险筛查参考，不能替代产品标签、SDS 或专业医疗意见。",
+    emptyArchiveReport: "档案还是空的——先去上方识别并存入几件物品吧。",
+    // ---- 方向④ 时间线 ----
+    tlNo: "/ 08 — 长期陪伴", tlTitle: "安全时间线",
+    tlEmpty: "还没有排查记录。生成第一份全屋报告，开始记录家的安全变化。",
+    tlItems: "件物品", remindTitle: "复检提醒",
   },
 };

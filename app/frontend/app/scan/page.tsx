@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
+import Assistant from "./assistant";
+import ReportPanel from "./report";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
@@ -222,6 +224,8 @@ export default function ScanPage() {
 
       <p className="scan-sub">{t.sub}</p>
 
+      <Assistant />
+
       <section className="household-archive">
         <p className="section-no">{t.archiveNo}</p>
         <h2>{t.archiveTitle}</h2>
@@ -238,6 +242,8 @@ export default function ScanPage() {
           </ul>
         )}
       </section>
+
+      <ReportPanel nItems={items.length} />
 
       <footer><a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
     </main>

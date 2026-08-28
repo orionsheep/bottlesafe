@@ -143,3 +143,100 @@ footer{background:var(--ink);color:var(--cream);border-top:1px solid var(--line)
 .lang-zh .product-name{letter-spacing:-.02em}
 .lang-zh .ticker{font-weight:600}
 @media(max-width:800px){.lang-zh .intro h2,.lang-zh .catalogue-head h2,.lang-zh .catalogue h2{font-size:clamp(42px,11vw,58px)}}
+
+/* ============ 方向① 语音问答 ============ */
+.assistant-section{padding:80px 5vw 40px;background:var(--ink);color:var(--cream)}
+.assistant-section h2{font-size:clamp(40px,4.5vw,72px);letter-spacing:-.05em;margin:14px 0 12px;text-transform:uppercase}
+.assistant-hint{font-size:14px;line-height:1.6;opacity:.65;max-width:560px}
+.ask-bar{display:flex;gap:12px;margin:28px 0 18px;flex-wrap:wrap}
+.ask-bar input{flex:1;min-width:220px;border:1px solid rgba(238,233,220,.4);background:rgba(238,233,220,.08);color:var(--cream);padding:12px 16px;font-size:15px;outline:none}
+.ask-bar input:focus{border-color:var(--lime)}
+.mic-btn{display:flex;align-items:center;gap:10px;border:1px solid rgba(238,233,220,.5);background:transparent;color:var(--cream);border-radius:40px;padding:10px 20px;cursor:pointer;font-size:12px;letter-spacing:.1em;transition:.25s}
+.mic-btn i{width:10px;height:10px;border-radius:50%;background:var(--coral)}
+.mic-btn.listening{border-color:var(--coral);background:rgba(240,125,99,.18);animation:micPulse 1.1s ease-in-out infinite}
+@keyframes micPulse{50%{transform:scale(1.05)}}
+.ask-btn{border:1px solid var(--lime);background:var(--lime);color:var(--ink);padding:12px 22px;font-size:12px;letter-spacing:.1em;cursor:pointer}
+.ask-btn:disabled{opacity:.4;cursor:default}
+.chip-rows{display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:22px}
+.chip-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip-group em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+.chip-group button{border:1px solid rgba(238,233,220,.35);background:transparent;color:var(--cream);border-radius:30px;padding:6px 14px;font-size:12px;cursor:pointer;transition:.2s}
+.chip-group button:hover{background:var(--cream);color:var(--ink)}
+.ask-result{display:grid;gap:14px}
+.ask-bubble{background:rgba(238,233,220,.1);border-left:3px solid var(--lime);padding:18px 22px;max-width:720px;font-size:15px;line-height:1.75;position:relative}
+.ask-bubble.skeleton{opacity:.5;animation:micPulse 1.2s infinite}
+.speak-btn{margin-top:12px;border:1px solid rgba(238,233,220,.4);background:transparent;color:var(--cream);border-radius:20px;padding:5px 14px;font-size:11px;cursor:pointer}
+.speak-btn:hover{border-color:var(--lime);color:var(--lime)}
+.related-box h4,.kg-details summary{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:8px}
+.related-box ul{list-style:none;margin:0;padding:0}
+.related-box li{font-size:13px;padding:6px 0;border-bottom:1px solid rgba(238,233,220,.12)}
+.related-box li small{display:block;opacity:.5;font-size:11px}
+.kg-details{font-size:13px;line-height:1.7}
+.kg-details summary{cursor:pointer}
+.kg-details ul{margin:8px 0 0;padding-left:18px;opacity:.8}
+.risk-dot{font-size:11px;margin-right:4px}
+.risk-dot.risk-high,.risk-dot.risk-critical{color:var(--coral)}
+.risk-dot.risk-medium{color:#e2b93b}
+.risk-dot.risk-low{color:#7fb069}
+
+/* ============ 方向② 全屋报告 ============ */
+.report-section{padding:80px 5vw 40px;background:#d9d2c1;border-top:1px solid rgba(16,37,29,.25)}
+.report-section h2{font-size:clamp(40px,4.5vw,72px);letter-spacing:-.05em;margin:14px 0 12px;text-transform:uppercase}
+.report-section .assistant-hint{color:rgba(16,37,29,.65)}
+.gen-report-btn{border:1px solid var(--ink);background:var(--ink);color:var(--cream);padding:14px 26px;font-size:13px;letter-spacing:.08em;cursor:pointer;transition:.2s;margin:10px 0 26px}
+.gen-report-btn:hover:not(:disabled){background:var(--coral);border-color:var(--coral)}
+.gen-report-btn:disabled{opacity:.45;cursor:default}
+.report-card{background:var(--cream);border:1px solid var(--ink);max-width:980px;padding:34px 38px}
+.report-card.risk-border-critical{box-shadow:8px 8px 0 var(--coral)}
+.report-card.risk-border-high{box-shadow:8px 8px 0 rgba(240,125,99,.55)}
+.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.overall-badge{display:inline-block;font-size:34px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px;padding:2px 14px;border:2px solid currentColor}
+.overall-badge.risk-low{color:#4c7a3f}.overall-badge.risk-medium{color:#a07d1c}
+.overall-badge.risk-high{color:#c2542e}.overall-badge.risk-critical{color:#b3261e;background:rgba(240,125,99,.15)}
+.overall-text{font-size:14px;opacity:.75}
+.print-btn{border:1px solid var(--ink);background:transparent;padding:8px 16px;font-size:11px;letter-spacing:.1em;cursor:pointer}
+.print-btn:hover{background:var(--ink);color:var(--cream)}
+.trend-line{font-size:13px;font-weight:700;margin:6px 0 0}
+.trend-line.good{color:#4c7a3f}.trend-line.bad{color:#c2542e}
+.report-overview{font-size:16px;line-height:1.8;margin:22px 0;max-width:760px}
+.report-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:34px;margin:10px 0 24px}
+.report-grid h4{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:0 0 10px}
+.radar-svg{width:100%;max-width:320px}
+.cross-box ul{list-style:none;margin:0;padding:0}
+.cross-pair{border-left:3px solid var(--coral);background:rgba(240,125,99,.1);padding:10px 14px;margin-bottom:10px;font-size:13px}
+.cross-pair b{display:block;margin-bottom:4px}
+.cross-pair span{opacity:.8;line-height:1.55}
+.cross-empty{font-size:13px;opacity:.6}
+.high-list{list-style:none;margin:0 0 24px;padding:0;border-top:1px solid rgba(16,37,29,.3)}
+.high-list li{padding:10px 4px;border-bottom:1px solid rgba(16,37,29,.2);font-size:14px}
+.high-list li small{display:block;opacity:.6;font-size:12px;margin-top:2px}
+.report-actions{display:grid;grid-template-columns:1.3fr 1fr;gap:30px}
+.report-actions h4{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:0 0 10px}
+.report-actions ol,.report-actions ul{margin:0;padding-left:20px;font-size:14px;line-height:1.9}
+.reassure{margin-top:26px;font-size:14px;background:rgba(217,255,82,.35);padding:12px 16px;border-left:3px solid #9db83a}
+.report-footer{margin-top:20px;font-size:11px;opacity:.5;line-height:1.5}
+
+/* ============ 方向④ 时间线 ============ */
+.timeline-section{padding:70px 5vw 90px;background:var(--cream)}
+.timeline-section h2{font-size:clamp(40px,4.5vw,72px);letter-spacing:-.05em;margin:14px 0 24px;text-transform:uppercase}
+.reminder-banner{list-style:none;margin:0 0 24px;padding:14px 20px;background:rgba(226,185,59,.25);border-left:3px solid #a07d1c;font-size:14px;line-height:1.9}
+.timeline{list-style:none;margin:0;padding:0;max-width:760px}
+.timeline li{display:flex;align-items:center;gap:16px;padding:16px 6px;border-bottom:1px solid rgba(16,37,29,.2);font-size:14px}
+.tl-dot{width:14px;height:14px;border-radius:50%;flex:none}
+.tl-dot.risk-bg-low{background:#4c7a3f}.tl-dot.risk-bg-medium{background:#e2b93b}
+.tl-dot.risk-bg-high{background:#c2542e}.tl-dot.risk-bg-critical{background:#b3261e}
+.tl-dot.risk-bg-unknown{background:#999}
+.timeline b{width:64px;font-weight:800}
+.tl-date{opacity:.7}.tl-count{opacity:.55}
+.tl-trend{font-style:normal;font-weight:700}
+.tl-trend.good{color:#4c7a3f}.tl-trend.bad{color:#c2542e}
+
+@media(max-width:800px){
+  .report-grid,.report-actions{grid-template-columns:1fr}
+  .report-card{padding:22px 18px}
+}
+@media print{
+  .nav,.scan-top,.scan-workbench,.scan-sub,.assistant-section,.household-archive,.timeline-section,.gen-report-btn,footer{display:none!important}
+  body{background:#fff}
+  .report-card{border:1px solid #333;box-shadow:none!important}
+}
