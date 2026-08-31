@@ -19,7 +19,7 @@ export default function MobileHome() {
         <div className="hero-copy">
           <h1>{lang === "zh" ? "拍一下，让瓶瓶罐罐安放妥当" : "Snap it. Keep every bottle safe."}</h1>
           <p>{lang === "zh" ? "读标签、辨风险、查禁忌混用，把一次排查变成长期家庭安全档案。" : "Read labels, judge risks, flag dangerous mixes — one scan becomes a lasting home safety archive."}</p>
-          <a className="hero-cta" href="/m/scan">{lang === "zh" ? "开始识别 →" : "Start scan →"}</a>
+          <a className="hero-cta" href="/scan">{lang === "zh" ? "开始识别 →" : "Start scan →"}</a>
         </div>
       </section>
 
@@ -68,7 +68,7 @@ export default function MobileHome() {
         </ul>
       </section>
 
-      <a className="scan-cta-card" href="/m/scan">
+      <a className="scan-cta-card" href="/scan">
         <div>
           <b>{lang === "zh" ? "进入识别台" : "Go to scanner"}</b>
           <p>{lang === "zh" ? "上传照片，得到产品、风险、禁忌混用、急救与绿色处置建议。" : "Upload a photo for product, risk, do-not-mix, first aid and green disposal advice."}</p>
