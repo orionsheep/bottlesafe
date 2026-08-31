@@ -28,8 +28,12 @@ function outcomeFromReason(reason: string, gasWord: string) {
 }
 
 function pairLine(reason: string) {
-  const head = reason.split(/[：:]/)[0] || reason;
-  return head.replace(/——.*/, "").trim();
+  const head = (reason.split(/[：:]/)[0] || reason)
+    .replace(/（[^）]*）/g, "")
+    .replace(/成分/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return head;
 }
 
 function Thumb({

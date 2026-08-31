@@ -556,7 +556,7 @@ html.desk .desk-bench{height:100%;display:flex;flex-direction:column;padding:12p
 html.desk .desk-split{flex:1;min-height:0;display:grid;grid-template-columns:42% 58%;gap:14px}
 
 /* 交叉告警英雄区 */
-html.desk .cross-hero{flex:none;height:160px;border-radius:18px;padding:12px 18px;display:flex;align-items:center;gap:22px;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow-sm);overflow:hidden}
+html.desk .cross-hero{flex:none;min-height:150px;height:auto;border-radius:18px;padding:12px 18px;display:flex;align-items:center;gap:22px;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow-sm);overflow:hidden}
 html.desk .cross-hero.is-hot{background:linear-gradient(90deg,rgba(192,48,28,.12),rgba(255,253,246,.95) 42%);border-color:#c0301c}
 html.desk .cross-hero.is-hot.sev-high{background:linear-gradient(90deg,rgba(224,114,31,.14),rgba(255,253,246,.95) 42%);border-color:#e0721f}
 html.desk .cross-hero.is-clear{background:linear-gradient(90deg,rgba(111,168,96,.16),var(--paper) 50%);border-color:var(--green)}
@@ -579,10 +579,18 @@ html.desk .cross-hero-copy ul li::before{content:"· ";color:#c0301c}
 
 /* 左栏瀑布流 */
 html.desk .desk-left,html.desk .desk-right{min-height:0;overflow:auto;background:transparent}
-html.desk .arc.is-desk{gap:12px}
+html.desk .arc.is-desk{gap:10px}
 html.desk .arc.is-desk .arc-stats{order:1}
-html.desk .arc.is-desk .arc-secondary{order:2;margin-top:0;padding-top:0;border-top:0}
+html.desk .arc.is-desk .arc-stat{padding:8px 4px}
+html.desk .arc.is-desk .arc-stat b{font-size:18px}
+html.desk .arc.is-desk .arc-secondary{order:2;margin-top:0;padding-top:0;border-top:0;gap:8px}
+html.desk .arc.is-desk .arc-tools{flex-direction:row;align-items:center;gap:8px}
+html.desk .arc.is-desk .arc-search{flex:1;padding:8px 12px}
+html.desk .arc.is-desk .arc-sort{flex:none;width:auto}
+html.desk .arc.is-desk .arc-sort button{flex:none;padding:8px 12px}
+html.desk .arc.is-desk .arc-top{display:none}
 html.desk .arc.is-desk .arc-waterfall{order:3;columns:3;column-gap:10px}
+html.desk .cross-hero-copy b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html.desk .arc-wf-card.is-pair{box-shadow:0 0 0 2px #c0301c,0 10px 22px rgba(192,48,28,.28);animation:pairPulse 1.6s ease-in-out infinite}
 @keyframes pairPulse{0%,100%{box-shadow:0 0 0 2px #c0301c,0 8px 18px rgba(192,48,28,.2)}50%{box-shadow:0 0 0 4px #c0301c,0 12px 26px rgba(192,48,28,.38)}}
 html.desk .arc-sheet-mask.is-desk{align-items:center}

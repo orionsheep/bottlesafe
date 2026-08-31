@@ -55,7 +55,7 @@ export default function ArchiveCenter({
   const t = SCAN_COPY[lang];
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
-  const [sort, setSort] = useState<"new" | "risk" | "name">("new");
+  const [sort, setSort] = useState<"new" | "risk" | "name">(variant === "desk" ? "risk" : "new");
   const [openId, setOpenId] = useState<number | null>(null);
   const openItem = openId == null ? null : items.find((it) => it.id === openId) || null;
 
