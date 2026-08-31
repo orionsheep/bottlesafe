@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
-import Assistant from "./assistant";
-import ReportPanel from "./report";
+import { useLang, SCAN_COPY } from "../../i18n";
+import AppShell from "../../AppShell";
+import Assistant from "../../scan/assistant";
 
-// 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
     ? "http://127.0.0.1:8000"
@@ -27,17 +26,16 @@ type Analysis = {
   risk_level: string;
   summary: string;
 };
-type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string };
-type HouseholdItem = { id: number; [k: string]: unknown };
+type Disposal = { category: string; drain_safe: string; drain_safe_text: string; disposal_route: string; container: string; eco_tip: string; hazardous_waste: boolean; matched: boolean };
+type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string; disposal?: Disposal };
 
 const riskLabel: Record<string, string> = {
   unknown: "UNKNOWN", low: "LOW", medium: "MEDIUM", high: "HIGH", critical: "CRITICAL",
 };
 
-export default function ScanPage() {
-  const { lang, setLang } = useLang();
+export default function MobileScanPage() {
+  const { lang } = useLang();
   const t = SCAN_COPY[lang];
-  const hn = HOME_COPY[lang];
   const [status, setStatus] = useState<{ status: string; detail: string }>({ status: "checking", detail: "连接后端…" });
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -45,7 +43,6 @@ export default function ScanPage() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [items, setItems] = useState<HouseholdItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -61,10 +58,6 @@ export default function ScanPage() {
     }, 3000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setItems(d.items ?? [])).catch(() => {});
-  }, [saved]);
 
   const pick = (f: File | undefined | null) => {
     if (!f) return;
@@ -103,67 +96,70 @@ export default function ScanPage() {
     if (res.ok) setSaved(true);
   };
 
-  const removeItem = async (id: number) => {
-    await fetch(`${API}/api/household/items/${id}`, { method: "DELETE" });
-    setItems((list) => list.filter((it) => it.id !== id));
-  };
-
   const a = result?.analysis;
-  const statusText = lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
+  const statusText = status.status === "ready"
+    ? (lang === "zh" ? "已就绪，可以开始识别" : "Ready to scan")
+    : lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
   const errorText = error
     ? (lang === "zh" ? error : error.replace("识别结果未通过结构校验：", "Recognition failed schema validation: ").replace("不支持的图片格式", "Unsupported image format"))
     : null;
 
   return (
-    <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
-      <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/#method">{hn.navMethod}</a><a href="/scan">{hn.navScan}</a><a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a></div>
-        <div className="nav-right">
-          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
-          <a className="menu" href="/"><span />{t.back}</a>
-        </div>
-      </nav>
-
-      <header className="scan-top">
-        <div>
-          <p className="section-no">{t.headNo}</p>
-          <h1>{t.h1a} <i>{t.h1b}</i></h1>
-        </div>
-        <p className={`scan-status status-${status.status}`}>
-          MODEL / {status.status.toUpperCase()} — {statusText}
-        </p>
+    <AppShell active="scan">
+      <div className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
+      <header className="page-head">
+        <h1>{lang === "zh" ? "拍照识别" : "Scan & identify"}</h1>
+        <p>{lang === "zh" ? "拍一张瓶身或标签，识别成分、风险与安全处置建议。" : "Snap a bottle or label to detect ingredients, risks and safe disposal."}</p>
       </header>
+      <div className="scan-status-bar">
+        <span className={`scan-status status-${status.status}`}>{statusText}</span>
+      </div>
 
       <section className="scan-workbench">
         <div className="scan-upload">
-          <button className="drop-zone" onClick={() => inputRef.current?.click()} aria-label={lang === "zh" ? "选择图片" : "Choose image"}>
-            {preview ? <img src={preview} alt="待识别图片预览" /> : <span>{t.dropHint[0]}<br />{t.dropHint[1]}</span>}
-          </button>
           <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
-          <div className="scan-actions">
-            <button className="analyze-btn" onClick={analyze} disabled={!file || busy || status.status !== "ready"}>
-              {busy ? t.busy : status.status === "ready" ? t.analyze : t.waiting}
-            </button>
-            {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
-          </div>
+          {!preview ? (
+            <div className="upload-card">
+              <div className="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A2 2 0 0 1 6 6.5h1.2a1 1 0 0 0 .8-.4l1-1.4a1 1 0 0 1 .8-.4h4.4a1 1 0 0 1 .8.4l1 1.4a1 1 0 0 0 .8.4H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><circle cx="12" cy="12.5" r="3.4" /></svg>
+              </div>
+              <h3>{lang === "zh" ? "拍下或上传一张照片" : "Take or upload a photo"}</h3>
+              <p>{lang === "zh" ? "对准瓶身、标签或成分表，越清晰识别越准" : "Aim at the bottle, label or ingredient list"}</p>
+              <button className="upload-cta" onClick={() => inputRef.current?.click()}>
+                {lang === "zh" ? "拍照 / 选图" : "Camera / Gallery"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <button className="preview-frame" onClick={() => inputRef.current?.click()} aria-label={lang === "zh" ? "重新选择" : "Reselect"}>
+                <img src={preview} alt={lang === "zh" ? "待识别图片预览" : "preview"} />
+                <span className="preview-change">{lang === "zh" ? "点击更换" : "Change"}</span>
+              </button>
+              <div className="scan-actions">
+                {status.status === "ready" && (
+                  <button className="analyze-btn" onClick={analyze} disabled={busy}>
+                    {busy ? t.busy : t.analyze}
+                  </button>
+                )}
+                {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
+              </div>
+            </>
+          )}
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
         </div>
 
         {!a && (
           <div className="scan-placeholder">
-            <p className="section-no">{t.placeholderNo}</p>
             <h3>{t.placeholderTitle}</h3>
             <ul>
               {t.placeholderList.map((line) => <li key={line}>{line}</li>)}
             </ul>
-            <p>{t.placeholderModel}</p>
           </div>
         )}
 
         {a && (
           <div className="scan-result">
-            <div className={`risk-badge risk-${a.risk_level}`}>RISK / {riskLabel[a.risk_level] ?? a.risk_level}</div>
+            <div className={`risk-badge risk-${a.risk_level}`}>{riskLabel[a.risk_level] ?? a.risk_level}</div>
             <h2>{a.product.name ?? t.unnamedProduct}</h2>
             <p className="result-meta">
               {[a.product.brand, a.product.category, a.product.barcode].filter(Boolean).join(" · ") || t.noLabel}
@@ -195,9 +191,21 @@ export default function ScanPage() {
                 <div className="result-block"><h3>{t.safeStorage}</h3><ul>{a.safe_storage.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
               )}
               {a.do_not_mix_with.length > 0 && (
-                <div className="result-block"><h3>{t.doNotMix}</h3><ul>{a.do_not_mix_with.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+                <div className="result-block block-danger"><h3>⚠ {t.doNotMix}</h3><ul>{a.do_not_mix_with.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
               )}
             </div>
+
+            {result?.disposal && (
+              <div className={`result-block disposal-block${result.disposal.hazardous_waste ? " is-hazard" : ""}`}>
+                <h3>♻ {t.disposalTitle}{result.disposal.hazardous_waste ? ` · ${t.disposalHazard}` : ""}</h3>
+                <p className={`disposal-drain drain-${result.disposal.drain_safe}`}>{result.disposal.drain_safe_text}</p>
+                <ul>
+                  <li><b>{t.disposalRoute}：</b>{result.disposal.disposal_route}</li>
+                  <li><b>{t.disposalContainer}：</b>{result.disposal.container}</li>
+                  <li><b>🌱 {t.disposalEco}：</b>{result.disposal.eco_tip}</li>
+                </ul>
+              </div>
+            )}
 
             {(a.first_aid.ingestion || a.first_aid.inhalation || a.first_aid.eye_contact || a.first_aid.skin_contact) && (
               <div className="result-block">
@@ -212,10 +220,10 @@ export default function ScanPage() {
             )}
 
             {a.uncertainties.length > 0 && (
-              <div className="result-block"><h3>{t.uncertainties}</h3><ul>{a.uncertainties.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+              <div className="result-block block-uncertain"><h3>❓ {t.uncertainties}</h3><ul>{a.uncertainties.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
             )}
             {a.needs_more_images.length > 0 && (
-              <div className="result-block"><h3>{t.moreImages}</h3><ul>{a.needs_more_images.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+              <div className="result-block block-retake"><h3>📷 {t.moreImages}</h3><ul>{a.needs_more_images.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
             )}
 
             {result?.database_match && (
@@ -225,30 +233,10 @@ export default function ScanPage() {
         )}
       </section>
 
-      <p className="scan-sub">{t.sub}</p>
-
       <Assistant />
 
-      <section className="household-archive">
-        <p className="section-no">{t.archiveNo}</p>
-        <h2>{t.archiveTitle}</h2>
-        {items.length === 0 ? (
-          <p className="archive-empty">{t.archiveEmpty}</p>
-        ) : (
-          <ul>
-            {items.map((it) => (
-              <li key={it.id}>
-                <span>#{it.id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
-                <button onClick={() => removeItem(it.id)} aria-label="删除档案">{t.remove}</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <ReportPanel nItems={items.length} />
-
-      <footer><a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
-    </main>
+      <footer className="scan-foot"><p>{t.footer}</p></footer>
+      </div>
+    </AppShell>
   );
 }

@@ -538,72 +538,69 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 /* 顶栏右侧（手机只放语言钮；工作台再塞风险徽章和按钮） */
 .app-topbar-end{display:flex;align-items:center;gap:8px;margin-left:auto}
 
-/* ============ 电脑工作台：仅 html.desk，手机选择器一律不动 ============ */
-html.desk .app-shell{max-width:none;height:100svh;overflow:hidden}
-html.desk .app-shell::before,html.desk .app-shell::after{max-width:none}
-html.desk .app-tabbar{display:none}
-html.desk .app-body{padding:0;height:calc(100svh - var(--topbar-h) - var(--safe-top));overflow:hidden}
-html.desk .app-topbar{height:calc(var(--topbar-h) + var(--safe-top));padding-inline:20px;justify-content:flex-start}
-html.desk .desk-nav{display:flex;gap:4px;margin-left:18px}
-html.desk .desk-nav-link{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted)}
-html.desk .desk-nav-link.is-active{background:rgba(111,168,96,.16);color:var(--ink)}
-html.desk .desk-risk-badge{font-size:12px;font-weight:800;letter-spacing:.04em;padding:6px 12px;border-radius:999px;white-space:nowrap}
-html.desk .desk-tool-btn{border:0;background:var(--ink);color:var(--paper);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-html.desk .desk-tool-btn:disabled{opacity:.4;cursor:not-allowed}
-html.desk .desk-tool-btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+/* ============ 电脑档案工作台（仅 /archive 的 .desk-root，不影响手机 /m） ============ */
+.desk-root{min-height:100svh;height:100svh;overflow:hidden;background:var(--cream);color:var(--ink);display:flex;flex-direction:column}
+.desk-root .nav{flex:none;color:var(--ink);height:64px;padding:0 24px;background:rgba(255,253,246,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.desk-root .nav-right{display:flex;align-items:center;gap:10px}
+.desk-root .desk-risk-badge{font-size:12px;font-weight:800;letter-spacing:.04em;padding:6px 12px;border-radius:999px;white-space:nowrap}
+.desk-root .desk-tool-btn{border:0;background:var(--ink);color:var(--paper);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.desk-root .desk-tool-btn:disabled{opacity:.4;cursor:not-allowed}
+.desk-root .desk-tool-btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
 
-html.desk .desk-bench{height:100%;display:flex;flex-direction:column;padding:12px 16px 14px;gap:12px}
-html.desk .desk-split{flex:1;min-height:0;display:grid;grid-template-columns:42% 58%;gap:14px}
+.desk-root .desk-bench{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 16px 14px;gap:12px}
+.desk-root .desk-split{flex:1;min-height:0;display:grid;grid-template-columns:42% 58%;gap:14px}
 
 /* 交叉告警英雄区 */
-html.desk .cross-hero{flex:none;min-height:150px;height:auto;border-radius:18px;padding:12px 18px;display:flex;align-items:center;gap:22px;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow-sm);overflow:hidden}
-html.desk .cross-hero.is-hot{background:linear-gradient(90deg,rgba(192,48,28,.12),rgba(255,253,246,.95) 42%);border-color:#c0301c}
-html.desk .cross-hero.is-hot.sev-high{background:linear-gradient(90deg,rgba(224,114,31,.14),rgba(255,253,246,.95) 42%);border-color:#e0721f}
-html.desk .cross-hero.is-clear{background:linear-gradient(90deg,rgba(111,168,96,.16),var(--paper) 50%);border-color:var(--green)}
-html.desk .cross-hero-ok{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#fff;font-size:24px;font-weight:800;flex:none}
-html.desk .cross-hero.is-clear b{display:block;font-size:20px;font-weight:900}
-html.desk .cross-hero.is-clear p{margin:4px 0 0;font-size:13px;color:var(--muted);max-width:62ch}
-html.desk .cross-hero-pair{display:flex;align-items:center;gap:12px;flex:none}
-html.desk .hero-thumb{width:92px;display:flex;flex-direction:column;gap:4px}
-html.desk .hero-thumb img,html.desk .hero-thumb-fallback{width:92px;height:110px;object-fit:cover;border-radius:12px;display:block;border:2px solid #fff;box-shadow:0 8px 18px rgba(30,61,47,.18)}
-html.desk .hero-thumb-fallback{display:grid;place-items:center;background:#c0301c;color:#fff;font-size:32px;font-weight:900}
-html.desk .hero-thumb b{font-size:11px;line-height:1.25;font-weight:800;text-align:center;max-height:2.6em;overflow:hidden}
-html.desk .hero-thumb.is-text{width:120px;height:110px;border-radius:12px;background:rgba(192,48,28,.1);display:grid;place-items:center;padding:8px;text-align:center}
-html.desk .cross-hero-x{font-size:42px;font-weight:900;color:#c0301c;line-height:1;flex:none}
-html.desk .cross-hero-copy{min-width:0;flex:1}
-html.desk .cross-hero-copy em{display:inline-block;background:#c0301c;color:#fff;font-style:normal;font-size:13px;font-weight:800;letter-spacing:.12em;padding:3px 10px;border-radius:6px;margin-bottom:6px}
-html.desk .cross-hero-copy b{display:block;font-size:20px;line-height:1.25;font-weight:900}
-html.desk .cross-hero-action{margin:8px 0 4px;font-size:16px;font-weight:800;color:#c0301c}
-html.desk .cross-hero-copy ul{margin:0;padding:0;list-style:none;display:flex;gap:14px;font-size:12.5px;font-weight:700;color:var(--muted)}
-html.desk .cross-hero-copy ul li::before{content:"· ";color:#c0301c}
+.desk-root .cross-hero{flex:none;min-height:150px;height:auto;border-radius:18px;padding:12px 18px;display:flex;align-items:center;gap:22px;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow-sm);overflow:hidden}
+.desk-root .cross-hero.is-hot{background:linear-gradient(90deg,rgba(192,48,28,.12),rgba(255,253,246,.95) 42%);border-color:#c0301c}
+.desk-root .cross-hero.is-hot.sev-high{background:linear-gradient(90deg,rgba(224,114,31,.14),rgba(255,253,246,.95) 42%);border-color:#e0721f}
+.desk-root .cross-hero.is-clear{background:linear-gradient(90deg,rgba(111,168,96,.16),var(--paper) 50%);border-color:var(--green)}
+.desk-root .cross-hero-ok{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#fff;font-size:24px;font-weight:800;flex:none}
+.desk-root .cross-hero.is-clear b{display:block;font-size:20px;font-weight:900}
+.desk-root .cross-hero.is-clear p{margin:4px 0 0;font-size:13px;color:var(--muted);max-width:62ch}
+.desk-root .cross-hero-pair{display:flex;align-items:center;gap:12px;flex:none}
+.desk-root .hero-thumb{width:92px;display:flex;flex-direction:column;gap:4px}
+.desk-root .hero-thumb img,.desk-root .hero-thumb-fallback{width:92px;height:110px;object-fit:cover;border-radius:12px;display:block;border:2px solid #fff;box-shadow:0 8px 18px rgba(30,61,47,.18)}
+.desk-root .hero-thumb-fallback{display:grid;place-items:center;background:#c0301c;color:#fff;font-size:32px;font-weight:900}
+.desk-root .hero-thumb b{font-size:11px;line-height:1.25;font-weight:800;text-align:center;max-height:2.6em;overflow:hidden}
+.desk-root .hero-thumb.is-text{width:120px;height:110px;border-radius:12px;background:rgba(192,48,28,.1);display:grid;place-items:center;padding:8px;text-align:center}
+.desk-root .cross-hero-x{font-size:42px;font-weight:900;color:#c0301c;line-height:1;flex:none}
+.desk-root .cross-hero-copy{min-width:0;flex:1}
+.desk-root .cross-hero-copy em{display:inline-block;background:#c0301c;color:#fff;font-style:normal;font-size:13px;font-weight:800;letter-spacing:.12em;padding:3px 10px;border-radius:6px;margin-bottom:6px}
+.desk-root .cross-hero-copy b{display:block;font-size:20px;line-height:1.25;font-weight:900}
+.desk-root .cross-hero-action{margin:8px 0 4px;font-size:16px;font-weight:800;color:#c0301c}
+.desk-root .cross-hero-copy ul{margin:0;padding:0;list-style:none;display:flex;gap:14px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.desk-root .cross-hero-copy ul li::before{content:"· ";color:#c0301c}
 
 /* 左栏瀑布流 */
-html.desk .desk-left,html.desk .desk-right{min-height:0;overflow:auto;background:transparent}
-html.desk .arc.is-desk{gap:10px}
-html.desk .arc.is-desk .arc-stats{order:1}
-html.desk .arc.is-desk .arc-stat{padding:8px 4px}
-html.desk .arc.is-desk .arc-stat b{font-size:18px}
-html.desk .arc.is-desk .arc-secondary{order:2;margin-top:0;padding-top:0;border-top:0;gap:8px}
-html.desk .arc.is-desk .arc-tools{flex-direction:row;align-items:center;gap:8px}
-html.desk .arc.is-desk .arc-search{flex:1;padding:8px 12px}
-html.desk .arc.is-desk .arc-sort{flex:none;width:auto}
-html.desk .arc.is-desk .arc-sort button{flex:none;padding:8px 12px}
-html.desk .arc.is-desk .arc-top{display:none}
-html.desk .arc.is-desk .arc-waterfall{order:3;columns:3;column-gap:10px}
-html.desk .cross-hero-copy b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html.desk .arc-wf-card.is-pair{box-shadow:0 0 0 2px #c0301c,0 10px 22px rgba(192,48,28,.28);animation:pairPulse 1.6s ease-in-out infinite}
+.desk-root .desk-left,.desk-root .desk-right{min-height:0;overflow:auto;background:transparent}
+.desk-root .arc.is-desk{gap:10px}
+.desk-root .arc.is-desk .arc-stats{order:1}
+.desk-root .arc.is-desk .arc-stat{padding:8px 4px}
+.desk-root .arc.is-desk .arc-stat b{font-size:18px}
+.desk-root .arc.is-desk .arc-secondary{order:2;margin-top:0;padding-top:0;border-top:0;gap:8px}
+.desk-root .arc.is-desk .arc-tools{flex-direction:row;align-items:center;gap:8px}
+.desk-root .arc.is-desk .arc-search{flex:1;padding:8px 12px}
+.desk-root .arc.is-desk .arc-sort{flex:none;width:auto}
+.desk-root .arc.is-desk .arc-sort button{flex:none;padding:8px 12px}
+.desk-root .arc.is-desk .arc-top{display:none}
+.desk-root .arc.is-desk .arc-waterfall{order:3;columns:3;column-gap:10px}
+.desk-root .cross-hero-copy b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desk-root .arc-wf-card.is-pair{box-shadow:0 0 0 2px #c0301c,0 10px 22px rgba(192,48,28,.28);animation:pairPulse 1.6s ease-in-out infinite}
 @keyframes pairPulse{0%,100%{box-shadow:0 0 0 2px #c0301c,0 8px 18px rgba(192,48,28,.2)}50%{box-shadow:0 0 0 4px #c0301c,0 12px 26px rgba(192,48,28,.38)}}
-html.desk .arc-sheet-mask.is-desk{align-items:center}
-html.desk .arc-sheet-mask.is-desk .arc-sheet{max-width:480px;border-radius:18px;animation:none;max-height:80vh}
+.desk-root .arc-sheet-mask.is-desk{align-items:center}
+.desk-root .arc-sheet-mask.is-desk .arc-sheet{max-width:480px;border-radius:18px;animation:none;max-height:80vh}
 
 /* 右栏报告：默认展开、内部滚动 */
-html.desk .desk-right .report-section,html.desk .desk-right .timeline-section{padding:0 8px 18px;background:transparent}
-html.desk .desk-right .report-card{margin-top:0}
-html.desk .desk-right .report-section h2,html.desk .desk-right .timeline-section h2{font-size:15px}
+.desk-root .desk-right .report-section,.desk-root .desk-right .timeline-section{padding:0 8px 18px;background:transparent}
+.desk-root .desk-right .report-card{margin-top:0}
+.desk-root .desk-right .report-section h2,.desk-root .desk-right .timeline-section h2{font-size:15px}
 
 @media print{
-  html.desk .app-tabbar,html.desk .desk-nav,html.desk .desk-tool-btn,html.desk .desk-left,html.desk .lang-chip,html.desk .grain{display:none!important}
-  html.desk .app-shell,html.desk .app-body,html.desk .desk-bench{height:auto;overflow:visible}
-  html.desk .desk-split{display:block}
-  html.desk .cross-hero{height:auto;break-inside:avoid}
+  .desk-root .nav,.desk-root .desk-tool-btn,.desk-root .desk-left,.desk-root .lang-toggle{display:none!important}
+  .desk-root,.desk-root .desk-bench{height:auto;overflow:visible}
+  .desk-root .desk-split{display:block}
+  .desk-root .cross-hero{height:auto;break-inside:avoid}
 }
+.edition-links{display:flex;align-items:center;gap:18px}
+.edition-links a{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7}

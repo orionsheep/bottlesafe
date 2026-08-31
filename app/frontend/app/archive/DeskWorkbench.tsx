@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SCAN_COPY, useLang } from "../i18n";
-import AppShell from "../AppShell";
+import { HOME_COPY, SCAN_COPY, useLang } from "../i18n";
 import ReportPanel, { type Report } from "../scan/report";
 import ArchiveCenter, { type ArchiveItem } from "./ArchiveCenter";
 import CrossAlertHero, { pairIdsFromCross } from "./CrossAlertHero";
@@ -16,8 +15,9 @@ const RISK_ZH: Record<string, string> = { unknown: "未知", low: "低危", medi
 const RISK_EN: Record<string, string> = { unknown: "?", low: "LOW", medium: "MED", high: "HIGH", critical: "CRIT" };
 
 export default function DeskWorkbench() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const t = SCAN_COPY[lang];
+  const hn = HOME_COPY[lang];
   const [items, setItems] = useState<ArchiveItem[]>([]);
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,26 +69,25 @@ export default function DeskWorkbench() {
   const riskLabel = lang === "zh" ? RISK_ZH : RISK_EN;
   const pairIds = pairIdsFromCross(report?.cross_risks);
 
-  const extra = (
-    <>
-      <span className={`desk-risk-badge risk-bg-${overall}`}>
-        {t.deskRisk} {riskLabel[overall] ?? overall}
-      </span>
-      <button
-        className="desk-tool-btn"
-        onClick={() => void generate()}
-        disabled={busy || items.length === 0}
-      >
-        {busy ? t.genReportBusy : t.refreshReport}
-      </button>
-      <button className="desk-tool-btn ghost" onClick={() => window.print()} disabled={!report}>
-        {t.printReport}
-      </button>
-    </>
-  );
-
   return (
-    <AppShell active="archive" desk extra={extra}>
+    <div className={`desk-root${lang === "zh" ? " lang-zh" : ""}`}>
+      <nav className="nav" aria-label="Main navigation">
+        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
+        <div className="nav-links">
+          <a href="/">{hn.navIndex}</a>
+          <a href="/scan">{hn.navScan}</a>
+          <a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a>
+        </div>
+        <div className="nav-right">
+          <span className={`desk-risk-badge risk-bg-${overall}`}>{t.deskRisk} {riskLabel[overall] ?? overall}</span>
+          <button className="desk-tool-btn" onClick={() => void generate()} disabled={busy || items.length === 0}>
+            {busy ? t.genReportBusy : t.refreshReport}
+          </button>
+          <button className="desk-tool-btn ghost" onClick={() => window.print()} disabled={!report}>{t.printReport}</button>
+          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")}>{lang === "zh" ? "EN" : "中文"}</button>
+        </div>
+      </nav>
+
       <div className="desk-bench">
         <CrossAlertHero items={items} cross={report?.cross_risks} api={API} pending={busy && !report} />
         <div className="desk-split">
@@ -107,6 +106,6 @@ export default function DeskWorkbench() {
           </section>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
