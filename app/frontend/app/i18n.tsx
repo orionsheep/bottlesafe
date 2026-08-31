@@ -13,11 +13,8 @@ export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("zh");
   useEffect(() => {
     const saved = localStorage.getItem("hh-lang");
-    setLangState(
-      saved === "en" || saved === "zh"
-        ? saved
-        : navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en",
-    );
+    // 默认简体中文；仅当用户此前显式切换过才沿用保存值。
+    if (saved === "en" || saved === "zh") setLangState(saved);
   }, []);
   useEffect(() => {
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -89,11 +86,11 @@ export const HOME_COPY = {
 
 /* ---------------- 首页危险品数据（双语） ---------------- */
 export const HAZARDS = [
-  { id: "01", name: "Bleach", cn: "含氯漂白剂", room: "LAUNDRY", roomZh: "洗衣房", risk: "Corrosive", riskZh: "腐蚀性", note: "Never mix with acids or ammonia.", noteZh: "切勿与酸或氨水同用。", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Kitchen_bleach.JPG/960px-Kitchen_bleach.JPG" },
-  { id: "02", name: "Pods", cn: "洗衣凝珠", room: "UTILITY", roomZh: "杂物间", risk: "Ingestion", riskZh: "误食", note: "Keep locked, high, and out of sight.", noteZh: "上锁、置高、藏于视线之外。", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Ariel_pods.jpg/960px-Ariel_pods.jpg" },
-  { id: "03", name: "Solvent", cn: "油漆稀释剂", room: "GARAGE", roomZh: "车库", risk: "Flammable", riskZh: "易燃", note: "Seal tightly and ventilate the room.", noteZh: "密封而藏，常通风。", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Thinner_premium%2C_in_bottle.jpg/960px-Thinner_premium%2C_in_bottle.jpg" },
-  { id: "04", name: "Spray", cn: "清洁喷雾", room: "GARDEN", roomZh: "花园", risk: "Inhalation", riskZh: "吸入", note: "Use sparingly; keep away from food.", noteZh: "少用为宜，远于食物。", image: "https://upload.wikimedia.org/wikipedia/commons/7/73/Sprayer.png" },
-  { id: "05", name: "Drain", cn: "管道疏通剂", room: "BATHROOM", roomZh: "浴室", risk: "Chemical burn", riskZh: "化学灼伤", note: "Wear protection and never combine cleaners.", noteZh: "先作防护，切勿混用清洁剂。", image: "https://upload.wikimedia.org/wikipedia/commons/5/58/Enzymatic_drain_cleaner.jpg" },
+  { id: "01", name: "Bleach", cn: "含氯漂白剂", room: "LAUNDRY", roomZh: "洗衣房", risk: "Corrosive", riskZh: "腐蚀性", note: "Never mix with acids or ammonia.", noteZh: "切勿与酸或氨水同用。", image: "/img/cat-bleach.jpg" },
+  { id: "02", name: "Toilet cleaner", cn: "酸性洁厕剂", room: "BATHROOM", roomZh: "浴室", risk: "Toxic gas", riskZh: "毒气", note: "With bleach it releases chlorine gas.", noteZh: "与含氯产品相遇会生成氯气。", image: "/img/cat-acid.jpg" },
+  { id: "03", name: "Drain opener", cn: "管道疏通剂", room: "BATHROOM", roomZh: "浴室", risk: "Chemical burn", riskZh: "化学灼伤", note: "Strong alkali; prefer physical unclogging.", noteZh: "强碱腐蚀，优先物理疏通替代。", image: "/img/cat-drain.jpg" },
+  { id: "04", name: "Insect spray", cn: "杀虫喷雾", room: "KITCHEN", roomZh: "厨房", risk: "Inhalation", riskZh: "吸入", note: "Keep away from children, pets and food.", noteZh: "远离儿童、宠物与食物。", image: "/img/cat-spray.jpg" },
+  { id: "05", name: "Detergent", cn: "日用洗涤剂", room: "HOME", roomZh: "全屋", risk: "Low", riskZh: "低风险", note: "Use in measured amounts; reduce waste.", noteZh: "按量使用，减少不必要排放。", image: "/img/cat-soap.jpg" },
 ];
 
 /* ---------------- 识别页文案 ---------------- */
@@ -111,6 +108,7 @@ export const SCAN_COPY = {
     placeholderModel: "Model: Qwen3-VL-4B + 2nd fine-tune LoRA (public-300-final)",
     hazards: "Hazards", ingredients: "Ingredients", signalWords: "Signal words",
     safeStorage: "Safe storage", doNotMix: "Do not mix with",
+    disposalTitle: "Green disposal", disposalDrain: "Down the drain?", disposalRoute: "Where it goes", disposalContainer: "Empty container", disposalEco: "Eco tip", disposalHazard: "Hazardous waste",
     firstAidTitle: "Acute exposure advice (not a medical diagnosis; in emergencies contact poison control / emergency services)",
     faIngestion: "Ingestion", faInhalation: "Inhalation", faEye: "Eye contact", faSkin: "Skin contact",
     uncertainties: "Uncertainties", moreImages: "Suggested extra photos",
@@ -145,10 +143,24 @@ export const SCAN_COPY = {
     actionsTitle: "Do these first", winsTitle: "Quick wins today", reassureLabel: "Good news",
     printReport: "Print / Save PDF", disclaimer: "Screening reference only — not a substitute for product labels, SDS or professional advice.",
     emptyArchiveReport: "Your archive is empty — scan & save a few products first.",
+    disposalSectionTitle: "Green disposal plan", disposalHazardList: "Hazardous waste — dispose separately", disposalNoDrain: "Never pour down the drain", disposalEcoTips: "Reduce & protect the environment", disposalNone: "No special-disposal hazardous waste found for now.",
     // ---- 方向④ 时间线 ----
     tlNo: "/ 08 — OVER TIME", tlTitle: "Your safety timeline",
     tlEmpty: "No check-ins yet. Generate your first whole-home report to start the timeline.",
     tlItems: "items", remindTitle: "Reminders",
+    arcStatTotal: "Total items", arcStatCritical: "Critical", arcStatHigh: "High", arcStatMedium: "Medium", arcStatLow: "Low",
+    arcTopRisk: "Highest-risk items", arcSearch: "Search by name / category",
+    arcFilterAll: "All", arcSortNew: "Newest", arcSortRisk: "By risk", arcSortName: "By name",
+    arcNoMatch: "No items match your filter.", arcArchivedAt: "Archived", arcViewDetail: "View details", arcHide: "Hide",
+    arcHazards: "Hazards", arcMix: "Do not mix", arcStorage: "Storage", arcReportSection: "Whole-home report & timeline", arcReportOpen: "Open whole-home report", arcItemsTitle: "Inventory",
+    riskCritical: "CRITICAL", riskHigh: "HIGH", riskMedium: "MEDIUM", riskLow: "LOW", riskUnknown: "UNKNOWN",
+    refreshReport: "Refresh report",
+    deskRisk: "Household risk",
+    heroClear: "No high-risk mixes in this home",
+    heroAction: "Separate these two bottles into different cabinets now",
+    heroAir: "Open windows and leave the room",
+    heroDrain: "Do not pour them down the same drain",
+    heroGas: "chlorine gas",
   },
   zh: {
     back: "返回",
@@ -163,6 +175,7 @@ export const SCAN_COPY = {
     placeholderModel: "模型：Qwen3-VL-4B + 第二次微调 LoRA（public-300-final）",
     hazards: "危害", ingredients: "成分", signalWords: "信号词",
     safeStorage: "储存之要", doNotMix: "切忌混用",
+    disposalTitle: "绿色处置", disposalDrain: "能否入下水道", disposalRoute: "投放去向", disposalContainer: "空容器", disposalEco: "环保提示", disposalHazard: "有害垃圾",
     firstAidTitle: "急性暴露应对（非医疗诊断；紧急情况请联络急救 / 中毒咨询机构）",
     faIngestion: "误食", faInhalation: "吸入", faEye: "入眼", faSkin: "触肤",
     uncertainties: "未定之处", moreImages: "建议补拍",
@@ -190,10 +203,24 @@ export const SCAN_COPY = {
     radarTitle: "风险画像", crossTitle: "发现的危险组合", noCross: "未发现同框禁忌组合；仍建议把不相容的产品分开存放。",
     actionsTitle: "先做这几件事", winsTitle: "今天就能做的小改动", reassureLabel: "安心一句话",
     printReport: "打印 / 存 PDF", disclaimer: "本报告仅供家庭风险筛查参考，不能替代产品标签、SDS 或专业医疗意见。",
+    disposalSectionTitle: "绿色处置方案", disposalHazardList: "有害垃圾 · 需单独投放", disposalNoDrain: "严禁倒入下水道", disposalEcoTips: "减量与环境保护", disposalNone: "暂未发现需特殊处置的高危废弃物。",
     emptyArchiveReport: "档案还是空的——先去上方识别并存入几件物品吧。",
     // ---- 方向④ 时间线 ----
     tlNo: "/ 08 — 长期陪伴", tlTitle: "安全时间线",
     tlEmpty: "还没有排查记录。生成第一份全屋报告，开始记录家的安全变化。",
     tlItems: "件物品", remindTitle: "复检提醒",
+    arcStatTotal: "档案总数", arcStatCritical: "危急", arcStatHigh: "高危", arcStatMedium: "中危", arcStatLow: "低危",
+    arcTopRisk: "最需关注", arcSearch: "按名称 / 品类搜索",
+    arcFilterAll: "全部", arcSortNew: "最新", arcSortRisk: "按风险", arcSortName: "按名称",
+    arcNoMatch: "没有符合条件的物品。", arcArchivedAt: "入档", arcViewDetail: "查看详情", arcHide: "收起",
+    arcHazards: "危害", arcMix: "切忌混用", arcStorage: "储存", arcReportSection: "全屋报告与时间线", arcReportOpen: "打开全屋安全报告", arcItemsTitle: "化学品台账",
+    riskCritical: "危急", riskHigh: "高危", riskMedium: "中危", riskLow: "低危", riskUnknown: "未知",
+    refreshReport: "刷新报告",
+    deskRisk: "本户风险",
+    heroClear: "本户暂无高危混用",
+    heroAction: "立刻把这两瓶分开放到不同柜子",
+    heroAir: "开窗离开",
+    heroDrain: "不要倒入同一下水",
+    heroGas: "氯气",
   },
 };

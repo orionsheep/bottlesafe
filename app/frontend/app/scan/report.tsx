@@ -6,9 +6,19 @@
 import { useEffect, useState } from "react";
 import { SCAN_COPY, useLang } from "../i18n";
 
-const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
+const API =
+  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+    ? "http://127.0.0.1:8000"
+    : "";
 
-type Report = {
+type Disposal = {
+  hazardous_count: number;
+  hazardous_items: { id: number; name: string; category: string; route: string }[];
+  no_drain_items: { id: number; name: string }[];
+  eco_tips: string[];
+  green_note: string;
+};
+export type Report = {
   overall_risk: string; overall_text: string; n_items: number;
   risk_count: Record<string, number>;
   radar: { dim: string; value: number }[];
@@ -16,6 +26,8 @@ type Report = {
   cross_risks: { a: string; b: string; reason: string; severity: string }[];
   overview: string; top_actions: string[]; quick_wins: string[]; reassure: string;
   prev_risk: string | null;
+  disposal?: Disposal;
+  disclaimer?: string;
 };
 type Timeline = {
   checkins: { id: number; created_at: string; overall_risk: string; item_count: number; trend: string | null }[];
@@ -23,15 +35,36 @@ type Timeline = {
   n_items: number;
 };
 
-const RISK_LABEL: Record<string, string> = { unknown: "?", low: "LOW", medium: "MED", high: "HIGH", critical: "CRIT" };
+const RISK_LABEL_EN: Record<string, string> = { unknown: "?", low: "LOW", medium: "MED", high: "HIGH", critical: "CRIT" };
+const RISK_LABEL_ZH: Record<string, string> = { unknown: "未知", low: "低危", medium: "中危", high: "高危", critical: "危急" };
 
-export default function ReportPanel({ nItems }: { nItems: number }) {
+export default function ReportPanel({
+  nItems,
+  variant = "phone",
+  report: controlled,
+  onGenerate,
+  busy: busyProp,
+  error: errorProp,
+}: {
+  nItems: number;
+  variant?: "phone" | "desk";
+  report?: Report | null;
+  onGenerate?: () => void;
+  busy?: boolean;
+  error?: string | null;
+}) {
   const { lang } = useLang();
   const t = SCAN_COPY[lang];
-  const [report, setReport] = useState<Report | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const RISK_LABEL = lang === "zh" ? RISK_LABEL_ZH : RISK_LABEL_EN;
+  const [inner, setInner] = useState<Report | null>(null);
+  const [innerBusy, setInnerBusy] = useState(false);
+  const [innerError, setInnerError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
+  const controlledMode = controlled !== undefined;
+  const report = controlledMode ? controlled ?? null : inner;
+  const busy = controlledMode ? !!busyProp : innerBusy;
+  const error = controlledMode ? errorProp ?? null : innerError;
+  const desk = variant === "desk";
 
   const loadTimeline = () => {
     fetch(`${API}/api/household/timeline`).then((r) => r.json()).then(setTimeline).catch(() => {});
@@ -39,15 +72,16 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
   useEffect(loadTimeline, [report]);
 
   const generate = async () => {
-    setBusy(true); setError(null);
+    if (onGenerate) { onGenerate(); return; }
+    setInnerBusy(true); setInnerError(null);
     try {
       const res = await fetch(`${API}/api/household/report`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
-      setReport(data);
+      setInner(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally { setBusy(false); }
+      setInnerError(e instanceof Error ? e.message : String(e));
+    } finally { setInnerBusy(false); }
   };
 
   const riskOrder: Record<string, number> = { unknown: 0, low: 1, medium: 2, high: 3, critical: 4 };
@@ -59,17 +93,21 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
   return (
     <>
       {/* ---------- 全屋报告 ---------- */}
-      <section className="report-section">
-        <p className="section-no">{t.reportNo}</p>
-        <h2>{t.reportTitle}</h2>
-        <p className="assistant-hint">{t.reportHint}</p>
+      <section className={`report-section${desk ? " is-desk" : ""}`}>
+        {!desk && <h2>{t.reportTitle}</h2>}
+        {!desk && <p className="assistant-hint">{t.reportHint}</p>}
 
-        <button className="gen-report-btn" onClick={() => void generate()} disabled={busy || nItems === 0}>
-          {busy ? t.genReportBusy : nItems === 0 ? t.emptyArchiveReport : t.genReport}
-        </button>
+        {!desk && (
+          <button className="gen-report-btn" onClick={() => void generate()} disabled={busy || nItems === 0}>
+            {busy ? t.genReportBusy : nItems === 0 ? t.emptyArchiveReport : t.genReport}
+          </button>
+        )}
         {error && <p className="scan-error">⚠ {error}</p>}
+        {desk && !report && (
+          <p className="assistant-hint">{nItems === 0 ? t.emptyArchiveReport : t.genReportBusy}</p>
+        )}
 
-        {report && !busy && (
+        {report && (
           <div className={`report-card risk-border-${report.overall_risk}`}>
             <header className="report-head">
               <div>
@@ -77,7 +115,7 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
                 <b className={`overall-badge risk-${report.overall_risk}`}>{RISK_LABEL[report.overall_risk] ?? report.overall_risk}</b>
                 <p className="overall-text">{report.overall_text}</p>
               </div>
-              <button className="print-btn" onClick={() => window.print()}>🖨 {t.printReport}</button>
+              {!desk && <button className="print-btn" onClick={() => window.print()}>🖨 {t.printReport}</button>}
             </header>
 
             {report.prev_risk != null && (
@@ -86,17 +124,33 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
 
             <p className="report-overview">{report.overview}</p>
 
+            {!desk && report.cross_risks.some((c) => c.severity === "critical" || c.severity === "high") && (
+              <div className="cross-alert-banner">
+                <span className="cross-alert-icon">☣</span>
+                <div>
+                  <b>{t.crossTitle}</b>
+                  <p>{report.cross_risks.filter((c) => c.severity === "critical" || c.severity === "high").map((c) => `${c.a} ✕ ${c.b}`).join("；")}</p>
+                </div>
+              </div>
+            )}
+
             <div className="report-grid">
               <div className="radar-box">
                 <h4>{t.radarTitle}</h4>
                 <RadarChart dims={report.radar} />
               </div>
               <div className="cross-box">
-                <h4>{t.crossTitle}</h4>
-                {report.cross_risks.length === 0 ? <p className="cross-empty">{t.noCross}</p> : (
-                  <ul>{report.cross_risks.map((c, i) => (
+                <h4>{t.crossTitle}{report.cross_risks.length > 0 ? ` · ${report.cross_risks.length}` : ""}</h4>
+                {report.cross_risks.length === 0 ? <p className="cross-empty">✓ {t.noCross}</p> : (
+                  <ul className="cross-list">{report.cross_risks.map((c, i) => (
                     <li key={i} className={`cross-pair sev-${c.severity}`}>
-                      <b>{c.a} × {c.b}</b><span>{c.reason}</span>
+                      <div className="cross-head">
+                        <span className={`cross-sev-tag sev-tag-${c.severity}`}>
+                          {c.severity === "critical" ? "☣ 危急" : c.severity === "high" ? "⚠ 高危" : "注意"}
+                        </span>
+                        <b>{c.a} <span className="cross-x">✕</span> {c.b}</b>
+                      </div>
+                      <span className="cross-reason">{c.reason}</span>
                     </li>
                   ))}</ul>
                 )}
@@ -115,6 +169,37 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
                 <div><h4>{t.winsTitle}</h4><ul>{report.quick_wins.map((a, i) => <li key={i}>{a}</li>)}</ul></div>
               )}
             </div>
+
+            {report.disposal && (
+              <div className="disposal-summary">
+                <h4>♻ {t.disposalSectionTitle}</h4>
+                <p className="green-note">{report.disposal.green_note}</p>
+                {report.disposal.hazardous_items.length > 0 && (
+                  <div className="disposal-group is-hazard">
+                    <b>{t.disposalHazardList}（{report.disposal.hazardous_count}）</b>
+                    <ul>{report.disposal.hazardous_items.map((h) => (
+                      <li key={h.id}>#{h.id} {h.name} <small>{h.category} — {h.route}</small></li>
+                    ))}</ul>
+                  </div>
+                )}
+                {report.disposal.no_drain_items.length > 0 && (
+                  <div className="disposal-group is-nodrain">
+                    <b>❌ {t.disposalNoDrain}</b>
+                    <p>{report.disposal.no_drain_items.map((n) => `#${n.id} ${n.name}`).join("、")}</p>
+                  </div>
+                )}
+                {report.disposal.eco_tips.length > 0 && (
+                  <div className="disposal-group is-eco">
+                    <b>🌱 {t.disposalEcoTips}</b>
+                    <ul>{report.disposal.eco_tips.map((tip, i) => <li key={i}>{tip}</li>)}</ul>
+                  </div>
+                )}
+                {report.disposal.hazardous_count === 0 && report.disposal.no_drain_items.length === 0 && (
+                  <p className="disposal-none">✓ {t.disposalNone}</p>
+                )}
+              </div>
+            )}
+
             {report.reassure && <p className="reassure">💛 {t.reassureLabel}：{report.reassure}</p>}
             <footer className="report-footer">{report.disclaimer || t.disclaimer}</footer>
           </div>
@@ -122,8 +207,7 @@ export default function ReportPanel({ nItems }: { nItems: number }) {
       </section>
 
       {/* ---------- 长期档案时间线 ---------- */}
-      <section className="timeline-section">
-        <p className="section-no">{t.tlNo}</p>
+      <section className={`timeline-section${desk ? " is-desk" : ""}`}>
         <h2>{t.tlTitle}</h2>
         {timeline && timeline.reminders.length > 0 && (
           <ul className="reminder-banner">

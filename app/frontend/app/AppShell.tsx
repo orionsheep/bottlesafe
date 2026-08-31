@@ -1,0 +1,77 @@
+"use client";
+
+// 原生 App 外壳：顶部固定精简栏 + 底部 Tab 栏。
+// 暖陆图鉴风格 token 由 globals.css 的 :root 提供。
+import type { ReactNode } from "react";
+import { useLang } from "./i18n";
+
+type Tab = "home" | "scan" | "archive";
+
+const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[] = [
+  {
+    key: "home", href: "/", zh: "图鉴", en: "Guide",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 4l9 6.5" /><path d="M5 9.5V20h14V9.5" /><path d="M9.5 20v-5h5v5" /></svg>
+    ),
+  },
+  {
+    key: "scan", href: "/scan", zh: "识别", en: "Scan",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8" /><path d="M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8" /><path d="M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16" /><path d="M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16" /><circle cx="12" cy="12" r="3.2" /></svg>
+    ),
+  },
+  {
+    key: "archive", href: "/archive", zh: "档案", en: "Archive",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="4" rx="1.2" /><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5" /><path d="M10 12.5h4" /></svg>
+    ),
+  },
+];
+
+export default function AppShell({
+  active, children, desk, extra,
+}: {
+  active: Tab;
+  children: ReactNode;
+  desk?: boolean;
+  extra?: ReactNode;
+}) {
+  const { lang, setLang } = useLang();
+  return (
+    <div className={`app-shell${lang === "zh" ? " lang-zh" : ""}${desk ? " is-desk" : ""}`}>
+      <div className="grain" aria-hidden="true" />
+      <header className="app-topbar">
+        <a className="app-brand" href={desk ? "/archive" : "/"}>
+          <span className="brand-dot" />
+          {desk ? (lang === "zh" ? "瓶安工作台" : "BottleSafe Desk") : <>瓶安 <i>BottleSafe</i></>}
+        </a>
+        {desk && (
+          <nav className="desk-nav" aria-label="Primary">
+            {TABS.map((tab) => (
+              <a key={tab.key} href={tab.href} className={`desk-nav-link${active === tab.key ? " is-active" : ""}`}>
+                {lang === "zh" ? tab.zh : tab.en}
+              </a>
+            ))}
+          </nav>
+        )}
+        <div className="app-topbar-end">
+          {extra}
+          <button className="lang-chip" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">
+            {lang === "zh" ? "EN" : "中文"}
+          </button>
+        </div>
+      </header>
+
+      <main className="app-body">{children}</main>
+
+      <nav className="app-tabbar" aria-label="Primary">
+        {TABS.map((tab) => (
+          <a key={tab.key} href={tab.href} className={`tab${active === tab.key ? " is-active" : ""}`} aria-current={active === tab.key ? "page" : undefined}>
+            {tab.icon}
+            <span>{lang === "zh" ? tab.zh : tab.en}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+  );
+}
