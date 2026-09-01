@@ -8,7 +8,7 @@
 
 | 服务 | 地址 | 代码 |
 |---|---|---|
-| 后端 API | http://127.0.0.1:8000 | `bottlesafe-new/bottlesafe/app/backend`（git **main**） |
+| 后端 API | 本机 http://127.0.0.1:8000 ；云端见下 | `bottlesafe-new/bottlesafe/app/backend`（git **main**） |
 | 手机改造版 | http://localhost:3200 | 同上仓库 `app/frontend`（git **main**） |
 | 电脑杂志版 | http://localhost:3400 | `bottlesafe-desktop/`（git **desktop-mix**，是 `2d50808` 的 worktree） |
 | iOS 客户端 | 打开 `bottlesafe-ios/BottleSafe.xcodeproj` | SwiftUI · iOS 26 · 不发布；API 在 App 内填写 |
@@ -26,6 +26,18 @@ PORT=3200 npx vinext dev -p 3200
 cd "/Users/mychanging/Desktop/家庭化学/bottlesafe-desktop/app/frontend"
 PORT=3400 npx vinext dev -p 3400
 ```
+
+### 云端后端（轻量 Ubuntu）
+
+SSH：`ssh -p 10350 root@218.11.5.249`
+
+机内已用 systemd 跑 FastAPI（`CHEM_BACKEND=api`）+ nginx。本机 `curl http://127.0.0.1/api/status` 为 ready。
+
+公网 HTTP 需要在轻量**防火墙/端口映射**里增加一条，和 SSH 的 10350 一样，例如：
+
+- 公网 **10380** → 实例 **80** 或 **10380**
+
+放行后验收：`curl http://218.11.5.249:10380/api/status`
 
 **不要把 `desktop-mix` merge 进 main。** main 是手机改造树（有 `AppShell`、`/m/*`）；电脑是独立 worktree。混在一起会把两套 UI 叠进同一路由。
 
