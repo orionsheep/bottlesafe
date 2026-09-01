@@ -6,19 +6,34 @@ struct Card<Content: View>: View {
         content
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(Theme.ink)
             .background(Theme.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Theme.ink.opacity(0.08), lineWidth: 1)
+            )
     }
 }
 
 struct RiskChip: View {
     var level: RiskLevel
     var body: some View {
+        let onDark = level == .critical || level == .high || level == .medium
         Text(level.label)
             .font(.caption.bold())
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .foregroundStyle(level == .critical || level == .high ? Color.white : Theme.ink)
-            .background(level.tint.opacity(level == .low ? 0.25 : 0.9), in: Capsule())
+            .foregroundStyle(onDark ? Color.white : Theme.ink)
+            .background(chipFill, in: Capsule())
+    }
+
+    private var chipFill: Color {
+        switch level {
+        case .unknown: Theme.muted.opacity(0.18)
+        case .low: Theme.green.opacity(0.18)
+        case .medium: Theme.amber
+        case .high, .critical: Theme.coral
+        }
     }
 }
 

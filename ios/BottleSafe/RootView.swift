@@ -21,6 +21,7 @@ struct RootView: View {
             }
         }
         .tint(Theme.green)
+        .preferredColorScheme(.light)
         .task { await app.ping() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

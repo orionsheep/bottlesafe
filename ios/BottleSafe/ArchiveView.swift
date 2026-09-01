@@ -30,6 +30,7 @@ struct ArchiveView: View {
                     }
                 }
                 .padding(16)
+                .padding(.bottom, 28)
             }
             .background(Theme.cream)
             .navigationTitle("家宅档案")
@@ -59,7 +60,7 @@ struct ArchiveView: View {
 
     private func stat(_ n: String, _ label: String) -> some View {
         VStack {
-            Text(n).font(.title2.bold())
+            Text(n).font(.title2.bold()).foregroundStyle(Theme.ink)
             Text(label).font(.caption).foregroundStyle(Theme.muted)
         }
         .frame(maxWidth: .infinity)
@@ -86,7 +87,7 @@ struct ArchiveView: View {
             }
             .buttonStyle(.plain)
             if openID == item.id, let a = item.analysis {
-                Text(a.summary).font(.subheadline)
+                Text(a.summary).font(.subheadline).foregroundStyle(Theme.ink)
                 if !a.ingredients.isEmpty {
                     LabeledBlock(title: "成分", text: a.ingredients.map(\.name).joined(separator: "、"))
                 }
@@ -111,7 +112,7 @@ struct ArchiveView: View {
 
     private var reportBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("全屋安全报告").font(.title3.bold())
+            Text("全屋安全报告").font(.title3.bold()).foregroundStyle(Theme.ink)
             Button {
                 Task { await makeReport() }
             } label: {
@@ -124,8 +125,8 @@ struct ArchiveView: View {
 
             if let report {
                 RiskChip(level: RiskLevel(rawValue: report.overall_risk ?? "") ?? .unknown)
-                if let t = report.overall_text { Text(t).font(.headline) }
-                if let o = report.overview { Text(o).font(.subheadline) }
+                if let t = report.overall_text { Text(t).font(.headline).foregroundStyle(Theme.ink) }
+                if let o = report.overview { Text(o).font(.subheadline).foregroundStyle(Theme.ink) }
                 if let pairs = report.cross_risks, !pairs.isEmpty {
                     LabeledBlock(title: "危险组合", text: pairs.map { "\($0.a) × \($0.b)：\($0.reason)" }.joined(separator: "\n"), danger: true)
                 }
@@ -133,7 +134,7 @@ struct ArchiveView: View {
                     LabeledBlock(title: "先做这几件事", text: acts.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n"))
                 }
                 if let r = report.reassure {
-                    Text("安心：\(r)").font(.subheadline)
+                    Text("安心：\(r)").font(.subheadline).foregroundStyle(Theme.ink)
                 }
                 Text(report.disclaimer ?? "仅供家庭风险筛查参考。")
                     .font(.caption2)
@@ -141,12 +142,12 @@ struct ArchiveView: View {
             }
 
             if let timeline, !timeline.checkins.isEmpty {
-                Text("安全时间线").font(.headline)
+                Text("安全时间线").font(.headline).foregroundStyle(Theme.ink)
                 ForEach(timeline.checkins) { c in
                     HStack {
                         Circle().fill(RiskLevel(rawValue: c.overall_risk)?.tint ?? Theme.muted).frame(width: 10, height: 10)
-                        Text(String(c.created_at.prefix(10)))
-                        Text(RiskLevel(rawValue: c.overall_risk)?.label ?? c.overall_risk)
+                        Text(String(c.created_at.prefix(10))).foregroundStyle(Theme.ink)
+                        Text(RiskLevel(rawValue: c.overall_risk)?.label ?? c.overall_risk).foregroundStyle(Theme.ink)
                         Text("\(c.item_count) 件").foregroundStyle(Theme.muted)
                     }
                     .font(.subheadline)

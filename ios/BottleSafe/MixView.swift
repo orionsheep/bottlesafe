@@ -57,7 +57,7 @@ struct MixView: View {
                     if let error { Text(error).foregroundStyle(Theme.coral).font(.footnote) }
                     if let result { outcome(result) }
 
-                    Text("候选瓶子").font(.headline).frame(maxWidth: .infinity, alignment: .leading)
+                    Text("候选瓶子").font(.headline).foregroundStyle(Theme.ink).frame(maxWidth: .infinity, alignment: .leading)
                     if tray.isEmpty {
                         Text("先去识别拍两瓶，或把瓶子存进档案。")
                             .foregroundStyle(Theme.muted)
@@ -74,6 +74,7 @@ struct MixView: View {
                     }
                 }
                 .padding(16)
+                .padding(.bottom, 28)
             }
             .background(Theme.cream)
             .navigationTitle("合在一起，会怎样？")
@@ -143,28 +144,34 @@ struct MixView: View {
                     .padding(6)
                     .background(Theme.coral, in: Capsule())
                     .foregroundStyle(.white)
-                Text("\(titleA)  ×  \(titleB)").font(.title3.bold())
-                Text(hot?.reason ?? "").font(.subheadline)
-                Text("· 立刻把两瓶分开放进不同柜子")
-                Text("· 开窗，离开这个房间")
-                Text("· 不要倒进同一下水道")
+                Text("\(titleA)  ×  \(titleB)").font(.title3.bold()).foregroundStyle(Theme.ink)
+                Text(hot?.reason ?? "").font(.subheadline).foregroundStyle(Theme.ink)
+                Text("· 立刻把两瓶分开放进不同柜子").foregroundStyle(Theme.ink)
+                Text("· 开窗，离开这个房间").foregroundStyle(Theme.ink)
+                Text("· 不要倒进同一下水道").foregroundStyle(Theme.ink)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
         case .unknown:
             VStack(alignment: .leading, spacing: 8) {
-                Text("混用结果未知").font(.caption.bold()).padding(6).background(Theme.amber, in: Capsule())
-                Text("\(titleA)  ×  \(titleB)").font(.title3.bold())
+                Text("混用结果未知")
+                    .font(.caption.bold())
+                    .padding(6)
+                    .background(Theme.amber, in: Capsule())
+                    .foregroundStyle(.white)
+                Text("\(titleA)  ×  \(titleB)").font(.title3.bold()).foregroundStyle(Theme.ink)
                 Text("至少有一瓶对不上已知成分，无法判断合在一起会怎样。不要混合。这不是安全许可。")
+                    .foregroundStyle(Theme.ink)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.amber.opacity(0.18), in: RoundedRectangle(cornerRadius: 18))
         case .noEdge:
             VStack(alignment: .leading, spacing: 8) {
-                Text("已知禁忌表里没有这一对").font(.title3.bold())
+                Text("已知禁忌表里没有这一对").font(.title3.bold()).foregroundStyle(Theme.ink)
                 Text("两瓶都对上了成分，但这一对比没有反应边。仍不要混合使用，分开放置。")
+                    .foregroundStyle(Theme.ink)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -185,7 +192,7 @@ struct MixView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading) {
                 Text(title).font(.caption).foregroundStyle(Theme.muted)
-                Text(cand?.name ?? "点选一瓶").font(.headline)
+                Text(cand?.name ?? "点选一瓶").font(.headline).foregroundStyle(Theme.ink)
                 if let cand { RiskChip(level: RiskLevel(rawValue: cand.riskLevel) ?? .unknown) }
             }
             Spacer()
@@ -201,7 +208,7 @@ struct MixView: View {
             BottleImage(jpeg: c.localJPEG, url: app.client.imageURL(c.imagePath))
                 .frame(width: 88, height: 72)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
-            Text(c.name).font(.caption.bold()).lineLimit(2).frame(width: 88)
+            Text(c.name).font(.caption.bold()).foregroundStyle(Theme.ink).lineLimit(2).frame(width: 88)
             Text(RiskLevel(rawValue: c.riskLevel)?.label ?? c.riskLevel)
                 .font(.caption2)
                 .foregroundStyle(Theme.muted)

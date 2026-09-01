@@ -56,6 +56,25 @@ struct AnalyzeResponse: Codable, Sendable {
     var analysis: ChemicalAnalysis
     var database_match: [String: JSONValue]?
     var image_path: String
+
+    static let contrastFixture = AnalyzeResponse(
+        analysis: ChemicalAnalysis(
+            product: ProductInfo(name: "和其正凉茶", brand: "和其正", category: "饮料", barcode: nil, manufacturer: nil),
+            visual_evidence: ["红色瓶身", "植物饮料"],
+            hazards: [],
+            ingredients: [IngredientItem(name: "水", source: "标签", confidence: 0.9)],
+            signal_words: [],
+            safe_storage: ["常温避光"],
+            do_not_mix_with: [],
+            first_aid: FirstAid(ingestion: nil, inhalation: nil, eye_contact: nil, skin_contact: nil),
+            uncertainties: ["完整成分表未拍摄"],
+            needs_more_images: [],
+            risk_level: "unknown",
+            summary: "和其正凉茶是一种植物饮料。根据标签信息，其净含量为1L。该产品为饮料，通常不具有高风险化学品特性，但具体成分和潜在风险需参考完整标签或产品说明书。"
+        ),
+        database_match: nil,
+        image_path: ""
+    )
 }
 
 struct HomeReport: Codable, Sendable {
