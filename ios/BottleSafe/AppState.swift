@@ -22,15 +22,36 @@ final class AppState {
 
     init() {
         let stored = UserDefaults.standard.string(forKey: "apiBase")
-        let initial = stored?.nilIfEmpty ?? "http://127.0.0.1:8000"
+        let initial = Self.resolvedAPIBase(stored: stored)
         apiBaseString = initial
-        client = APIClient(baseURL: URL(string: initial) ?? URL(string: "http://127.0.0.1:8000")!)
+        client = APIClient(baseURL: URL(string: initial) ?? URL(string: Self.defaultAPIBase)!)
         loadDrafts()
+    }
+
+    /// 模拟器走电脑回环；真机必须走 Mac 局域网 IP，127.0.0.1 是手机自己。
+    static let macLANAPIBase = "http://192.168.3.110:8000"
+    static let simulatorAPIBase = "http://127.0.0.1:8000"
+    static var defaultAPIBase: String {
+        #if targetEnvironment(simulator)
+        simulatorAPIBase
+        #else
+        macLANAPIBase
+        #endif
+    }
+
+    static func resolvedAPIBase(stored: String?) -> String {
+        let value = stored?.nilIfEmpty ?? defaultAPIBase
+        #if targetEnvironment(simulator)
+        return value
+        #else
+        if value.contains("127.0.0.1") { return macLANAPIBase }
+        return value
+        #endif
     }
 
     var apiURL: URL {
         URL(string: apiBaseString.trimmingCharacters(in: .whitespacesAndNewlines))
-            ?? URL(string: "http://127.0.0.1:8000")!
+            ?? URL(string: Self.defaultAPIBase)!
     }
 
     func applyAPIBase() async {

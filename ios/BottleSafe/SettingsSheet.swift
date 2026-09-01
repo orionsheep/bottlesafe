@@ -10,14 +10,15 @@ struct SettingsSheet: View {
         NavigationStack {
             Form {
                 Section("云端 API") {
-                    TextField("http://127.0.0.1:8000", text: $draft)
+                    TextField("http://192.168.3.110:8000", text: $draft)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
-                    Text("模拟器连本机后端用 http://127.0.0.1:8000。真机填云服务器，例如 http://218.11.5.249:10380（需面板放行该端口）。")
+                    Text("真机填电脑局域网地址 http://192.168.3.110:8000（手机和 Mac 同一 Wi-Fi）。模拟器才用 http://127.0.0.1:8000。")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
-                    Button("填入本机后端") { draft = "http://127.0.0.1:8000" }
+                    Button("填入电脑局域网") { draft = AppState.macLANAPIBase }
+                    Button("填入模拟器本机") { draft = AppState.simulatorAPIBase }
                     Button("填入云服务器 80") { draft = "http://218.11.5.249" }
                     Button("填入云服务器 10380") { draft = "http://218.11.5.249:10380" }
                 }

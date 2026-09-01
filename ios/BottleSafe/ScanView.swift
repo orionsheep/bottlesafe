@@ -118,7 +118,7 @@ struct ScanView: View {
                 .font(.footnote)
                 .foregroundStyle(Theme.green)
         } else {
-            Text(app.backendError ?? app.backend?.detail ?? "后端未连接。点右上角填写服务器地址。模拟器可用 http://127.0.0.1:8000")
+            Text(app.backendError ?? app.backend?.detail ?? "后端未连接。点右上角填写服务器。真机用 http://192.168.3.110:8000")
                 .font(.footnote)
                 .foregroundStyle(Theme.coral)
         }

@@ -8,6 +8,8 @@
 	<string>拍摄瓶身或标签，识别家庭化学品风险。仅用于比赛演示。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>从相册选择瓶身照片进行识别。仅用于比赛演示。</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>瓶安需要访问同一 Wi-Fi 下的电脑后端，才能识别和查询混用风险。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
