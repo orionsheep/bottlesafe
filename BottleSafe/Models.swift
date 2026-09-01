@@ -58,6 +58,40 @@ struct AnalyzeResponse: Codable, Sendable {
     var image_path: String
 }
 
+struct HomeReport: Codable, Sendable {
+    var overall_risk: String?
+    var overall_text: String?
+    var n_items: Int?
+    var overview: String?
+    var top_actions: [String]?
+    var quick_wins: [String]?
+    var reassure: String?
+    var disclaimer: String?
+    var cross_risks: [CrossRisk]?
+    var high_items: [HighItem]?
+}
+
+struct HighItem: Codable, Sendable, Identifiable, Hashable {
+    var id: Int
+    var name: String
+    var risk_level: String?
+    var why: String?
+}
+
+struct TimelinePayload: Codable, Sendable {
+    var checkins: [Checkin]
+    var reminders: [String]?
+    var n_items: Int?
+}
+
+struct Checkin: Codable, Sendable, Identifiable, Hashable {
+    var id: Int
+    var created_at: String
+    var overall_risk: String
+    var item_count: Int
+    var trend: String?
+}
+
 enum JSONValue: Codable, Sendable, Hashable {
     case string(String)
     case number(Double)

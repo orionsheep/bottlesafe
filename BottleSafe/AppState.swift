@@ -14,6 +14,8 @@ final class AppState {
     var lastScan: AnalyzeResponse?
     var lastPreview: UIImage?
     var savedLastScan = false
+    var pendingMixPrefill = false
+    var archiveStamp = 0
     var selectedTab: AppTab = .guide
 
     let client: APIClient
@@ -62,6 +64,12 @@ final class AppState {
         drafts.insert(cand, at: 0)
         if drafts.count > 8 { drafts = Array(drafts.prefix(8)) }
         persistDrafts()
+        pendingMixPrefill = true
+    }
+
+    func markSaved() {
+        savedLastScan = true
+        archiveStamp += 1
     }
 
     func persistDrafts() {

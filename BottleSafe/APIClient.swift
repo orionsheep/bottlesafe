@@ -61,6 +61,15 @@ final class APIClient {
         return try await post("/api/mix", body: Body(items: [a, b]))
     }
 
+    func generateReport() async throws -> HomeReport {
+        struct Empty: Codable {}
+        return try await post("/api/household/report", body: Empty())
+    }
+
+    func timeline() async throws -> TimelinePayload {
+        try await get("/api/household/timeline")
+    }
+
     func imageURL(_ path: String?) -> URL? {
         guard let path, !path.isEmpty else { return nil }
         if path.hasPrefix("http") { return URL(string: path) }
@@ -87,11 +96,7 @@ final class APIClient {
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let detail = obj["detail"] as? String {
-                throw APIError(message: detail)
-            }
-            throw APIError(message: "返回数据无法解析")
+            throw APIError(message: Self.detail(from: data) ?? "返回数据无法解析")
         }
     }
 
@@ -103,11 +108,17 @@ final class APIClient {
         if (200..<300).contains(http.statusCode) {
             return (data, http)
         }
-        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let detail = obj["detail"] as? String {
-            throw APIError(message: detail)
+        throw APIError(message: Self.detail(from: data) ?? "HTTP \(http.statusCode)")
+    }
+
+    private static func detail(from data: Data) -> String? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        if let detail = obj["detail"] as? String { return detail }
+        if let detail = obj["detail"] as? [[String: Any]] {
+            let msg = detail.compactMap { $0["msg"] as? String }.joined(separator: "；")
+            return msg.isEmpty ? nil : msg
         }
-        throw APIError(message: "HTTP \(http.statusCode)")
+        return nil
     }
 }
 

@@ -5,7 +5,7 @@ struct MixView: View {
     @State private var house: [HouseholdItem] = []
     @State private var slotA: MixCandidate?
     @State private var slotB: MixCandidate?
-    @State private var lastFilled: String = "a"
+    @State private var lastFilled = "a"
     @State private var busy = false
     @State private var error: String?
     @State private var result: MixResponse?
@@ -13,7 +13,7 @@ struct MixView: View {
     var tray: [MixCandidate] {
         var seen = Set<String>()
         var out: [MixCandidate] = []
-        for c in app.drafts + house.map(Self.candidate(from:)) {
+        for c in app.drafts + house.map({ Self.candidate(from: $0) }) {
             if seen.contains(c.id) || seen.contains("name:\(c.name)") { continue }
             seen.insert(c.id)
             seen.insert("name:\(c.name)")
@@ -30,9 +30,17 @@ struct MixView: View {
                         .foregroundStyle(Theme.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                    slotCard(slotA, title: "槽 A") { slotA = nil; result = nil }
-                    Image(systemName: "xmark").font(.title.bold()).foregroundStyle(Theme.coral)
-                    slotCard(slotB, title: "槽 B") { slotB = nil; result = nil }
+                    slotCard(slotA, title: "槽 A") {
+                        slotA = nil
+                        result = nil
+                    }
+                    Image(systemName: "xmark")
+                        .font(.title.bold())
+                        .foregroundStyle(Theme.coral)
+                    slotCard(slotB, title: "槽 B") {
+                        slotB = nil
+                        result = nil
+                    }
 
                     Button {
                         Task { await runMix() }
@@ -47,34 +55,19 @@ struct MixView: View {
                     .disabled(slotA == nil || slotB == nil || busy)
 
                     if let error { Text(error).foregroundStyle(Theme.coral).font(.footnote) }
-
                     if let result { outcome(result) }
 
                     Text("候选瓶子").font(.headline).frame(maxWidth: .infinity, alignment: .leading)
                     if tray.isEmpty {
                         Text("先去识别拍两瓶，或把瓶子存进档案。")
                             .foregroundStyle(Theme.muted)
+                        Button("去识别") { app.selectedTab = .scan }
                     } else {
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
+                            HStack(spacing: 10) {
                                 ForEach(tray) { c in
-                                    Button { pick(c) } label: {
-                                        VStack {
-                                            Text(c.name)
-                                                .font(.caption.bold())
-                                                .lineLimit(2)
-                                                .frame(width: 88)
-                                            Text(RiskLevel(rawValue: c.riskLevel)?.label ?? c.riskLevel)
-                                                .font(.caption2)
-                                                .foregroundStyle(Theme.muted)
-                                        }
-                                        .padding(8)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(slotA?.id == c.id || slotB?.id == c.id ? Theme.ink : Theme.muted.opacity(0.3), lineWidth: 2)
-                                        )
-                                    }
-                                    .buttonStyle(.plain)
+                                    Button { pick(c) } label: { chip(c) }
+                                        .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -85,21 +78,29 @@ struct MixView: View {
             .background(Theme.cream)
             .navigationTitle("合在一起，会怎样？")
             .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
-            .task {
-                await loadHouse()
-                prefillFromDrafts()
+            .task { await refresh() }
+            .onChange(of: app.selectedTab) { _, tab in
+                if tab == .mix { Task { await refresh() } }
+            }
+            .onChange(of: app.pendingMixPrefill) { _, flag in
+                if flag { applyPrefill(); app.pendingMixPrefill = false }
             }
         }
     }
 
-    private func prefillFromDrafts() {
-        guard slotA == nil, slotB == nil, app.drafts.count >= 1 else { return }
-        slotA = app.drafts[0]
-        if app.drafts.count >= 2 { slotB = app.drafts[1] }
+    private func refresh() async {
+        house = (try? await app.client.householdItems()) ?? []
+        if app.pendingMixPrefill || (slotA == nil && slotB == nil) {
+            applyPrefill()
+            app.pendingMixPrefill = false
+        }
     }
 
-    private func loadHouse() async {
-        house = (try? await app.client.householdItems()) ?? []
+    private func applyPrefill() {
+        guard app.drafts.count >= 1 else { return }
+        slotA = app.drafts[0]
+        slotB = app.drafts.count >= 2 ? app.drafts[1] : nil
+        result = nil
     }
 
     private func pick(_ c: MixCandidate) {
@@ -137,12 +138,16 @@ struct MixView: View {
         case .danger:
             let hot = r.cross_risks.first { $0.severity == "critical" || $0.severity == "high" } ?? r.cross_risks.first
             VStack(alignment: .leading, spacing: 8) {
-                Text(gasTitle(hot?.reason ?? "")).font(.caption.bold()).padding(6).background(Theme.coral, in: Capsule()).foregroundStyle(.white)
+                Text(gasTitle(hot?.reason ?? ""))
+                    .font(.caption.bold())
+                    .padding(6)
+                    .background(Theme.coral, in: Capsule())
+                    .foregroundStyle(.white)
                 Text("\(titleA)  ×  \(titleB)").font(.title3.bold())
                 Text(hot?.reason ?? "").font(.subheadline)
-                Text("立刻把两瓶分开放进不同柜子")
-                Text("开窗，离开这个房间")
-                Text("不要倒进同一下水道")
+                Text("· 立刻把两瓶分开放进不同柜子")
+                Text("· 开窗，离开这个房间")
+                Text("· 不要倒进同一下水道")
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -169,23 +174,43 @@ struct MixView: View {
 
     private func gasTitle(_ reason: String) -> String {
         if reason.contains("氯气") { return "氯气" }
-        return String(reason.split(separator: "：").last?.prefix(18) ?? "禁忌反应")
+        let part = reason.split(separator: "：").last.map(String.init) ?? "禁忌反应"
+        return String(part.prefix(18))
     }
 
     private func slotCard(_ cand: MixCandidate?, title: String, clear: @escaping () -> Void) -> some View {
-        HStack {
+        HStack(spacing: 12) {
+            BottleImage(jpeg: cand?.localJPEG, url: app.client.imageURL(cand?.imagePath))
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading) {
                 Text(title).font(.caption).foregroundStyle(Theme.muted)
                 Text(cand?.name ?? "点选一瓶").font(.headline)
+                if let cand { RiskChip(level: RiskLevel(rawValue: cand.riskLevel) ?? .unknown) }
             }
             Spacer()
-            if cand != nil {
-                Button("换掉", action: clear).font(.caption)
-            }
+            if cand != nil { Button("换掉", action: clear).font(.caption) }
         }
         .padding(14)
         .frame(maxWidth: .infinity)
         .background(Theme.paper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func chip(_ c: MixCandidate) -> some View {
+        VStack(spacing: 6) {
+            BottleImage(jpeg: c.localJPEG, url: app.client.imageURL(c.imagePath))
+                .frame(width: 88, height: 72)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            Text(c.name).font(.caption.bold()).lineLimit(2).frame(width: 88)
+            Text(RiskLevel(rawValue: c.riskLevel)?.label ?? c.riskLevel)
+                .font(.caption2)
+                .foregroundStyle(Theme.muted)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(slotA?.id == c.id || slotB?.id == c.id ? Theme.ink : Theme.muted.opacity(0.3), lineWidth: 2)
+        )
     }
 
     private static func candidate(from item: HouseholdItem) -> MixCandidate {
