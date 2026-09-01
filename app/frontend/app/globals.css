@@ -285,3 +285,35 @@ footer{background:var(--ink);color:var(--cream);border-top:1px solid var(--line)
 .mix-empty{font-size:14px;opacity:.7}
 .mix-empty a{text-decoration:underline}
 @media(max-width:800px){.mix-stage{grid-template-columns:1fr;justify-items:center}.mix-x{transform:rotate(90deg)}}
+
+/* ============ /archive 家宅档案 ============ */
+.arch-page{min-height:100svh;background:var(--cream);color:var(--ink)}
+.arch-page .nav{border-bottom-color:rgba(16,37,29,.18)}
+.arch-top{display:flex;justify-content:space-between;align-items:flex-end;gap:4vw;padding:28px 5vw 18px;border-bottom:1px solid rgba(16,37,29,.2)}
+.arch-top h1{font-size:clamp(40px,5vw,84px);letter-spacing:-.055em;margin:10px 0 12px;text-transform:uppercase;line-height:.9}
+.arch-lead{max-width:520px;font-size:15px;line-height:1.55;opacity:.72;margin:0}
+.arch-stats{list-style:none;margin:0;padding:0;display:flex;gap:28px}
+.arch-stats li{display:flex;flex-direction:column;min-width:64px}
+.arch-stats b{font-size:36px;letter-spacing:-.04em;line-height:1}
+.arch-stats span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;margin-top:6px}
+.arch-grid-wrap{padding:36px 5vw 20px}
+.arch-empty{font-size:15px;opacity:.7}
+.arch-empty a{margin-left:8px;text-decoration:underline}
+.arch-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.arch-card{border:1px solid rgba(16,37,29,.3);background:#ece8dd;display:flex;flex-direction:column}
+.arch-card.is-open{background:#e4dfd0;outline:2px solid var(--ink)}
+.arch-card-main{display:grid;grid-template-columns:120px 1fr;gap:16px;padding:14px;text-align:left;background:transparent;border:0;cursor:pointer;width:100%}
+.arch-card-main img,.arch-fallback{width:120px;height:140px;object-fit:contain;background:#d9d2c1}
+.arch-fallback{display:grid;place-items:center;font-size:40px;font-weight:800}
+.arch-card-main b{display:block;font-size:22px;letter-spacing:-.03em;margin:10px 0 6px;line-height:1.15}
+.arch-card-main span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.55}
+.arch-card-detail{padding:0 16px 16px;border-top:1px solid rgba(16,37,29,.2);font-size:14px;line-height:1.6}
+.arch-card-detail em{font-style:normal;font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;margin-right:8px}
+.arch-card-actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.arch-card-actions a{font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline}
+.arch-card-actions button{border:1px solid var(--ink);background:transparent;padding:6px 14px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.arch-card-actions button:hover{background:var(--coral)}
+.arch-page .report-section{border-top:1px solid rgba(16,37,29,.25)}
+.scan-actions a.save-btn{display:inline-block;text-decoration:none}
+@media(max-width:1100px){.arch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.arch-top{flex-direction:column;align-items:flex-start}}
+@media(max-width:700px){.arch-grid{grid-template-columns:1fr}.arch-card-main{grid-template-columns:90px 1fr}.arch-card-main img,.arch-fallback{width:90px;height:110px}}

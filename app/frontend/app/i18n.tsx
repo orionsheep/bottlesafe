@@ -36,7 +36,7 @@ export function useLang() {
 /* ---------------- 首页文案 ---------------- */
 export const HOME_COPY = {
   en: {
-    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", navMix: "Do not mix", explore: "EXPLORE",
+    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", navMix: "Do not mix", navArchive: "Archive", explore: "EXPLORE",
     eyebrow: "The house is familiar. What lives inside it?",
     h1a: "0 hidden hazards", h1b: "for the next", h1c: "7 years",
     modeMorning: "Morning", modeNight: "Night",
@@ -61,7 +61,7 @@ export const HOME_COPY = {
     back: "BACK TO LIGHT ↑",
   },
   zh: {
-    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", navMix: "禁忌混用", explore: "探索",
+    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", navMix: "禁忌混用", navArchive: "家宅档案", explore: "探索",
     eyebrow: "屋舍寻常，内里藏着什么？",
     h1a: "0 处隐患", h1b: "藏于未来", h1c: "7 年",
     modeMorning: "清晨", modeNight: "入夜",

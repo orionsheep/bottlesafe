@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
 import Assistant from "./assistant";
-import ReportPanel from "./report";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
@@ -25,7 +24,6 @@ type Analysis = {
   summary: string;
 };
 type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string };
-type HouseholdItem = { id: number; [k: string]: unknown };
 
 const riskLabel: Record<string, string> = {
   unknown: "UNKNOWN", low: "LOW", medium: "MEDIUM", high: "HIGH", critical: "CRITICAL",
@@ -42,7 +40,6 @@ export default function ScanPage() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [items, setItems] = useState<HouseholdItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,10 +55,6 @@ export default function ScanPage() {
     }, 3000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setItems(d.items ?? [])).catch(() => {});
-  }, [saved]);
 
   const pick = (f: File | undefined | null) => {
     if (!f) return;
@@ -100,11 +93,6 @@ export default function ScanPage() {
     if (res.ok) setSaved(true);
   };
 
-  const removeItem = async (id: number) => {
-    await fetch(`${API}/api/household/items/${id}`, { method: "DELETE" });
-    setItems((list) => list.filter((it) => it.id !== id));
-  };
-
   const a = result?.analysis;
   const statusText = lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
   const errorText = error
@@ -115,7 +103,7 @@ export default function ScanPage() {
     <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
       <nav className="nav" aria-label="Main navigation">
         <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/#method">{hn.navMethod}</a><a href="/scan">{hn.navScan}</a><a href="/mix">{hn.navMix}</a></div>
+        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/scan">{hn.navScan}</a><a href="/mix">{hn.navMix}</a><a href="/archive">{hn.navArchive}</a></div>
         <div className="nav-right">
           <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
           <a className="menu" href="/"><span />{t.back}</a>
@@ -143,6 +131,7 @@ export default function ScanPage() {
               {busy ? t.busy : status.status === "ready" ? t.analyze : t.waiting}
             </button>
             {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
+            {saved && <a className="save-btn" href="/archive">{hn.navArchive} →</a>}
           </div>
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
         </div>
@@ -225,25 +214,6 @@ export default function ScanPage() {
       <p className="scan-sub">{t.sub}</p>
 
       <Assistant />
-
-      <section className="household-archive">
-        <p className="section-no">{t.archiveNo}</p>
-        <h2>{t.archiveTitle}</h2>
-        {items.length === 0 ? (
-          <p className="archive-empty">{t.archiveEmpty}</p>
-        ) : (
-          <ul>
-            {items.map((it) => (
-              <li key={it.id}>
-                <span>#{it.id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
-                <button onClick={() => removeItem(it.id)} aria-label="删除档案">{t.remove}</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <ReportPanel nItems={items.length} />
 
       <footer><a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
     </main>

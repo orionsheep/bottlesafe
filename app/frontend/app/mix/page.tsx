@@ -150,9 +150,9 @@ export default function MixPage() {
         <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
         <div className="nav-links">
           <a href="/">{hn.navIndex}</a>
-          <a href="/#method">{hn.navMethod}</a>
           <a href="/scan">{hn.navScan}</a>
           <a href="/mix">{hn.navMix}</a>
+          <a href="/archive">{hn.navArchive}</a>
         </div>
         <div className="nav-right">
           <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")}>{lang === "zh" ? "EN" : "中文"}</button>
