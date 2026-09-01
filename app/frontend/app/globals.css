@@ -240,3 +240,48 @@ footer{background:var(--ink);color:var(--cream);border-top:1px solid var(--line)
   body{background:#fff}
   .report-card{border:1px solid #333;box-shadow:none!important}
 }
+
+/* ============ /mix 禁忌混用 ============ */
+.mix-page{min-height:100svh;background:var(--cream);color:var(--ink)}
+.mix-page .nav{border-bottom-color:rgba(16,37,29,.18)}
+.mix-top{padding:28px 5vw 10px}
+.mix-top h1{font-size:clamp(36px,4.4vw,72px);line-height:.9;letter-spacing:-.05em;margin:10px 0 12px;text-transform:uppercase}
+.mix-top h1 i{font-family:Georgia,serif;font-weight:400;text-transform:none}
+.mix-hint{max-width:560px;font-size:15px;line-height:1.55;opacity:.72;margin:0}
+.mix-stage{display:grid;grid-template-columns:1fr auto 1fr;gap:2vw;align-items:stretch;padding:28px 5vw 10px}
+.mix-x{font-size:clamp(48px,6vw,88px);font-weight:800;color:var(--coral);align-self:center;line-height:1}
+.mix-slot{min-height:280px;border:1px dashed rgba(16,37,29,.45);background:#ece8dd;padding:18px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative}
+.mix-slot.is-filled{border-style:solid;background:#e4dfd0}
+.mix-slot-label{font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5}
+.mix-slot img{width:100%;height:160px;object-fit:contain;background:#ddd6c6}
+.mix-slot-fallback,.mix-chip-fallback{width:100%;height:160px;display:grid;place-items:center;font-size:48px;font-weight:800;background:#d9d2c1}
+.mix-slot b{font-size:22px;letter-spacing:-.03em}
+.mix-slot-empty{margin:auto;font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.45}
+.mix-slot-clear{border:1px solid var(--ink);background:transparent;padding:6px 12px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.mix-slot-clear:hover{background:var(--coral)}
+.mix-actions{display:flex;justify-content:center;padding:8px 5vw 24px}
+.mix-btn{border:1px solid var(--ink);background:var(--ink);color:var(--cream);padding:16px 48px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.mix-btn:hover:not(:disabled){background:#173b2b}
+.mix-btn:disabled{opacity:.4;cursor:not-allowed}
+.mix-error{margin:0 5vw 20px}
+.mix-outcome{margin:0 5vw 36px;padding:28px 32px;border:1px solid var(--ink)}
+.mix-outcome.is-hot{background:#1a120f;color:var(--cream);border-color:#f07d63}
+.mix-outcome-kicker{display:inline-block;background:var(--coral);color:var(--ink);font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;margin:0 0 12px;font-weight:800}
+.mix-outcome h2{font-size:clamp(28px,3vw,48px);letter-spacing:-.04em;margin:0 0 12px;text-transform:uppercase}
+.mix-outcome h2 i{font-style:normal;color:var(--coral)}
+.mix-outcome-reason{font-size:15px;line-height:1.6;opacity:.86;max-width:70ch}
+.mix-outcome ul{margin:18px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:10px 22px;font-size:13px;font-weight:700}
+.mix-outcome ul li::before{content:"· ";color:var(--coral)}
+.mix-outcome.is-clear{background:#dce8c8;border-color:#173b2b}
+.mix-outcome.is-clear h2{font-size:28px;text-transform:none}
+.mix-tray{padding:10px 5vw 80px}
+.mix-tray ul{list-style:none;margin:16px 0 0;padding:0;display:flex;gap:12px;flex-wrap:wrap}
+.mix-chip{width:140px;border:1px solid rgba(16,37,29,.35);background:#ece8dd;padding:8px;display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer}
+.mix-chip img{width:100%;height:88px;object-fit:cover;background:#d9d2c1}
+.mix-chip-fallback{height:88px;font-size:28px}
+.mix-chip b{font-size:13px;line-height:1.3}
+.mix-chip i{font-style:normal;font-size:9px;letter-spacing:.12em;padding:3px 6px;border:1px solid var(--ink);align-self:flex-start}
+.mix-chip.is-on{outline:2px solid var(--ink);background:#fff}
+.mix-empty{font-size:14px;opacity:.7}
+.mix-empty a{text-decoration:underline}
+@media(max-width:800px){.mix-stage{grid-template-columns:1fr;justify-items:center}.mix-x{transform:rotate(90deg)}}

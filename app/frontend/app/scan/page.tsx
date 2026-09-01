@@ -115,7 +115,7 @@ export default function ScanPage() {
     <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
       <nav className="nav" aria-label="Main navigation">
         <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/#method">{hn.navMethod}</a><a href="/scan">{hn.navScan}</a></div>
+        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/#method">{hn.navMethod}</a><a href="/scan">{hn.navScan}</a><a href="/mix">{hn.navMix}</a></div>
         <div className="nav-right">
           <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
           <a className="menu" href="/"><span />{t.back}</a>
