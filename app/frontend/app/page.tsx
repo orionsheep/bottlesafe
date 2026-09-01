@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 import { useLang, HOME_COPY, HAZARDS } from "./i18n";
+import DeskNav from "./DeskNav";
 
 export default function Home() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const t = HOME_COPY[lang];
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -33,14 +34,7 @@ export default function Home() {
   return (
     <main className={lang === "zh" ? "lang-zh" : ""}>
       <section className={`hero ${mode}`} id="top" onMouseMove={moveHouse} onMouseLeave={() => setTilt({ x: 0, y: 0 })} style={heroStyle}>
-        <nav className="nav" aria-label="Main navigation">
-          <a className="brand" href="#top" aria-label="Home Hazard home"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-          <div className="nav-links"><a href="#index">{t.navIndex}</a><a href="#method">{t.navMethod}</a><a href="/scan">{t.navScan}</a><a href="/mix">{t.navMix}</a><a href="/archive">{t.navArchive}</a></div>
-          <div className="nav-right">
-            <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
-            <button className="menu" onClick={scrollToIndex} aria-label="Explore household hazards"><span />{t.explore}</button>
-          </div>
-        </nav>
+        <DeskNav home onExplore={scrollToIndex} />
 
         <div className="hero-copy">
           <p className="eyebrow"><span>HOME / HAZARD</span> {t.eyebrow}</p>

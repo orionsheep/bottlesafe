@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
 import Assistant from "./assistant";
+import DeskNav from "../DeskNav";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
@@ -30,7 +31,7 @@ const riskLabel: Record<string, string> = {
 };
 
 export default function ScanPage() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const t = SCAN_COPY[lang];
   const hn = HOME_COPY[lang];
   const [status, setStatus] = useState<{ status: string; detail: string }>({ status: "checking", detail: "连接后端…" });
@@ -101,14 +102,7 @@ export default function ScanPage() {
 
   return (
     <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
-      <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/scan">{hn.navScan}</a><a href="/mix">{hn.navMix}</a><a href="/archive">{hn.navArchive}</a></div>
-        <div className="nav-right">
-          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
-          <a className="menu" href="/"><span />{t.back}</a>
-        </div>
-      </nav>
+      <DeskNav />
 
       <header className="scan-top">
         <div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { HOME_COPY, MIX_COPY, useLang } from "../i18n";
+import DeskNav from "../DeskNav";
 
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
 const SESSION_KEY = "bottlesafe-mix-session";
@@ -58,7 +59,7 @@ function outcomeTitle(reason: string, gasWord: string) {
 }
 
 export default function MixPage() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const hn = HOME_COPY[lang];
   const t = MIX_COPY[lang];
   const [tray, setTray] = useState<MixCandidate[]>([]);
@@ -146,19 +147,7 @@ export default function MixPage() {
 
   return (
     <main className={`mix-page${lang === "zh" ? " lang-zh" : ""}`}>
-      <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links">
-          <a href="/">{hn.navIndex}</a>
-          <a href="/scan">{hn.navScan}</a>
-          <a href="/mix">{hn.navMix}</a>
-          <a href="/archive">{hn.navArchive}</a>
-        </div>
-        <div className="nav-right">
-          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")}>{lang === "zh" ? "EN" : "中文"}</button>
-          <a className="menu" href="/scan"><span />{hn.navScan}</a>
-        </div>
-      </nav>
+      <DeskNav />
 
       <header className="mix-top">
         <div>

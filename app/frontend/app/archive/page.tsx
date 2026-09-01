@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HOME_COPY, SCAN_COPY, useLang } from "../i18n";
 import ReportPanel from "../scan/report";
+import DeskNav from "../DeskNav";
 
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
 
@@ -38,7 +39,7 @@ function itemName(it: ArchiveItem, unnamed: string) {
 }
 
 export default function ArchivePage() {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const hn = HOME_COPY[lang];
   const t = SCAN_COPY[lang];
   const [items, setItems] = useState<ArchiveItem[]>([]);
@@ -69,19 +70,7 @@ export default function ArchivePage() {
 
   return (
     <main className={`arch-page${lang === "zh" ? " lang-zh" : ""}`}>
-      <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links">
-          <a href="/">{hn.navIndex}</a>
-          <a href="/scan">{hn.navScan}</a>
-          <a href="/mix">{hn.navMix}</a>
-          <a href="/archive">{hn.navArchive}</a>
-        </div>
-        <div className="nav-right">
-          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")}>{lang === "zh" ? "EN" : "中文"}</button>
-          <a className="menu" href="/scan"><span />{hn.navScan}</a>
-        </div>
-      </nav>
+      <DeskNav />
 
       <header className="arch-top">
         <div>
