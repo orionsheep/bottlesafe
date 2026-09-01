@@ -43,6 +43,11 @@ SSH：`ssh -p 10350 root@218.11.5.249`
 
 ### iOS（比赛用，不上架）
 
+工程有两份相同内容（方便本机打开 / GitHub）：
+
+- `/Users/mychanging/Desktop/家庭化学/bottlesafe-ios/BottleSafe.xcodeproj`
+- 仓库内 `ios/BottleSafe.xcodeproj`（随 **main** 提交）
+
 ```bash
 open "/Users/mychanging/Desktop/家庭化学/bottlesafe-ios/BottleSafe.xcodeproj"
 ```
