@@ -1,53 +1,67 @@
 # 瓶安 BottleSafe · 两套前端，别搞混
 
-同一份前端代码库思路上有两套完全不同的形态。动手前先确认自己面对的是哪一套，不要混改。
-
-后端始终共享：`app/backend`，端口 **8000**。识别引擎和数据一致。
+后端始终共享：`app/backend`，端口 **8000**。识别引擎和混用图谱两端一样。
 
 ---
 
-## 1. 电脑端前端（原始版 / GitHub 版）
+## 怎么跑（路演）
 
-- **来源：** git 提交 `2d50808`（项目最初从 GitHub 导入的原始版本）。
-- **形态：** 宽屏桌面杂志式布局，内容铺满整个宽屏，深绿色高级质感，巨型英文标题。
-- **路由（只有两个页面）：**
-  - 首页 `/`
-  - 识别页 `/scan`（含 `report.tsx` 报告、`assistant.tsx` 语音助手）
-- **没有** 档案页 `/archive`。原始版根本不存在这条路由。
-- **代码特征：** `app/frontend/app/` 下 **没有** `AppShell.tsx`、**没有** `archive/` 文件夹。
-- **判断方法：** 如果 `app/` 目录里看不到 `AppShell.tsx` 和 `archive/`，看的就是电脑端原始版。
-- **演示 / 截图：** 只用 `/` 和 `/scan`。在原始版上访问 `/archive` 会错误 / 空白 / 乱码——不是 bug，是这个页面压根不存在。
+| 服务 | 地址 | 代码 |
+|---|---|---|
+| 后端 API | http://127.0.0.1:8000 | `bottlesafe-new/bottlesafe/app/backend`（git **main**） |
+| 手机改造版 | http://localhost:3200 | 同上仓库 `app/frontend`（git **main**） |
+| 电脑杂志版 | http://localhost:3400 | `bottlesafe-desktop/`（git **desktop-mix**，是 `2d50808` 的 worktree） |
 
-参考运行端口：**3400** = 电脑端原始版。
+```bash
+# 后端（当前演示用云端视觉，不占本地 GPU）
+cd "/Users/mychanging/Desktop/家庭化学/bottlesafe-new/bottlesafe/app/backend"
+CHEM_BACKEND=api .venv-ui/bin/python -m uvicorn src.web.app:app --host 127.0.0.1 --port 8000
 
----
+# 手机
+cd "/Users/mychanging/Desktop/家庭化学/bottlesafe-new/bottlesafe/app/frontend"
+PORT=3200 npx vinext dev -p 3200
 
-## 2. 手机端前端（移动改造版 / 当前工作区）
+# 电脑
+cd "/Users/mychanging/Desktop/家庭化学/bottlesafe-desktop/app/frontend"
+PORT=3400 npx vinext dev -p 3400
+```
 
-- **来源：** 在原始版基础上做的移动化改造。
-- **形态：** 移动优先，顶部精简栏 + 底部图标 Tab（图鉴 / 识别 / 档案），暖色卡片风，液态玻璃效果。
-- **路由（三个页面）：**
-  - 图鉴首页 `/`
-  - 识别 `/scan`
-  - 档案 `/archive`（改造版新增：瀑布流、绿色处置、全屋报告）
-- **代码特征：** `app/frontend/app/` 下 **有** `AppShell.tsx`（移动外壳）、**有** `archive/` 文件夹。
-- **判断方法：** 如果能看到 `AppShell.tsx` 和 `archive/`，看的就是手机改造版。
-
-参考运行端口：**3200** = 手机改造版。
+**不要把 `desktop-mix` merge 进 main。** main 是手机改造树（有 `AppShell`、`/m/*`）；电脑是独立 worktree。混在一起会把两套 UI 叠进同一路由。
 
 ---
 
-## 最容易踩的坑
+## 路由（两端都是四页）
 
-`/archive` **只存在于手机改造版**。电脑端原始版没有这个路由。
+| 路由 | 电脑 3400 | 手机 3200 |
+|---|---|---|
+| `/` | 杂志首页 HOME/HAZARD | 图鉴（AppShell） |
+| `/scan` | 拍一瓶、存档；可跳混用/档案 | 拍一瓶、存档；可跳混用/档案 |
+| `/mix` | 选两瓶点「混合」 | 同上，底栏「混用」 |
+| `/archive` | 宽屏卡片台账 + 全屋报告 | 瀑布流台账 + 全屋报告 |
 
-做电脑端相关的截图、演示、开发时，只用 `/` 和 `/scan`。
+电脑顶栏：**危害图鉴 · AI 识别 · 禁忌混用 · 家宅档案**（首页「安全之道」正文仍在，导航不挂这个标签）。
 
-两套的布局逻辑和路由完全不同，不要在同一套树上按窗口宽度互相切换，也不要把手机页硬接到电脑路由上。
+手机底栏：**图鉴 · 识别 · 混用 · 档案**。3200 用 middleware 把 `/` `/scan` `/mix` `/archive` rewrite 到 `/m/*`。
 
 ---
 
-## 动手前检查清单
+## 混用怎么判
+
+`POST /api/mix` 只对两瓶做图谱交叉，**不写档案**。`verdict` 只有三种，页面必须三种样子：
+
+| verdict | 含义 | 界面 |
+|---|---|---|
+| `danger` | 命中禁忌边（如 84×洁厕灵→氯气） | 红/珊瑚对撞提示 |
+| `unknown` | 至少一瓶对不上已知成分 | 琥珀色「混用结果未知，不要混合」 |
+| `no_edge` | 两瓶都对上了，但这一对比没有边 | 「已知禁忌表里没有这一对，仍不要混合」 |
+
+禁止写成「可以混合」「安全」。
+
+识别成功会写入浏览器 `sessionStorage`（`bottlesafe-mix-session`），**不必先存档**也能进混用候选。`/mix?prefill=1` 会预填本轮最近两瓶。存档成功后再给「去档案」。
+
+---
+
+## 动手前检查
 
 ```bash
 ls app/frontend/app/
@@ -55,7 +69,7 @@ ls app/frontend/app/
 
 | 看到 | 面对的是 |
 |---|---|
-| 没有 `AppShell.tsx`、没有 `archive/` | 电脑端原始版 → 只改 `/`、`/scan` |
-| 有 `AppShell.tsx`、有 `archive/` | 手机改造版 → 可改 `/`、`/scan`、`/archive` |
+| 有 `DeskNav.tsx`、`mix/`、`archive/`，**没有** `AppShell.tsx` | 电脑端 → `bottlesafe-desktop`，分支 `desktop-mix` |
+| 有 `AppShell.tsx`、`m/` | 手机端 → `bottlesafe-new`，分支 `main` |
 
-先明确用户要改的是「手机端」还是「电脑端」，再动手。
+先明确改的是手机还是电脑，再动手。电脑改动提交到 `desktop-mix` 并 push；手机+后端提交到 `main`。

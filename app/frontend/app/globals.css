@@ -366,10 +366,10 @@ footer{background:var(--ink);color:var(--cream);border-top:1px solid var(--line)
 .app-shell .preview-frame{display:block;width:100%;position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--paper);padding:0;box-shadow:var(--shadow-sm)}
 .app-shell .preview-frame img{width:100%;display:block;max-height:360px;object-fit:cover}
 .app-shell .preview-change{position:absolute;right:10px;bottom:10px;background:rgba(30,61,47,.72);color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px}
-.app-shell .scan-actions{display:flex;gap:10px;margin-top:12px}
+.app-shell .scan-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .app-shell .analyze-btn{flex:1;border:0;background:var(--ink);color:var(--paper);border-radius:14px;padding:14px;font-size:15px;font-weight:800;box-shadow:0 10px 22px rgba(30,61,47,.2)}
 .app-shell .analyze-btn:active{transform:scale(.98)}
-.app-shell .save-btn{flex:none;border:1px solid var(--green);background:rgba(111,168,96,.12);color:var(--green);border-radius:14px;padding:14px 18px;font-size:14px;font-weight:800}
+.app-shell .save-btn{flex:none;border:1px solid var(--green);background:rgba(111,168,96,.12);color:var(--green);border-radius:14px;padding:14px 18px;font-size:14px;font-weight:800;text-decoration:none;display:inline-block}
 .app-shell .analyze-btn:disabled{background:var(--paper);color:var(--muted);border:1px solid var(--line);box-shadow:none}
 .app-shell .assistant-section h2,.app-shell .report-section h2,.app-shell .timeline-section h2{font-size:18px;font-weight:800;letter-spacing:-.01em;text-transform:none;margin:0 0 8px;line-height:1.2}
 .app-shell .report-section h2,.app-shell .timeline-section h2{font-size:16px}
@@ -628,6 +628,8 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 .phone-mix-outcome ul li{padding:4px 0}
 .phone-mix-outcome ul li::before{content:"· ";color:#c0301c}
 .phone-mix-outcome.is-clear{background:linear-gradient(180deg,rgba(111,168,96,.16),var(--paper) 55%);border-color:var(--green)}
+.phone-mix-outcome.is-unknown{background:linear-gradient(180deg,rgba(226,185,59,.22),var(--paper) 55%);border-color:#c9a227}
+.phone-mix-outcome.is-unknown em{background:#c9a227}
 .phone-mix-tray{margin-top:18px}
 .phone-mix-tray h2{margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .phone-mix-tray ul{list-style:none;margin:0 -16px;padding:0 16px;display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}

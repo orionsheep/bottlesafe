@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import AppShell from "../../AppShell";
 import { MIX_COPY, useLang } from "../../i18n";
+import { loadMixSession } from "./session";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
     ? "http://127.0.0.1:8000"
     : "";
-const SESSION_KEY = "bottlesafe-mix-session";
-
 type Analysis = {
   product?: { name?: string | null };
   risk_level?: string;
@@ -23,7 +22,12 @@ type MixCandidate = {
   analysis: Analysis;
 };
 type CrossRisk = { a: string; b: string; reason: string; severity: string };
-type MixResp = { cross_risks: CrossRisk[]; has_critical: boolean };
+type MixResp = {
+  cross_risks: CrossRisk[];
+  has_critical: boolean;
+  verdict?: "danger" | "unknown" | "no_edge";
+  unknown_names?: string[];
+};
 
 const RISK: Record<string, string> = {
   unknown: "?", low: "低危", medium: "中危", high: "高危", critical: "危急",
@@ -36,25 +40,6 @@ function imgSrc(path?: string) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   return `${API}/${path.replace(/^\//, "")}`;
-}
-
-function loadSession(): MixCandidate[] {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Array<Partial<MixCandidate>>;
-    return parsed
-      .filter((x) => x && x.analysis)
-      .map((x, i) => ({
-        key: x.key || `scan:${i}`,
-        name: x.name || "未命名",
-        risk_level: x.risk_level || "unknown",
-        image_path: x.image_path,
-        analysis: x.analysis as Analysis,
-      }));
-  } catch {
-    return [];
-  }
 }
 
 function outcomeTitle(reason: string, gasWord: string) {
@@ -77,7 +62,8 @@ export default function MobileMixPage() {
   const [result, setResult] = useState<MixResp | null>(null);
 
   useEffect(() => {
-    const session = loadSession();
+    const session = loadMixSession() as MixCandidate[];
+    const wantPrefill = new URLSearchParams(window.location.search).get("prefill") === "1";
     fetch(`${API}/api/household/items`)
       .then((r) => r.json())
       .then((d) => {
@@ -99,8 +85,23 @@ export default function MobileMixPage() {
           merged.push(c);
         }
         setTray(merged);
+        if (wantPrefill && session.length >= 2) {
+          setSlotA(session[0]);
+          setSlotB(session[1]);
+          setLastFilled("b");
+        } else if (wantPrefill && session.length === 1) {
+          setSlotA(session[0]);
+          setLastFilled("a");
+        }
       })
-      .catch(() => setTray(session));
+      .catch(() => {
+        setTray(session);
+        if (wantPrefill && session.length >= 2) {
+          setSlotA(session[0]);
+          setSlotB(session[1]);
+          setLastFilled("b");
+        }
+      });
   }, [t.unnamed]);
 
   const pick = (c: MixCandidate) => {
@@ -149,6 +150,7 @@ export default function MobileMixPage() {
 
   const ready = Boolean(slotA && slotB);
   const hot = result?.cross_risks.find((c) => c.severity === "critical" || c.severity === "high") || result?.cross_risks[0];
+  const verdict = result?.verdict || (hot ? "danger" : result ? "no_edge" : undefined);
 
   return (
     <AppShell active="mix">
@@ -170,24 +172,30 @@ export default function MobileMixPage() {
 
         {error && <p className="scan-error">⚠ {error}</p>}
 
-        {result && !busy && (
-          hot ? (
-            <section className="phone-mix-outcome is-hot" aria-live="assertive">
-              <em>{outcomeTitle(hot.reason, t.outcomeGas)}</em>
-              <b>{slotA?.name} ✕ {slotB?.name}</b>
-              <p>{hot.reason}</p>
-              <ul>
-                <li>{t.action1}</li>
-                <li>{t.action2}</li>
-                <li>{t.action3}</li>
-              </ul>
-            </section>
-          ) : (
-            <section className="phone-mix-outcome is-clear" aria-live="polite">
-              <b>{t.missTitle}</b>
-              <p>{t.missBody}</p>
-            </section>
-          )
+        {result && !busy && verdict === "danger" && hot && (
+          <section className="phone-mix-outcome is-hot" aria-live="assertive">
+            <em>{outcomeTitle(hot.reason, t.outcomeGas)}</em>
+            <b>{slotA?.name} ✕ {slotB?.name}</b>
+            <p>{hot.reason}</p>
+            <ul>
+              <li>{t.action1}</li>
+              <li>{t.action2}</li>
+              <li>{t.action3}</li>
+            </ul>
+          </section>
+        )}
+        {result && !busy && verdict === "unknown" && (
+          <section className="phone-mix-outcome is-unknown" aria-live="polite">
+            <em>{t.unknownTitle}</em>
+            <b>{slotA?.name} ✕ {slotB?.name}</b>
+            <p>{t.unknownBody}</p>
+          </section>
+        )}
+        {result && !busy && verdict === "no_edge" && (
+          <section className="phone-mix-outcome is-clear" aria-live="polite">
+            <b>{t.missTitle}</b>
+            <p>{t.missBody}</p>
+          </section>
         )}
 
         <section className="phone-mix-tray">

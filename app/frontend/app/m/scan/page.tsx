@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY } from "../../i18n";
 import AppShell from "../../AppShell";
 import Assistant from "../../scan/assistant";
+import { pushMixSession } from "../mix/session";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -79,6 +80,12 @@ export default function MobileScanPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
       setResult(data);
+      pushMixSession({
+        name: data.analysis?.product?.name || t.unnamedProduct,
+        risk_level: data.analysis?.risk_level || "unknown",
+        image_path: data.image_path,
+        analysis: data.analysis,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -142,6 +149,8 @@ export default function MobileScanPage() {
                   </button>
                 )}
                 {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
+                {result && <a className="save-btn" href="/mix?prefill=1">{t.goMix}</a>}
+                {saved && <a className="save-btn" href="/archive">{t.goArchive}</a>}
               </div>
             </>
           )}

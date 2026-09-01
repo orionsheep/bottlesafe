@@ -130,6 +130,11 @@ def _match_nodes(text: str) -> list[KGNode]:
     return out
 
 
+def matched_ingredients(item: dict) -> list[KGNode]:
+    """识别结果对上的成分节点；空列表表示这瓶对不上图谱。"""
+    return [n for n in _match_nodes(_item_text(item)) if n.type == "ingredient"]
+
+
 def _item_text(item: dict) -> str:
     a = item.get("analysis") or {}
     p = a.get("product") or {}

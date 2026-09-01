@@ -237,7 +237,7 @@ def household_timeline():
 
 # ---------------- 方向③ 知识图谱多维解读 + 方向① 问答（语音转文字后进入） ----------------
 
-from ..kg import query as kg_query  # noqa: E402
+from ..kg import matched_ingredients, query as kg_query  # noqa: E402
 
 
 @app.get("/api/kg/query")
@@ -279,19 +279,31 @@ def mix_check(body: MixBody):
         })
     result = kg_query("auto", "", packed)
     cross = result["cross_risks"]
+    annotated = []
+    for row in packed:
+        ings = matched_ingredients(row)
+        annotated.append({
+            "id": row["id"],
+            "name": row["observed_name"],
+            "risk_level": (row.get("analysis") or {}).get("risk_level", "unknown"),
+            "image_path": row.get("image_path"),
+            "matched": [{"id": n.id, "name": n.name} for n in ings],
+            "unknown": len(ings) == 0,
+        })
+    unknown_names = [x["name"] for x in annotated if x["unknown"]]
+    if any(p.get("severity") in ("critical", "high") for p in cross):
+        verdict = "danger"
+    elif unknown_names:
+        verdict = "unknown"
+    else:
+        verdict = "no_edge"
     return {
         "n_items": 2,
-        "items": [
-            {
-                "id": row["id"],
-                "name": row["observed_name"],
-                "risk_level": (row.get("analysis") or {}).get("risk_level", "unknown"),
-                "image_path": row.get("image_path"),
-            }
-            for row in packed
-        ],
+        "items": annotated,
         "cross_risks": cross,
-        "has_critical": any(p.get("severity") in ("critical", "high") for p in cross),
+        "has_critical": verdict == "danger",
+        "verdict": verdict,
+        "unknown_names": unknown_names,
     }
 
 
