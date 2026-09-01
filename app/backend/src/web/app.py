@@ -249,6 +249,52 @@ def kg_endpoint(mode: str = "auto", q: str = ""):
     return kg_query(mode, q, items)
 
 
+class MixItemIn(BaseModel):
+    analysis: dict
+    name: str | None = None
+    image_path: str | None = None
+
+
+class MixBody(BaseModel):
+    items: list[MixItemIn]
+
+
+@app.post("/api/mix")
+def mix_check(body: MixBody):
+    """两瓶会话混用检测：只算图谱交叉，不写入档案 / 时间线。"""
+    if len(body.items) != 2:
+        raise HTTPException(status_code=400, detail="请选出两瓶再混合")
+    packed = []
+    for i, it in enumerate(body.items, start=1):
+        try:
+            analysis = ChemicalAnalysis.model_validate(it.analysis)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=f"第{i}瓶分析结构无效：{exc}") from exc
+        name = (it.name or analysis.product.name or f"物品{i}").strip()
+        packed.append({
+            "id": i,
+            "observed_name": name,
+            "analysis": analysis.model_dump(),
+            "image_path": it.image_path,
+        })
+    result = kg_query("auto", "", packed)
+    cross = result["cross_risks"]
+    return {
+        "n_items": 2,
+        "items": [
+            {
+                "id": row["id"],
+                "name": row["observed_name"],
+                "risk_level": (row.get("analysis") or {}).get("risk_level", "unknown"),
+                "image_path": row.get("image_path"),
+            }
+            for row in packed
+        ],
+        "cross_risks": cross,
+        "has_critical": any(p.get("severity") in ("critical", "high") for p in cross),
+    }
+
+
 class AskBody(BaseModel):
     question: str
     mode: str = "auto"

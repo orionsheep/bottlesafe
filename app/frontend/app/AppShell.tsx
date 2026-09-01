@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useLang } from "./i18n";
 
-type Tab = "home" | "scan" | "archive";
+type Tab = "home" | "scan" | "mix" | "archive";
 
 const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[] = [
   {
@@ -16,6 +16,12 @@ const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[
     key: "scan", href: "/scan", zh: "识别", en: "Scan",
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8" /><path d="M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8" /><path d="M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16" /><path d="M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16" /><circle cx="12" cy="12" r="3.2" /></svg>
+    ),
+  },
+  {
+    key: "mix", href: "/mix", zh: "混用", en: "Mix",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3h3v4L8 14h8l-3-7V3h3" /><path d="M9 20h6" /></svg>
     ),
   },
   {

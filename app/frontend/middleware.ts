@@ -18,6 +18,7 @@ export function middleware(req: NextRequest) {
   const map: Record<string, string> = {
     "/": "/m",
     "/scan": "/m/scan",
+    "/mix": "/m/mix",
     "/archive": "/m/archive",
   };
   const dest = map[pathname];
@@ -29,5 +30,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/scan", "/archive", "/m/:path*"],
+  matcher: ["/", "/scan", "/mix", "/archive", "/m/:path*"],
 };

@@ -33,7 +33,7 @@ export function useLang() {
 /* ---------------- 首页文案 ---------------- */
 export const HOME_COPY = {
   en: {
-    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", explore: "EXPLORE",
+    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", navMix: "Do not mix", explore: "EXPLORE",
     eyebrow: "The house is familiar. What lives inside it?",
     h1a: "0 hidden hazards", h1b: "for the next", h1c: "7 years",
     modeMorning: "Morning", modeNight: "Night",
@@ -58,7 +58,7 @@ export const HOME_COPY = {
     back: "BACK TO LIGHT ↑",
   },
   zh: {
-    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", explore: "探索",
+    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", navMix: "禁忌混用", explore: "探索",
     eyebrow: "屋舍寻常，内里藏着什么？",
     h1a: "0 处隐患", h1b: "藏于未来", h1c: "7 年",
     modeMorning: "清晨", modeNight: "入夜",
@@ -222,5 +222,50 @@ export const SCAN_COPY = {
     heroAir: "开窗离开",
     heroDrain: "不要倒入同一下水",
     heroGas: "氯气",
+  },
+};
+
+export const MIX_COPY = {
+  en: {
+    no: "/ 05 — DO NOT MIX",
+    h1: "What happens if they meet?",
+    hint: "Pick two bottles. Mix only on this page — never in the sink.",
+    slot: "Choose a bottle",
+    slotClear: "Clear",
+    mix: "Mix",
+    mixNeed: "Pick two bottles first",
+    mixing: "Checking ingredients…",
+    empty: "Scan two bottles first, then come back to mix.",
+    goScan: "Go to scan →",
+    tray: "Bottles you can pick",
+    outcomeGas: "chlorine gas",
+    action1: "Put the two bottles in different cabinets now",
+    action2: "Open a window and leave the room",
+    action3: "Do not pour them down the same drain",
+    missTitle: "No known forbidden pair",
+    missBody: "The graph has no reaction edge for these two. Still do not mix them. Store them apart.",
+    error: "Could not check this pair. Try again.",
+    unnamed: "Unnamed",
+  },
+  zh: {
+    no: "/ 05 — DO NOT MIX",
+    h1: "合在一起，会怎样？",
+    hint: "选出两瓶，只在这一页「混合」。不要真的倒在一起。",
+    slot: "点选一瓶",
+    slotClear: "换掉",
+    mix: "混合",
+    mixNeed: "先选出两瓶",
+    mixing: "正在比对成分…",
+    empty: "先去识别拍两瓶，再回来混合",
+    goScan: "去识别 →",
+    tray: "候选瓶子",
+    outcomeGas: "氯气",
+    action1: "立刻把两瓶分开放进不同柜子",
+    action2: "开窗，离开这个房间",
+    action3: "不要倒进同一下水道",
+    missTitle: "未发现已知禁忌组合",
+    missBody: "图谱里没有这两瓶的反应边。仍不要混合使用，分开放置。",
+    error: "比对失败，请再点一次混合。",
+    unnamed: "未命名",
   },
 };
