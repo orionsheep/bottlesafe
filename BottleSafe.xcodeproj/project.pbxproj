@@ -6,9 +6,22 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA0000160000000000000016 /* Exceptions for "BottleSafe" folder in "BottleSafe" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AA0000020000000000000002 /* BottleSafe */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AA0000040000000000000004 /* BottleSafe */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA0000160000000000000016 /* Exceptions for "BottleSafe" folder in "BottleSafe" target */,
+			);
 			path = BottleSafe;
 			sourceTree = "<group>";
 		};
