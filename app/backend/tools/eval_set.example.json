@@ -1,0 +1,51 @@
+{
+  "_doc": "识别准确率自测评测集。期望值来自 materials/演示素材/素材说明.txt 记录的真实产品，以及公开的家用化学品安全常识；均需人工对照产品背标/SDS 复核后才能作为正式指标。运行：cd app/backend && CHEM_BACKEND=api CHEM_API_KEY=*** python -m tools.eval_accuracy --set tools/eval_set.example.json",
+  "_note_to_reviewer": "以下期望字段为『待人工确认』的基线标注。请对照真实产品标签核对后再据此汇报指标；样本量小时结果仅作趋势参考，不等于生产级准确率。",
+  "cases": [
+    {
+      "image": "../../materials/演示素材/01_漂白剂_Clorox.jpg",
+      "expected": {
+        "category_keywords": ["漂白", "含氯", "bleach", "次氯酸"],
+        "risk_level": "high",
+        "do_not_mix_keywords": ["酸", "洁厕", "含氨", "ammonia"],
+        "hazard_keywords": ["刺激", "腐蚀", "呼吸", "氯"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/02_洁厕剂_Clorox.jpg",
+      "expected": {
+        "category_keywords": ["洁厕", "toilet", "清洁", "酸"],
+        "risk_level": "high",
+        "do_not_mix_keywords": ["漂白", "含氯", "次氯酸", "bleach"],
+        "hazard_keywords": ["刺激", "腐蚀", "眼", "皮肤"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/03_管道疏通剂_ALBERT.jpg",
+      "expected": {
+        "category_keywords": ["疏通", "drain", "管道", "碱"],
+        "risk_level": "high",
+        "do_not_mix_keywords": ["酸"],
+        "hazard_keywords": ["腐蚀", "灼伤", "corrosive"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/04_备选_氢氧化钠标签特写.jpg",
+      "expected": {
+        "category_keywords": ["氢氧化钠", "碱", "hydroxid", "naoh"],
+        "risk_level": "high",
+        "do_not_mix_keywords": ["酸"],
+        "hazard_keywords": ["腐蚀", "灼伤", "H314", "corrosive"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/05_备选_数据集商品图.jpg",
+      "expected": {
+        "category_keywords": ["清洁", "cleaner", "tap", "shower"],
+        "risk_level": "low",
+        "do_not_mix_keywords": [],
+        "hazard_keywords": []
+      }
+    }
+  ]
+}

@@ -72,7 +72,7 @@ def _load_model() -> None:
 
 
 if BACKEND_MODE == "api":
-    _state.update(status="ready", detail="API 模式：魔搭免费推理（无本地模型）")
+    _state.update(status="ready", detail="API 模式：云端视觉模型推理（硅基流动 / 无需本地 GPU）")
 else:
     threading.Thread(target=_load_model, daemon=True).start()
 
@@ -121,8 +121,39 @@ def analyze(image: UploadFile = File(...)):
 
     with ChemicalDB(DB_PATH) as db:
         match = db.match(analysis)
-    return {"analysis": analysis.model_dump(), "database_match": match,
-            "image_path": f"uploads/{filename}"}
+
+    # ---- 规则引擎兜底判定（模型负责看懂与解释，关键安全判定由规则兜底）----
+    from ..rule_engine import evaluate as rules_evaluate
+
+    analysis_dict = analysis.model_dump()
+    rules = rules_evaluate(analysis_dict)
+
+    # ---- 证据溯源：按规则引擎命中的成分标签匹配条款级证据 ----
+    from .. import evidence as ev
+
+    matched_evidence = ev.for_ingredients(rules["ingredient_labels"])
+    expiring = ev.expiring_soon()
+
+    # ---- 识别后自动混用检测：与档案中已有产品做组合（主动预警） ----
+    cross_risks: list[dict] = []
+    try:
+        with ChemicalDB(DB_PATH) as db:
+            existing = db.list_household(HOUSEHOLD_ID)
+        if existing:
+            from .. import kg as _kg
+
+            candidate = {"id": -1, "observed_name": analysis.product.name or "本次识别",
+                         "analysis": analysis_dict}
+            cross_risks = _kg.query("auto", "", existing + [candidate])["cross_risks"]
+    except Exception:
+        cross_risks = []
+
+    return {"analysis": analysis_dict, "database_match": match,
+            "image_path": f"uploads/{filename}",
+            "rules": rules,
+            "evidence": [ev.to_view(e) for e in matched_evidence],
+            "expiring_standards": [ev.to_view(e) for e in expiring],
+            "cross_risks": cross_risks}
 
 
 class SaveItem(BaseModel):
@@ -310,6 +341,8 @@ def mix_check(body: MixBody):
 class AskBody(BaseModel):
     question: str
     mode: str = "auto"
+    history: list | None = None          # 多轮：前端传 [{role, content}]
+    context: dict | None = None          # 家庭画像（child/pet_cat/pregnant...）
 
 
 @app.post("/api/ask")
@@ -321,7 +354,91 @@ def ask(body: AskBody):
         items = db.list_household(HOUSEHOLD_ID)
     from ..report_gen import answer_question
 
-    return answer_question(q, body.mode, items)
+    return answer_question(q, body.mode, items, history=body.history, context=body.context)
+
+
+# ---------------- 证据溯源（条款级） ----------------
+@app.get("/api/evidence")
+def list_evidence(labels: str = "", as_of: str | None = None):
+    """按成分标签返回证据；labels 逗号分隔（如 hypochlorite,acid）。空则返回全部。"""
+    from .. import evidence as ev
+
+    if labels:
+        ings = [s.strip() for s in labels.split(",") if s.strip()]
+        data = ev.for_ingredients(ings, as_of=as_of)
+    else:
+        data = ev.all_evidence()
+    return {"evidence": [ev.to_view(e) for e in data],
+            "expiring_soon": [ev.to_view(e) for e in ev.expiring_soon(as_of=as_of)]}
+
+
+@app.get("/api/evidence/{eid}")
+def get_evidence(eid: str):
+    from .. import evidence as ev
+
+    e = ev.get(eid)
+    if e is None:
+        raise HTTPException(status_code=404, detail="证据不存在")
+    return ev.to_view(e)
+
+
+# ---------------- 反馈收集（真实用户反馈） ----------------
+import sqlite3 as _sqlite3
+from datetime import datetime as _dt
+
+_FEEDBACK_DB = Path(DB_PATH)
+
+
+def _feedback_conn():
+    conn = _sqlite3.connect(str(_FEEDBACK_DB))
+    conn.row_factory = _sqlite3.Row
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS feedback(
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             rating TEXT NOT NULL,
+             comment TEXT DEFAULT '',
+             audience TEXT DEFAULT '',
+             page TEXT DEFAULT '',
+             created_at TEXT NOT NULL)"""
+    )
+    return conn
+
+
+class FeedbackBody(BaseModel):
+    rating: str                            # "up" | "down"
+    comment: str = ""
+    audience: str = ""                     # 人群标签，如"有2岁宝宝"
+    page: str = ""                         # 来源页面 scan/archive/mix
+
+
+@app.post("/api/feedback")
+def submit_feedback(body: FeedbackBody):
+    if body.rating not in ("up", "down"):
+        raise HTTPException(status_code=400, detail="rating 必须为 up/down")
+    conn = _feedback_conn()
+    conn.execute(
+        "INSERT INTO feedback(rating,comment,audience,page,created_at) VALUES(?,?,?,?,?)",
+        (body.rating, body.comment[:500], body.audience[:50], body.page[:50],
+         _dt.now().isoformat(timespec="seconds")),
+    )
+    conn.commit()
+    conn.close()
+    return {"ok": True}
+
+
+@app.get("/api/feedback/stats")
+def feedback_stats():
+    conn = _feedback_conn()
+    total = conn.execute("SELECT COUNT(*) c FROM feedback").fetchone()["c"]
+    up = conn.execute("SELECT COUNT(*) c FROM feedback WHERE rating='up'").fetchone()["c"]
+    rows = conn.execute(
+        "SELECT rating,comment,audience,page,created_at FROM feedback ORDER BY id DESC LIMIT 50"
+    ).fetchall()
+    conn.close()
+    return {
+        "total": total, "up": up, "down": total - up,
+        "recent": [dict(r) for r in rows],
+    }
 
 
 # ---------------- 前端静态页面（放最后，避免覆盖 API 路由） ----------------

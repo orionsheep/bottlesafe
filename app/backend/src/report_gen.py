@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from . import kg
+from .disposal import disposal_summary
 from .llm import chat_json
 
 _RISK_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
@@ -140,6 +141,7 @@ def generate_report(items: list[dict], household_id: str) -> tuple[dict, dict]:
         "top_actions": [str(x) for x in narrative.get("top_actions") or []][:5],
         "quick_wins": [str(x) for x in narrative.get("quick_wins") or []][:3],
         "reassure": str(narrative.get("reassure") or ""),
+        "disposal": disposal_summary(items),
         "disclaimer": "本报告仅供家庭风险筛查参考，不能替代产品标签、SDS 或专业建议。",
     }
     return report, local
@@ -156,15 +158,42 @@ _ASK_SYSTEM = """你是家庭化学品安全助手「瓶安」。用户可能描
 5. 用不超过 200 字的中文短段落回答，不要用 Markdown 标题。"""
 
 
-def answer_question(question: str, mode: str, items: list[dict]) -> dict:
+def answer_question(question: str, mode: str, items: list[dict],
+                    history: list | None = None, context: dict | None = None) -> dict:
+    """多轮语音问答：支持 history（多轮）+ 记忆开场（最近扫描）+ 画像（context）。"""
     sub = kg.query(mode, question, items)
     facts = "\n".join(["- " + f for f in sub["facts"][:10]] +
                       ["- 家中相关在档物品：" + (", ".join(f"#{i['id']}{i['name']}" for i in sub["related_items"][:6]) or "（无匹配项）")] +
                       ["- 交叉混用风险：" + p["reason"] for p in sub["cross_risks"][:5]])
+
+    # 记忆开场：把最近扫描的产品注入 system，让 AI 能"记得"
+    memory = ""
+    if items:
+        recent = [f"#{i['id']} {i.get('observed_name') or '未命名'}"
+                  for i in items[-5:]]
+        memory = "用户最近扫描并建档的物品：" + "、".join(recent) + "。"
+
+    # 画像：把家庭成员/人群注入
+    profile = ""
+    if context:
+        tags = []
+        if context.get("child"):
+            tags.append("有婴幼儿/儿童")
+        if context.get("pet_cat"):
+            tags.append("养猫")
+        if context.get("pregnant"):
+            tags.append("有孕妇")
+        if context.get("elderly"):
+            tags.append("有老人")
+        if tags:
+            profile = "家庭画像：" + "、".join(tags) + "。回答需针对这些人群给出差异化提示。"
+
+    system = _ASK_SYSTEM + ("\n\n" + memory if memory else "") + ("\n" + profile if profile else "")
     user = f"用户问题：{question}\n\n【知识图谱线索】\n{facts}"
+
     ans = None
-    from .llm import chat
-    raw = chat(_ASK_SYSTEM, user, max_tokens=500, temperature=0.4)
+    from .llm import chat_multi
+    raw = chat_multi(system, history, user, max_tokens=500, temperature=0.4)
     if raw:
         ans = raw.strip()
     if not ans:

@@ -66,6 +66,11 @@ class ChemicalDB:
         self.conn.commit()
         return int(cur.lastrowid)
 
+    def delete_household_item(self, item_id: int) -> bool:
+        cur = self.conn.execute("DELETE FROM household_items WHERE id = ?", (item_id,))
+        self.conn.commit()
+        return cur.rowcount > 0
+
     def list_household(self, household_id: str) -> list[dict]:
         rows = self.conn.execute(
             "SELECT * FROM household_items WHERE household_id = ? ORDER BY id",

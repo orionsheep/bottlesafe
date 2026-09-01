@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY } from "../../i18n";
 import AppShell from "../../AppShell";
 import Assistant from "../../scan/assistant";
+import FeedbackBar from "../../scan/FeedbackBar";
 import { pushMixSession } from "../mix/session";
 
 const API =
@@ -28,10 +29,22 @@ type Analysis = {
   summary: string;
 };
 type Disposal = { category: string; drain_safe: string; drain_safe_text: string; disposal_route: string; container: string; eco_tip: string; hazardous_waste: boolean; matched: boolean };
-type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string; disposal?: Disposal };
+type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string; disposal?: Disposal;
+  rules?: { risk_level: string; findings: { rule_id: string; severity: string; title: string; reason: string; action: string }[]; ingredient_labels: string[] };
+  evidence?: Evidence[];
+  expiring_standards?: Evidence[];
+  cross_risks?: { a: string; b: string; reason: string; severity: string }[];
+};
+type Evidence = { id: string; title: string; standard_no?: string | null; source_level?: string; source_level_label?: string; clause?: string; effective_from?: string | null; effective_to?: string | null; next_effective_from?: string | null; url?: string | null; summary?: string; note?: string | null };
 
 const riskLabel: Record<string, string> = {
   unknown: "UNKNOWN", low: "LOW", medium: "MEDIUM", high: "HIGH", critical: "CRITICAL",
+};
+const riskLabelZh: Record<string, string> = {
+  unknown: "暂无法判断", low: "低风险", medium: "需要注意", high: "高风险", critical: "严重风险",
+};
+const levelColor: Record<string, string> = {
+  unknown: "#8d938f", low: "#2f8f70", medium: "#c8842f", high: "#c0503f", critical: "#1d211f",
 };
 
 export default function MobileScanPage() {
@@ -42,6 +55,7 @@ export default function MobileScanPage() {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -135,6 +149,28 @@ export default function MobileScanPage() {
               <button className="upload-cta" onClick={() => inputRef.current?.click()}>
                 {lang === "zh" ? "拍照 / 选图" : "Camera / Gallery"}
               </button>
+              <div className="sample-row" style={{ marginTop: 12, justifyContent: "center" }}>
+                <span className="sample-label">{t.samplesTitle}</span>
+                <div className="sample-btns">
+                  {["samples/bleach.jpg", "samples/toilet.jpg", "samples/goods.jpg"].map((src, i) => (
+                    <button
+                      key={src}
+                      className="sample-btn"
+                      disabled={busy || status.status !== "ready"}
+                      onClick={async () => {
+                        try {
+                          const r = await fetch(src);
+                          const b = await r.blob();
+                          pick(new File([b], src.split("/").pop() as string, { type: "image/jpeg" }));
+                        } catch { /* sample fetch failed, ignore */ }
+                      }}
+                    >
+                      {t.samples[i]}
+                    </button>
+                  ))}
+                </div>
+                <span className="sample-hint" style={{ textAlign: "center" }}>{t.samplesHint}</span>
+              </div>
             </div>
           ) : (
             <>
@@ -168,7 +204,13 @@ export default function MobileScanPage() {
 
         {a && (
           <div className="scan-result">
-            <div className={`risk-badge risk-${a.risk_level}`}>{riskLabel[a.risk_level] ?? a.risk_level}</div>
+            <div className={`risk-badge risk-${a.risk_level}`} style={{ background: levelColor[a.risk_level], color: a.risk_level === "critical" ? "var(--coral,#c0503f)" : "#fff", borderColor: levelColor[a.risk_level] }}>
+              {lang === "zh" ? (riskLabelZh[a.risk_level] ?? a.risk_level) : (riskLabel[a.risk_level] ?? a.risk_level)}
+            </div>
+            {a.risk_level === "unknown" && (
+              <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe."}</p>
+            )}
+            <p className="confidence-note">{lang === "zh" ? "本结论基于包装识别与结构校验，非实验室成分检测。" : "Based on packaging recognition, not a lab test."}</p>
             <h2>{a.product.name ?? t.unnamedProduct}</h2>
             <p className="result-meta">
               {[a.product.brand, a.product.category, a.product.barcode].filter(Boolean).join(" · ") || t.noLabel}
@@ -238,9 +280,84 @@ export default function MobileScanPage() {
             {result?.database_match && (
               <p className="db-match">{t.dbMatch} #{String(result.database_match.id)}</p>
             )}
+
+            {/* 规则引擎判定 + 依据 */}
+            {result?.rules && (
+              <div className="rules-block">
+                <h3>{lang === "zh" ? "规则引擎判定" : "Rule engine"}</h3>
+                <p className="rules-meta">
+                  {lang === "zh"
+                    ? `命中规则 ${result.rules.findings.length} 条 · 风险等级由规则引擎兜底（非大模型推测）`
+                    : `${result.rules.findings.length} rule(s) · ruled by engine`}
+                </p>
+                {result.rules.findings.map((f) => (
+                  <div key={f.rule_id} className={`rule-finding sev-${f.severity}`}>
+                    <b>{f.title}</b>
+                    <p>{f.reason}</p>
+                    <p className="rule-action">→ {f.action}</p>
+                  </div>
+                ))}
+                {result.evidence && result.evidence.length > 0 && (
+                  <button className="evidence-btn" onClick={() => setEvidenceOpen(true)}>
+                    {lang === "zh" ? `查看依据（${result.evidence.length}）` : `Evidence (${result.evidence.length})`}
+                  </button>
+                )}
+                {result.expiring_standards && result.expiring_standards.length > 0 && (
+                  <p className="expiring-note">
+                    {lang === "zh" ? `⏳ ${result.expiring_standards.map((e) => e.standard_no || e.title).join("、")} 即将换代` : `⏳ Standards expiring soon`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 主动混用预警弹卡 */}
+            {result?.cross_risks && result.cross_risks.length > 0 && (
+              <div className="mix-alert">
+                <h3>{lang === "zh" ? "⚠ 主动混用预警" : "⚠ Mixing alert"}</h3>
+                <p className="mix-rule-tag">{lang === "zh" ? "基于规则库判定，非大模型推测" : "Ruled by rules"}</p>
+                {result.cross_risks.slice(0, 3).map((c, i) => (
+                  <div key={i} className="mix-pair">
+                    <b>{c.a}</b> ✕ <b>{c.b}</b>
+                    <p>{c.reason}</p>
+                    <p className="mix-action">{lang === "zh" ? "→ 分开存放、绝不混用；使用后充分通风。" : "→ Keep apart. Never mix."}</p>
+                  </div>
+                ))}
+                {result.cross_risks.length > 3 && (
+                  <a className="mix-more" href="/mix">{lang === "zh" ? `查看全部 ${result.cross_risks.length} 组 →` : "See all →"}</a>
+                )}
+              </div>
+            )}
           </div>
         )}
       </section>
+
+      {/* 依据抽屉 */}
+      {evidenceOpen && result?.evidence && (
+        <div className="evidence-drawer" onClick={() => setEvidenceOpen(false)}>
+          <div className="evidence-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="evidence-head">
+              <h3>{lang === "zh" ? "判定依据" : "Evidence"}</h3>
+              <button onClick={() => setEvidenceOpen(false)} aria-label="close">✕</button>
+            </div>
+            {result.evidence.map((e) => (
+              <div key={e.id} className="evidence-item">
+                <div className="evidence-title">{e.title}{e.standard_no && <span className="ev-no">{e.standard_no}</span>}</div>
+                {e.source_level_label && <span className={`ev-level ev-${e.source_level}`}>{e.source_level_label}</span>}
+                {e.clause && <p className="ev-clause">{e.clause}</p>}
+                {e.summary && <p className="ev-summary">{e.summary}</p>}
+                {e.note && <p className="ev-note">{e.note}</p>}
+                <p className="ev-dates">
+                  {e.effective_from && (lang === "zh" ? `生效 ${e.effective_from}` : `from ${e.effective_from}`)}
+                  {e.next_effective_from && (lang === "zh" ? ` 换代 ${e.next_effective_from}` : ` next ${e.next_effective_from}`)}
+                </p>
+                {e.url && <a className="ev-url" href={e.url} target="_blank" rel="noreferrer">{lang === "zh" ? "查看原文" : "Source"}</a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <FeedbackBar page="m-scan" />
 
       <Assistant />
 

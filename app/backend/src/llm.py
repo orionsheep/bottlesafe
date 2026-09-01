@@ -40,6 +40,31 @@ def chat(system: str, user: str, max_tokens: int = 1200, temperature: float = 0.
         return None
 
 
+def chat_multi(system: str, history: list | None, user: str,
+               max_tokens: int = 800, temperature: float = 0.4, timeout: int = 180) -> str | None:
+    """多轮对话：history 为 [{role, content}, ...]（按时间先后）。失败返回 None。"""
+    if not API_KEY:
+        return None
+    messages = [{"role": "system", "content": system}]
+    for m in (history or [])[-12:]:  # 只保留最近 12 条，控制 token
+        role = m.get("role")
+        content = m.get("content")
+        if role in ("user", "assistant") and isinstance(content, str) and content.strip():
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user})
+    payload = {"model": TEXT_MODEL, "messages": messages,
+               "max_tokens": max_tokens, "temperature": temperature}
+    try:
+        req = urllib.request.Request(
+            API_BASE, data=json.dumps(payload).encode(),
+            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read())
+        return body["choices"][0]["message"]["content"]
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def chat_json(system: str, user: str, **kw) -> dict | None:
     """要求模型输出 JSON 并解析；失败返回 None。"""
     text = chat(system, user, **kw)

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "MIX_CHLORINE_ACID",
+    "severity": "critical",
+    "when": {"has_ingredients": ["hypochlorite", "acid"]},
+    "title": "含氯消毒剂 × 酸性洁厕剂 → 氯气",
+    "reason": "次氯酸钠遇酸迅速释放氯气，密闭卫生间数分钟即可达刺激浓度。",
+    "action": "分开存放、绝不同时或先后紧邻使用；使用后开窗通风 20 分钟以上。"
+  },
+  {
+    "id": "MIX_CHLORINE_AMMONIA",
+    "severity": "critical",
+    "when": {"has_ingredients": ["hypochlorite", "ammonia"]},
+    "title": "含氯消毒剂 × 含氨清洁剂 → 氯胺",
+    "reason": "含氯与含氨体系反应生成氯胺，刺激性强且不易察觉。",
+    "action": "分开使用，间隔充分通风。"
+  },
+  {
+    "id": "MIX_LYE_ACID",
+    "severity": "high",
+    "when": {"has_ingredients": ["lye", "acid"]},
+    "title": "强碱疏通剂 × 酸性清洁剂 → 剧烈放热",
+    "reason": "强酸强碱中和会剧烈放热溅射。",
+    "action": "两者务必分开放置，不可同用。"
+  },
+  {
+    "id": "MIX_PEROXIDE_ACID",
+    "severity": "high",
+    "when": {"has_ingredients": ["peroxide", "acid"]},
+    "title": "过氧化物 × 强酸 → 放热/产气",
+    "reason": "双氧水/彩漂遇强酸生成腐蚀性过氧乙酸。",
+    "action": "分开存放，避免接触。"
+  },
+  {
+    "id": "CTX_CHILD_ACCESSIBLE",
+    "severity": "high",
+    "when": {"hazard_any_of": ["corrosive", "acute_toxicity", "flammable"], "context_child": true},
+    "title": "高危品在儿童可触及范围",
+    "reason": "疏通剂/洁厕剂外观似饮料，是儿童误食高发品类。",
+    "action": "上锁或放至孩子够不到的高处，保持原包装与标签。"
+  },
+  {
+    "id": "CTX_PET_PYRETHROID",
+    "severity": "high",
+    "when": {"has_ingredients": ["pyrethroid"], "context_pet_cat": true},
+    "title": "拟除虫菊酯 × 猫 → 特异性高毒",
+    "reason": "猫缺乏代谢菊酯所需的酶，蚊香/杀虫喷雾可致中毒。",
+    "action": "家有猫优先选宠物专用或无菊酯配方，使用后隔离通风。"
+  },
+  {
+    "id": "CTX_PET_PHENOL",
+    "severity": "high",
+    "when": {"has_ingredients": ["phenol"], "context_pet_cat": true},
+    "title": "酚类消毒剂 × 猫 → 高毒",
+    "reason": "酚类对猫具高毒性，中国标签不强制标注猫警示。",
+    "action": "家有猫避免酚类消毒剂，改宠物专用。"
+  },
+  {
+    "id": "LABEL_INCOMPLETE",
+    "severity": "medium",
+    "when": {"missing_fields_any_of": ["manufacturer", "standard_no", "ingredients"]},
+    "title": "标识信息严重缺失",
+    "reason": "无厂名厂址/执行标准号/完整成分表，无法核验安全性；公开抽检显示此类低价无牌产品不合格率显著更高。",
+    "action": "建议更换为标识完整的同类产品；本结论基于标识完整度与品类先验，非成分分析（置信度：中低）。"
+  },
+  {
+    "id": "FALLBACK_UNKNOWN",
+    "severity": "unknown",
+    "when": {"no_evidence": true},
+    "title": "信息不足，暂无法判断",
+    "reason": "未能识别足够信息，无法给出可靠安全结论。",
+    "action": "请补拍瓶身标签与成分表（越清晰越好）；在确认前按谨慎原则存放，远离儿童与食物。"
+  }
+]

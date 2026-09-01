@@ -7,7 +7,10 @@
 import { useRef, useState } from "react";
 import { SCAN_COPY, useLang } from "../i18n";
 
-const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
+const API =
+  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+    ? "http://127.0.0.1:8000"
+    : "";
 
 type KgNode = { id: string; type: string; name: string };
 type AskResponse = {
@@ -25,6 +28,7 @@ export default function Assistant() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AskResponse | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const recRef = useRef<{ stop: () => void } | null>(null);
 
   const ask = async (q: string) => {
@@ -32,18 +36,21 @@ export default function Assistant() {
     if (!q || busy) return;
     setBusy(true);
     setResult(null);
+    const next = [...messages, { role: "user" as const, content: q }];
     try {
       const res = await fetch(`${API}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, mode: "auto" }),
+        body: JSON.stringify({ question: q, mode: "auto", history: next.slice(0, -1) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
       setResult(data);
+      setMessages([...next, { role: "assistant", content: data.answer }]);
     } catch {
-      setResult({ answer: lang === "zh" ? "后端未连接——请确认服务运行在 127.0.0.1:8000。" : "Backend offline — expected at 127.0.0.1:8000.",
-                  graph: { matched_nodes: [], facts: [], advice: [], cross_risks: [] }, related_items: [] });
+      const fallback = lang === "zh" ? "后端未连接——请确认服务运行在 127.0.0.1:8000。" : "Backend offline — expected at 127.0.0.1:8000.";
+      setResult({ answer: fallback, graph: { matched_nodes: [], facts: [], advice: [], cross_risks: [] }, related_items: [] });
+      setMessages([...next, { role: "assistant", content: fallback }]);
     } finally {
       setBusy(false);
     }
@@ -87,7 +94,6 @@ export default function Assistant() {
 
   return (
     <section className="assistant-section">
-      <p className="section-no">{t.voiceNo}</p>
       <h2>{t.voiceTitle}</h2>
       <p className="assistant-hint">{t.voiceHint}</p>
 
@@ -116,6 +122,18 @@ export default function Assistant() {
       </div>
 
       {busy && <div className="ask-bubble skeleton">{t.asking}</div>}
+
+      {messages.length > 1 && (
+        <div className="chat-history">
+          {messages.slice(0, -2).map((m, i) => (
+            <div key={i} className={`chat-msg chat-${m.role}`}>
+              <span className="chat-role">{m.role === "user" ? (lang === "zh" ? "我" : "Me") : (lang === "zh" ? "小安" : "An")}</span>
+              <p>{m.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {result && !busy && (
         <div className="ask-result">
           <div className="ask-bubble">
