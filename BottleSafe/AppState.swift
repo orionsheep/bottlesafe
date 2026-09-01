@@ -26,6 +26,10 @@ final class AppState {
         apiBaseString = initial
         client = APIClient(baseURL: URL(string: initial) ?? URL(string: Self.defaultAPIBase)!)
         loadDrafts()
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "-tab"), i + 1 < args.count, let tab = AppTab(rawValue: args[i + 1]) {
+            selectedTab = tab
+        }
     }
 
     /// 模拟器走电脑回环；真机必须走 Mac 局域网 IP，127.0.0.1 是手机自己。
@@ -123,6 +127,6 @@ final class AppState {
     }
 }
 
-enum AppTab: Hashable {
+enum AppTab: String, Hashable {
     case guide, scan, mix, archive
 }

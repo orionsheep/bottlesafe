@@ -100,6 +100,7 @@ struct ScanView: View {
                     }
                 }
                 .padding(16)
+                .padding(.bottom, 28)
             }
             .background(Theme.cream)
             .navigationTitle("拍照识别")
@@ -107,7 +108,12 @@ struct ScanView: View {
             .sheet(isPresented: $showCamera) {
                 CameraPicker(onImage: consume).ignoresSafeArea()
             }
-            .onAppear { Task { await app.ping() } }
+            .onAppear {
+                if ProcessInfo.processInfo.arguments.contains("-fixture-scan") {
+                    result = .contrastFixture
+                }
+                Task { await app.ping() }
+            }
         }
     }
 
@@ -162,11 +168,16 @@ struct ScanView: View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
                 RiskChip(level: a.risk)
-                Text(a.displayName).font(.title2.bold())
+                Text(a.displayName)
+                    .font(.title2.bold())
+                    .foregroundStyle(Theme.ink)
                 Text([a.product.brand, a.product.category].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(Theme.muted)
-                Text(a.summary).font(.subheadline)
+                Text(a.summary)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                 if !a.hazards.isEmpty {
                     LabeledBlock(title: "危害", text: a.hazards.map { "\($0.severity.uppercased()) \($0.type) — \($0.evidence)" }.joined(separator: "\n"), danger: true)
                 }

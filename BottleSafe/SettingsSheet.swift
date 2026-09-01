@@ -25,11 +25,11 @@ struct SettingsSheet: View {
                 Section("当前状态") {
                     if let b = app.backend {
                         LabeledContent("后端", value: b.status)
-                        Text(b.detail).font(.footnote)
+                        Text(b.detail).font(.footnote).foregroundStyle(Theme.ink)
                     } else if let err = app.backendError {
                         Text(err).foregroundStyle(Theme.coral)
                     } else {
-                        Text("尚未连接")
+                        Text("尚未连接").foregroundStyle(Theme.ink)
                     }
                 }
                 Section {

@@ -67,13 +67,14 @@ struct GuideView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("日光三法则").font(.headline)
+                        Text("日光三法则").font(.headline).foregroundStyle(Theme.ink)
                         rule("01", "读标", "让每件产品留在原瓶原罐。标签，是安全系统的一部分。")
                         rule("02", "分置", "相克的化学品，分处而藏。切勿随手调配混合物——尤其是漂白剂。")
                         rule("03", "通风", "挥发之物，当于通风处使用；远热源，远孩童，远宠物。")
                     }
                 }
                 .padding(16)
+                .padding(.bottom, 28)
             }
             .background(Theme.cream)
             .navigationTitle("瓶安")
@@ -87,7 +88,7 @@ struct GuideView: View {
         HStack(alignment: .top, spacing: 12) {
             Text(no).font(.caption.bold()).foregroundStyle(Theme.green)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline)
+                Text(title).font(.headline).foregroundStyle(Theme.ink)
                 Text(body).font(.subheadline).foregroundStyle(Theme.muted)
             }
         }
@@ -111,6 +112,7 @@ struct APIBadge: View {
                     .frame(width: 8, height: 8)
                 Text(app.backend?.status == "ready" ? "已连接" : "未连接")
                     .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
             }
         }
         .sheet(isPresented: $showSettings) { SettingsSheet() }

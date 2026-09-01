@@ -8,6 +8,8 @@ struct BottleSafeApp: App {
         WindowGroup {
             RootView()
                 .environment(appState)
+                .preferredColorScheme(.light)
+                .tint(Theme.green)
         }
     }
 }

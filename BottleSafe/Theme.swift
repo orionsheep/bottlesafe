@@ -1,13 +1,15 @@
 import SwiftUI
 
 enum Theme {
-    static let ink = Color(red: 0.12, green: 0.24, blue: 0.18)
-    static let cream = Color(red: 0.95, green: 0.94, blue: 0.92)
-    static let paper = Color(red: 1.0, green: 0.99, blue: 0.96)
-    static let green = Color(red: 0.44, green: 0.66, blue: 0.38)
-    static let coral = Color(red: 0.85, green: 0.42, blue: 0.24)
-    static let amber = Color(red: 0.79, green: 0.64, blue: 0.23)
-    static let muted = Color(red: 0.42, green: 0.44, blue: 0.40)
+    /// 正文/标题：深墨绿，浅底上保持高对比。
+    static let ink = Color(red: 0.07, green: 0.14, blue: 0.11)
+    static let cream = Color(red: 0.94, green: 0.93, blue: 0.90)
+    static let paper = Color(red: 0.99, green: 0.98, blue: 0.95)
+    static let green = Color(red: 0.22, green: 0.45, blue: 0.28)
+    static let coral = Color(red: 0.72, green: 0.28, blue: 0.16)
+    static let amber = Color(red: 0.62, green: 0.42, blue: 0.08)
+    /// 辅助说明：比正文浅，但仍需在米色底上可读。
+    static let muted = Color(red: 0.28, green: 0.32, blue: 0.28)
 }
 
 enum RiskLevel: String, Codable, Sendable {
