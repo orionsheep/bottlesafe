@@ -6,6 +6,8 @@ import AppShell from "../../AppShell";
 import Assistant from "../../scan/assistant";
 import FeedbackBar from "../../scan/FeedbackBar";
 import { pushMixSession } from "../mix/session";
+import ProfileSheet from "../ProfileSheet";
+import { loadProfile, profileHints, toApiContext } from "../../profile";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -90,6 +92,7 @@ export default function MobileScanPage() {
     try {
       const form = new FormData();
       form.append("image", file);
+      form.append("context", JSON.stringify(toApiContext(loadProfile())));
       const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
@@ -132,6 +135,7 @@ export default function MobileScanPage() {
         <h1>{lang === "zh" ? "拍照识别" : "Scan & identify"}</h1>
         <p>{lang === "zh" ? "拍一张瓶身或标签，识别成分、风险与安全处置建议。" : "Snap a bottle or label to detect ingredients, risks and safe disposal."}</p>
       </header>
+      <ProfileSheet compact />
       <div className="scan-status-bar">
         <span className={`scan-status status-${status.status}`}>{statusText}</span>
       </div>
@@ -149,7 +153,7 @@ export default function MobileScanPage() {
               <button className="upload-cta" onClick={() => inputRef.current?.click()}>
                 {lang === "zh" ? "拍照 / 选图" : "Camera / Gallery"}
               </button>
-              <div className="sample-row" style={{ marginTop: 12, justifyContent: "center" }}>
+              <div className="sample-row" data-tour="samples" style={{ marginTop: 12, justifyContent: "center" }}>
                 <span className="sample-label">{t.samplesTitle}</span>
                 <div className="sample-btns">
                   {["samples/bleach.jpg", "samples/toilet.jpg", "samples/goods.jpg"].map((src, i) => (
@@ -211,6 +215,9 @@ export default function MobileScanPage() {
               <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe."}</p>
             )}
             <p className="confidence-note">{lang === "zh" ? "本结论基于包装识别与结构校验，非实验室成分检测。" : "Based on packaging recognition, not a lab test."}</p>
+            {profileHints(a, loadProfile(), lang).map((hint) => (
+              <p key={hint} className="profile-hint">{hint}</p>
+            ))}
             <h2>{a.product.name ?? t.unnamedProduct}</h2>
             <p className="result-meta">
               {[a.product.brand, a.product.category, a.product.barcode].filter(Boolean).join(" · ") || t.noLabel}

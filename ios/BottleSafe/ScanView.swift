@@ -13,9 +13,11 @@ struct ScanView: View {
     @State private var saved = false
 
     var body: some View {
+        @Bindable var app = app
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    ProfileCard(profile: $app.profile)
                     Text("拍一张瓶身或标签，识别成分、风险与禁忌。")
                         .foregroundStyle(Theme.muted)
 
@@ -145,7 +147,7 @@ struct ScanView: View {
         defer { busy = false }
         await app.ping()
         do {
-            let res = try await app.client.analyze(jpeg: jpeg)
+            let res = try await app.client.analyze(jpeg: jpeg, context: app.profile.apiContext)
             result = res
             app.rememberScan(res, jpeg: jpeg, preview: preview)
         } catch {
@@ -178,6 +180,14 @@ struct ScanView: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
+                ForEach(app.profile.hints(for: a), id: \.self) { hint in
+                    Text(hint)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.coral)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                }
                 if !a.hazards.isEmpty {
                     LabeledBlock(title: "危害", text: a.hazards.map { "\($0.severity.uppercased()) \($0.type) — \($0.evidence)" }.joined(separator: "\n"), danger: true)
                 }

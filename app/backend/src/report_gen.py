@@ -177,14 +177,26 @@ def answer_question(question: str, mode: str, items: list[dict],
     profile = ""
     if context:
         tags = []
+        if context.get("infant"):
+            tags.append("有婴幼儿")
         if context.get("child"):
-            tags.append("有婴幼儿/儿童")
+            tags.append("有儿童")
         if context.get("pet_cat"):
             tags.append("养猫")
+        if context.get("pet_dog"):
+            tags.append("养狗")
         if context.get("pregnant"):
             tags.append("有孕妇")
+        if context.get("trying_conceive"):
+            tags.append("备孕")
         if context.get("elderly"):
             tags.append("有老人")
+        if context.get("allergy"):
+            tags.append("过敏体质")
+        if context.get("asthma"):
+            tags.append("有哮喘")
+        if context.get("hypertension"):
+            tags.append("有高血压")
         if tags:
             profile = "家庭画像：" + "、".join(tags) + "。回答需针对这些人群给出差异化提示。"
 

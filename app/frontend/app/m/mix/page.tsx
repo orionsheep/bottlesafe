@@ -160,6 +160,12 @@ export default function MobileMixPage() {
           <p>{t.hint}</p>
         </header>
 
+        <aside className="mix-demo-card" data-tour="mix-demo">
+          <em>{lang === "zh" ? "演示组合 · 规则库" : "Demo pair · rule library"}</em>
+          <b>{lang === "zh" ? "84 消毒液 × 洁厕灵 → 氯气" : "Bleach × toilet cleaner → chlorine gas"}</b>
+          <p>{lang === "zh" ? "马桶是这两瓶最容易先后相遇的地方。分开存放，绝不同时或先后紧邻倒入。本组合判定基于规则库，非大模型推测。" : "The toilet is where these two meet. Store apart. This call is from the rule library, not the model."}</p>
+        </aside>
+
         <div className="phone-mix-stage">
           <PhoneSlot cand={slotA} empty={t.slot} clearLabel={t.slotClear} riskLabel={riskLabel} onClear={() => clearSlot("a")} />
           <span className="phone-mix-x" aria-hidden="true">✕</span>

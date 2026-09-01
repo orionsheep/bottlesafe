@@ -6,6 +6,7 @@
 
 import { useRef, useState } from "react";
 import { SCAN_COPY, useLang } from "../i18n";
+import { loadProfile, toApiContext } from "../profile";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -41,7 +42,7 @@ export default function Assistant() {
       const res = await fetch(`${API}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, mode: "auto", history: next.slice(0, -1) }),
+        body: JSON.stringify({ question: q, mode: "auto", history: next.slice(0, -1), context: toApiContext(loadProfile()) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
@@ -93,7 +94,7 @@ export default function Assistant() {
   };
 
   return (
-    <section className="assistant-section">
+    <section className="assistant-section" data-tour="assistant">
       <h2>{t.voiceTitle}</h2>
       <p className="assistant-hint">{t.voiceHint}</p>
 

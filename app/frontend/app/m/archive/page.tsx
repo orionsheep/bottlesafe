@@ -5,6 +5,7 @@ import { useLang, SCAN_COPY } from "../../i18n";
 import AppShell from "../../AppShell";
 import ReportPanel from "../../scan/report";
 import ArchiveCenter, { type ArchiveItem } from "../../archive/ArchiveCenter";
+import ProfileSheet from "../ProfileSheet";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -27,11 +28,12 @@ export default function MobileArchivePage() {
 
   return (
     <AppShell active="archive">
-      <div className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
+      <div className={`scan-page${lang === "zh" ? " lang-zh" : ""}`} data-tour="archive">
         <header className="page-head page-head--archive">
           <h1>{lang === "zh" ? "家庭档案" : "Household archive"}</h1>
           <p>{lang === "zh" ? "全家化学品台账 · 一眼看清风险分布" : "Your home chemical inventory at a glance."}</p>
         </header>
+        <ProfileSheet />
 
         <ArchiveCenter items={items} onRemove={removeItem} api={API} />
 

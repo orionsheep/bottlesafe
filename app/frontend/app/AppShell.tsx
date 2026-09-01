@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useLang } from "./i18n";
+import TourGuide from "./m/TourGuide";
 
 type Tab = "home" | "scan" | "mix" | "archive";
 
@@ -41,13 +42,14 @@ export default function AppShell({ active, children }: { active: Tab; children: 
       <header className="app-topbar">
         <a className="app-brand" href="/"><span className="brand-dot" />瓶安 <i>BottleSafe</i></a>
         <div className="app-topbar-end">
-          <button className="lang-chip" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">
+          <button className="lang-chip" data-tour="lang" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">
             {lang === "zh" ? "EN" : "中文"}
           </button>
         </div>
       </header>
 
       <main className="app-body">{children}</main>
+      <TourGuide />
 
       <nav className="app-tabbar" aria-label="Primary">
         {TABS.map((tab) => (

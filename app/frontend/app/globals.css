@@ -551,6 +551,7 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 .risk-dot-mini{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
 /* 手机端隐藏所有页面顶栏（统计概览/内容取代它，节省空间）；PC 端保留 */
 .app-shell .page-head{display:none}
+.app-shell .scan-page .page-head,.app-shell .phone-mix .page-head{display:block}
 @media(min-width:801px){.app-shell .page-head{display:block}}
 /* 次要工具区：与瀑布流拉开距离，放最下 */
 .arc-secondary{display:flex;flex-direction:column;gap:16px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
@@ -704,3 +705,44 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 .phone-mix-chip.is-on{outline:2px solid var(--ink)}
 .mix-empty{font-size:13px;color:var(--muted)}
 .mix-empty a{color:var(--ink);font-weight:800}
+
+/* ---- 家庭画像 / 今日小知识 / 自动导览 ---- */
+.hero-cta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hero-tour{border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer}
+.hero-tour:active{transform:scale(.97)}
+.daily-tip{margin:14px 0 4px;padding:14px 16px;background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-sm)}
+.daily-tip-k{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.daily-tip b{display:block;font-size:16px;line-height:1.35;margin:0 0 6px;color:var(--ink)}
+.daily-tip p{margin:0 0 8px;font-size:13px;line-height:1.55;color:#3d4a42}
+.daily-tip-note{font-size:11px;color:var(--muted);font-weight:700}
+.profile-wrap{margin:8px 0 12px}
+.profile-bar{width:100%;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:10px 12px;cursor:pointer;box-shadow:var(--shadow-sm)}
+.profile-bar-k{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--green);flex:none}
+.profile-bar-v{flex:1;font-size:13px;font-weight:700;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-bar-edit{font-size:12px;font-weight:800;color:var(--ink)}
+.profile-mask{position:fixed;inset:0;z-index:80;background:rgba(20,32,26,.45);display:flex;align-items:flex-end;justify-content:center}
+.profile-sheet{width:min(520px,100%);background:var(--paper);border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--safe-bottom));color:var(--ink)}
+.profile-sheet header{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.profile-sheet h3{margin:0 0 4px;font-size:18px;font-weight:900}
+.profile-sheet header p{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.profile-x{margin-left:auto;border:0;background:transparent;font-size:18px;cursor:pointer;color:var(--ink)}
+.profile-chips{display:flex;flex-wrap:wrap;gap:8px}
+.profile-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink)}
+.profile-chip.is-on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.profile-foot{margin:12px 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.profile-done{width:100%;border:0;background:var(--green);color:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:800}
+.profile-hint{margin:8px 0 10px;padding:10px 12px;background:rgba(216,106,61,.12);border:1px solid rgba(216,106,61,.35);border-radius:12px;font-size:13px;line-height:1.5;font-weight:700;color:#6a2c16}
+.mix-demo-card{margin:0 0 14px;padding:14px 16px;border-radius:16px;border:1px solid #c0301c;background:linear-gradient(180deg,rgba(192,48,28,.12),var(--paper) 60%)}
+.mix-demo-card em{display:inline-block;background:#c0301c;color:#fff;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:6px;margin-bottom:8px}
+.mix-demo-card b{display:block;font-size:16px;font-weight:900;line-height:1.3;margin-bottom:6px;color:var(--ink)}
+.mix-demo-card p{margin:0;font-size:13px;line-height:1.55;color:#3d4a42}
+.tour-overlay{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h) + var(--safe-bottom) + 8px);z-index:70;display:flex;justify-content:center;pointer-events:none;padding:0 10px}
+.tour-progress{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(30,61,47,.12);z-index:71}
+.tour-progress i{display:block;height:100%;background:var(--green);width:0;transition:width .2s linear}
+.tour-card{pointer-events:auto;width:min(500px,100%);background:var(--ink);color:var(--paper);border-radius:16px;padding:12px 14px 12px;box-shadow:var(--shadow-md)}
+.tour-meta{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.08em;opacity:.75;margin-bottom:6px}
+.tour-card p{margin:0 0 10px;font-size:14px;line-height:1.5;color:var(--paper)}
+.tour-actions{display:flex;justify-content:flex-end}
+.tour-actions button{border:1px solid rgba(255,253,246,.35);background:transparent;color:var(--paper);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer}
+[data-tour-hl]{outline:2px solid var(--green)!important;box-shadow:0 0 0 6px rgba(111,168,96,.28)!important;border-radius:16px;position:relative;z-index:5}
+@media(prefers-reduced-motion:reduce){.tour-progress i{transition:none}}

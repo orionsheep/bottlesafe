@@ -31,5 +31,32 @@ struct RootView: View {
         .sheet(isPresented: $showSettings) {
             SettingsSheet()
         }
+        .overlay {
+            if app.tourStep != nil {
+                TourOverlay(step: Binding(
+                    get: { app.tourStep ?? 0 },
+                    set: { app.tourStep = $0 }
+                ), skip: { app.tourStep = nil })
+            }
+        }
+        .onChange(of: app.tourStep) { _, step in
+            guard let step else { return }
+            let tabs: [AppTab] = [.guide, .guide, .scan, .mix, .archive, .guide]
+            if tabs.indices.contains(step) {
+                app.selectedTab = tabs[step]
+            }
+        }
+        .task(id: app.tourStep) {
+            guard app.tourStep != nil else { return }
+            while let step = app.tourStep {
+                try? await Task.sleep(for: .seconds(step == 3 ? 12 : 10))
+                guard app.tourStep == step else { return }
+                if step >= 5 {
+                    app.tourStep = nil
+                    return
+                }
+                app.tourStep = step + 1
+            }
+        }
     }
 }

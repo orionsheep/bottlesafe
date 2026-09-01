@@ -15,13 +15,14 @@ Demo 阶段不做用户登录，所有数据归属固定家庭 HOUSEHOLD_ID。
 
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -97,7 +98,7 @@ def status():
 
 
 @app.post("/api/analyze")
-def analyze(image: UploadFile = File(...)):
+def analyze(image: UploadFile = File(...), context: str | None = Form(None)):
     _require_model()  # local 模式下确认模型就绪
     ext = Path(image.filename or "").suffix.lower()
     if ext not in ALLOWED_EXT:
@@ -126,7 +127,15 @@ def analyze(image: UploadFile = File(...)):
     from ..rule_engine import evaluate as rules_evaluate
 
     analysis_dict = analysis.model_dump()
-    rules = rules_evaluate(analysis_dict)
+    ctx: dict = {}
+    if context:
+        try:
+            parsed = json.loads(context)
+            if isinstance(parsed, dict):
+                ctx = {str(k): bool(v) for k, v in parsed.items()}
+        except json.JSONDecodeError:
+            ctx = {}
+    rules = rules_evaluate(analysis_dict, context=ctx)
 
     # ---- 证据溯源：按规则引擎命中的成分标签匹配条款级证据 ----
     from .. import evidence as ev

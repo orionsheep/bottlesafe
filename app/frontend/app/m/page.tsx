@@ -1,13 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLang, HOME_COPY, HAZARDS } from "../i18n";
 import AppShell from "../AppShell";
+import { pickDaily } from "../knowledge";
+import { loadProfile, type HouseholdProfile } from "../profile";
+import { startTour } from "./TourGuide";
 
 export default function MobileHome() {
   const { lang } = useLang();
   const t = HOME_COPY[lang];
   const [active, setActive] = useState<string | null>("01");
+  const [profile, setProfile] = useState<HouseholdProfile>(loadProfile);
+  useEffect(() => {
+    const sync = () => setProfile(loadProfile());
+    window.addEventListener("bottlesafe-profile", sync);
+    return () => window.removeEventListener("bottlesafe-profile", sync);
+  }, []);
+  const tip = pickDaily(profile);
+  const tipCopy = tip[lang];
 
   return (
     <AppShell active="home">
@@ -19,8 +30,18 @@ export default function MobileHome() {
         <div className="hero-copy">
           <h1>{lang === "zh" ? "拍一下，让瓶瓶罐罐安放妥当" : "Snap it. Keep every bottle safe."}</h1>
           <p>{lang === "zh" ? "读标签、辨风险、查禁忌混用，把一次排查变成长期家庭安全档案。" : "Read labels, judge risks, flag dangerous mixes — one scan becomes a lasting home safety archive."}</p>
-          <a className="hero-cta" href="/scan">{lang === "zh" ? "开始识别 →" : "Start scan →"}</a>
+          <div className="hero-cta-row">
+            <a className="hero-cta" data-tour="cta" href="/scan">{lang === "zh" ? "开始识别 →" : "Start scan →"}</a>
+            <button type="button" className="hero-tour" onClick={startTour}>{lang === "zh" ? "90 秒自动演示" : "90s auto demo"}</button>
+          </div>
         </div>
+      </section>
+
+      <section className="daily-tip" data-tour="tip">
+        <div className="daily-tip-k">{lang === "zh" ? "今日小知识" : "Today's tip"}</div>
+        <b>{tipCopy.title}</b>
+        <p>{tipCopy.body}</p>
+        <span className="daily-tip-note">{lang === "zh" ? "按家庭画像加权轮换 · 不是医疗建议" : "Weighted by household profile · not medical advice"}</span>
       </section>
 
       <div className="cap-strip" aria-label={lang === "zh" ? "关键能力" : "capabilities"}>
@@ -30,7 +51,7 @@ export default function MobileHome() {
         ).map((c) => <span key={c} className="cap-chip">{c}</span>)}
       </div>
 
-      <section className="home-section">
+      <section className="home-section" data-tour="guide">
         <div className="sec-head">
           <h2>{lang === "zh" ? "家宅危害图鉴" : "Home hazard guide"}</h2>
           <span>{lang === "zh" ? "轻点查看" : "tap to view"}</span>

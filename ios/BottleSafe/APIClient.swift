@@ -21,7 +21,7 @@ final class APIClient {
         try await get("/api/status")
     }
 
-    func analyze(jpeg: Data, filename: String = "bottle.jpg") async throws -> AnalyzeResponse {
+    func analyze(jpeg: Data, filename: String = "bottle.jpg", context: [String: Bool] = [:]) async throws -> AnalyzeResponse {
         var req = URLRequest(url: baseURL.appending(path: "/api/analyze"))
         req.httpMethod = "POST"
         req.timeoutInterval = 180
@@ -32,7 +32,14 @@ final class APIClient {
         body.append(contentsOf: Data("Content-Disposition: form-data; name=\"image\"; filename=\"\(filename)\"\r\n".utf8))
         body.append(contentsOf: Data("Content-Type: image/jpeg\r\n\r\n".utf8))
         body.append(jpeg)
-        body.append(contentsOf: Data("\r\n--\(boundary)--\r\n".utf8))
+        body.append(contentsOf: Data("\r\n".utf8))
+        if let ctx = try? JSONSerialization.data(withJSONObject: context),
+           let ctxStr = String(data: ctx, encoding: .utf8) {
+            body.append(contentsOf: Data("--\(boundary)\r\n".utf8))
+            body.append(contentsOf: Data("Content-Disposition: form-data; name=\"context\"\r\n\r\n".utf8))
+            body.append(contentsOf: Data("\(ctxStr)\r\n".utf8))
+        }
+        body.append(contentsOf: Data("--\(boundary)--\r\n".utf8))
         req.httpBody = body
         return try await decode(req)
     }

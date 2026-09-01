@@ -30,6 +30,24 @@ struct MixView: View {
                         .foregroundStyle(Theme.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("演示组合 · 规则库")
+                            .font(.caption.bold())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .foregroundStyle(.white)
+                            .background(Theme.coral, in: Capsule())
+                        Text("84 消毒液 × 洁厕灵 → 氯气")
+                            .font(.headline)
+                            .foregroundStyle(Theme.ink)
+                        Text("马桶是这两瓶最容易先后相遇的地方。分开存放，绝不同时倒。本组合判定基于规则库，非大模型推测。")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.ink)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+
                     slotCard(slotA, title: "槽 A") {
                         slotA = nil
                         result = nil

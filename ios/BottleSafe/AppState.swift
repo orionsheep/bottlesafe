@@ -17,6 +17,8 @@ final class AppState {
     var pendingMixPrefill = false
     var archiveStamp = 0
     var selectedTab: AppTab = .guide
+    var profile: HouseholdProfile = .load()
+    var tourStep: Int? = nil
 
     let client: APIClient
 

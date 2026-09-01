@@ -13,6 +13,8 @@ struct GuideView: View {
     ]
 
     var body: some View {
+        @Bindable var app = app
+        let tip = DailyKnowledge.pick(profile: app.profile)
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
@@ -35,9 +37,28 @@ struct GuideView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(Theme.ink)
+                        Button {
+                            app.tourStep = 0
+                        } label: {
+                            Text("90 秒自动演示")
+                                .font(.subheadline.weight(.bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.bordered)
                     }
                     .padding(20)
                     .background(Theme.paper, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("今日小知识").font(.caption.bold()).foregroundStyle(Theme.green)
+                        Text(tip.title).font(.headline).foregroundStyle(Theme.ink)
+                        Text(tip.body).font(.subheadline).foregroundStyle(Theme.muted)
+                        Text("按家庭画像加权轮换 · 不是医疗建议").font(.caption).foregroundStyle(Theme.muted)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                     Text("家宅危害图鉴").font(.headline).foregroundStyle(Theme.ink)
 
