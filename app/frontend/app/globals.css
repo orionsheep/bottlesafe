@@ -274,6 +274,9 @@ footer{background:var(--ink);color:var(--cream);border-top:1px solid var(--line)
 .mix-outcome ul li::before{content:"· ";color:var(--coral)}
 .mix-outcome.is-clear{background:#dce8c8;border-color:#173b2b}
 .mix-outcome.is-clear h2{font-size:28px;text-transform:none}
+.mix-outcome.is-unknown{background:#2a2416;color:var(--cream);border-color:#e2b93b}
+.mix-outcome.is-unknown .mix-outcome-kicker{background:#e2b93b;color:#10251d}
+.mix-outcome.is-unknown h2 i{color:#e2b93b}
 .mix-tray{padding:10px 5vw 80px}
 .mix-tray ul{list-style:none;margin:16px 0 0;padding:0;display:flex;gap:12px;flex-wrap:wrap}
 .mix-chip{width:140px;border:1px solid rgba(16,37,29,.35);background:#ece8dd;padding:8px;display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
 import Assistant from "./assistant";
 import DeskNav from "../DeskNav";
+import { pushMixSession } from "../mix/session";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
@@ -77,6 +78,12 @@ export default function ScanPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
       setResult(data);
+      pushMixSession({
+        name: data.analysis?.product?.name || t.unnamedProduct,
+        risk_level: data.analysis?.risk_level || "unknown",
+        image_path: data.image_path,
+        analysis: data.analysis,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -125,7 +132,8 @@ export default function ScanPage() {
               {busy ? t.busy : status.status === "ready" ? t.analyze : t.waiting}
             </button>
             {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
-            {saved && <a className="save-btn" href="/archive">{hn.navArchive} →</a>}
+            {result && <a className="save-btn" href="/mix?prefill=1">{t.goMix}</a>}
+            {saved && <a className="save-btn" href="/archive">{t.goArchive}</a>}
           </div>
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
         </div>

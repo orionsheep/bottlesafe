@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { HOME_COPY, MIX_COPY, useLang } from "../i18n";
 import DeskNav from "../DeskNav";
+import { loadMixSession } from "./session";
 
 const API = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? "http://127.0.0.1:8000" : "";
-const SESSION_KEY = "bottlesafe-mix-session";
 
 type Analysis = {
   product?: { name?: string | null };
@@ -20,7 +20,12 @@ type MixCandidate = {
   analysis: Analysis;
 };
 type CrossRisk = { a: string; b: string; reason: string; severity: string };
-type MixResp = { cross_risks: CrossRisk[]; has_critical: boolean };
+type MixResp = {
+  cross_risks: CrossRisk[];
+  has_critical: boolean;
+  verdict?: "danger" | "unknown" | "no_edge";
+  unknown_names?: string[];
+};
 
 const RISK: Record<string, string> = {
   unknown: "?", low: "LOW", medium: "MED", high: "HIGH", critical: "CRIT",
@@ -30,25 +35,6 @@ function imgSrc(path?: string) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   return `${API}/${path.replace(/^\//, "")}`;
-}
-
-function loadSession(): MixCandidate[] {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Array<Partial<MixCandidate>>;
-    return parsed
-      .filter((x) => x && x.analysis)
-      .map((x, i) => ({
-        key: x.key || `scan:${i}`,
-        name: x.name || "未命名",
-        risk_level: x.risk_level || "unknown",
-        image_path: x.image_path,
-        analysis: x.analysis as Analysis,
-      }));
-  } catch {
-    return [];
-  }
 }
 
 function outcomeTitle(reason: string, gasWord: string) {
@@ -71,7 +57,8 @@ export default function MixPage() {
   const [result, setResult] = useState<MixResp | null>(null);
 
   useEffect(() => {
-    const session = loadSession();
+    const session = loadMixSession() as MixCandidate[];
+    const wantPrefill = new URLSearchParams(window.location.search).get("prefill") === "1";
     fetch(`${API}/api/household/items`)
       .then((r) => r.json())
       .then((d) => {
@@ -94,8 +81,23 @@ export default function MixPage() {
           merged.push(c);
         }
         setTray(merged);
+        if (wantPrefill && session.length >= 2) {
+          setSlotA(session[0]);
+          setSlotB(session[1]);
+          setLastFilled("b");
+        } else if (wantPrefill && session.length === 1) {
+          setSlotA(session[0]);
+          setLastFilled("a");
+        }
       })
-      .catch(() => setTray(session));
+      .catch(() => {
+        setTray(session);
+        if (wantPrefill && session.length >= 2) {
+          setSlotA(session[0]);
+          setSlotB(session[1]);
+          setLastFilled("b");
+        }
+      });
   }, [t.unnamed]);
 
   const pick = (c: MixCandidate) => {
@@ -144,6 +146,7 @@ export default function MixPage() {
 
   const ready = Boolean(slotA && slotB);
   const hot = result?.cross_risks.find((c) => c.severity === "critical" || c.severity === "high") || result?.cross_risks[0];
+  const verdict = result?.verdict || (hot ? "danger" : result ? "no_edge" : undefined);
 
   return (
     <main className={`mix-page${lang === "zh" ? " lang-zh" : ""}`}>
@@ -171,24 +174,33 @@ export default function MixPage() {
 
       {error && <p className="scan-error mix-error">⚠ {error}</p>}
 
-      {result && !busy && (
-        hot ? (
-          <section className="mix-outcome is-hot" aria-live="assertive">
-            <p className="mix-outcome-kicker">{outcomeTitle(hot.reason, t.outcomeGas)}</p>
-            <h2>{slotA?.name} <i>✕</i> {slotB?.name}</h2>
-            <p className="mix-outcome-reason">{hot.reason}</p>
-            <ul>
-              <li>{t.action1}</li>
-              <li>{t.action2}</li>
-              <li>{t.action3}</li>
-            </ul>
-          </section>
-        ) : (
-          <section className="mix-outcome is-clear" aria-live="polite">
-            <h2>{t.missTitle}</h2>
-            <p>{t.missBody}</p>
-          </section>
-        )
+      {result && !busy && verdict === "danger" && hot && (
+        <section className="mix-outcome is-hot" aria-live="assertive">
+          <p className="mix-outcome-kicker">{outcomeTitle(hot.reason, t.outcomeGas)}</p>
+          <h2>{slotA?.name} <i>✕</i> {slotB?.name}</h2>
+          <p className="mix-outcome-reason">{hot.reason}</p>
+          <ul>
+            <li>{t.action1}</li>
+            <li>{t.action2}</li>
+            <li>{t.action3}</li>
+          </ul>
+        </section>
+      )}
+      {result && !busy && verdict === "unknown" && (
+        <section className="mix-outcome is-unknown" aria-live="polite">
+          <p className="mix-outcome-kicker">{t.unknownTitle}</p>
+          <h2>{slotA?.name} <i>✕</i> {slotB?.name}</h2>
+          <p className="mix-outcome-reason">{t.unknownBody}</p>
+          {!!result.unknown_names?.length && (
+            <p className="mix-outcome-reason">{result.unknown_names.join("、")}</p>
+          )}
+        </section>
+      )}
+      {result && !busy && verdict === "no_edge" && (
+        <section className="mix-outcome is-clear" aria-live="polite">
+          <h2>{t.missTitle}</h2>
+          <p>{t.missBody}</p>
+        </section>
       )}
 
       <section className="mix-tray">
