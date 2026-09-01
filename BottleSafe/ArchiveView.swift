@@ -10,9 +10,11 @@ struct ArchiveView: View {
     @State private var reportBusy = false
 
     var body: some View {
+        @Bindable var app = app
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    ProfileCard(profile: $app.profile)
                     stats
                     if let error {
                         Text(error).foregroundStyle(Theme.coral).font(.footnote)
