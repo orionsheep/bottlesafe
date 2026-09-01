@@ -11,6 +11,7 @@
 | 后端 API | http://127.0.0.1:8000 | `bottlesafe-new/bottlesafe/app/backend`（git **main**） |
 | 手机改造版 | http://localhost:3200 | 同上仓库 `app/frontend`（git **main**） |
 | 电脑杂志版 | http://localhost:3400 | `bottlesafe-desktop/`（git **desktop-mix**，是 `2d50808` 的 worktree） |
+| iOS 客户端 | 打开 `bottlesafe-ios/BottleSafe.xcodeproj` | SwiftUI · iOS 26 · 不发布；API 在 App 内填写 |
 
 ```bash
 # 后端（当前演示用云端视觉，不占本地 GPU）
@@ -27,6 +28,14 @@ PORT=3400 npx vinext dev -p 3400
 ```
 
 **不要把 `desktop-mix` merge 进 main。** main 是手机改造树（有 `AppShell`、`/m/*`）；电脑是独立 worktree。混在一起会把两套 UI 叠进同一路由。
+
+### iOS（比赛用，不上架）
+
+```bash
+open "/Users/mychanging/Desktop/家庭化学/bottlesafe-ios/BottleSafe.xcodeproj"
+```
+
+SwiftUI Tab：图鉴 / 识别 / 混用 / 档案。相机走系统 `UIImagePicker`，相册走 `PhotosPicker`，HEIC 会转 JPEG。右上角填云端 `https://你的域名`；模拟器可暂用 `http://127.0.0.1:8000`。密钥只放服务器。本机若尚未安装 iOS 26 Simulator runtime，在 Xcode → Settings → Components 下载后再 Run。
 
 ---
 
