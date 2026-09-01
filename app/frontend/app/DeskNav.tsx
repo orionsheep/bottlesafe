@@ -14,7 +14,6 @@ export default function DeskNav({
   const t = HOME_COPY[lang];
   const links = [
     { href: home ? "#index" : "/", label: t.navIndex },
-    { href: home ? "#method" : "/#method", label: t.navMethod },
     { href: "/scan", label: t.navScan },
     { href: "/mix", label: t.navMix },
     { href: "/archive", label: t.navArchive },
