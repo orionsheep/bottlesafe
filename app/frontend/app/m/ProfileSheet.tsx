@@ -6,19 +6,30 @@ import {
   PROFILE_KEYS,
   PROFILE_LABELS,
   emptyProfile,
+  emptyStorage,
   loadProfile,
+  loadStorage,
   saveProfile,
+  saveStorage,
   selectedLabels,
   type HouseholdProfile,
+  type StorageContext,
 } from "../profile";
+
+const STORAGE_OPTS: { key: keyof StorageContext; zh: string; en: string }[] = [
+  { key: "child_accessible", zh: "儿童可触及", en: "Child-reachable" },
+  { key: "near_food", zh: "靠近食品", en: "Near food" },
+  { key: "original_container", zh: "保留原包装", en: "Original packaging" },
+];
 
 export default function ProfileSheet({ compact = false }: { compact?: boolean }) {
   const { lang } = useLang();
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState<HouseholdProfile>(emptyProfile);
+  const [storage, setStorage] = useState<StorageContext>(emptyStorage);
 
   useEffect(() => {
-    const sync = () => setProfile(loadProfile());
+    const sync = () => { setProfile(loadProfile()); setStorage(loadStorage()); };
     sync();
     window.addEventListener("bottlesafe-profile", sync);
     window.addEventListener("storage", sync);
@@ -32,6 +43,14 @@ export default function ProfileSheet({ compact = false }: { compact?: boolean })
     const next = { ...profile, [k]: !profile[k] };
     setProfile(next);
     saveProfile(next);
+  };
+
+  const cycleStorage = (k: keyof StorageContext) => {
+    const cur = storage[k];
+    const next = cur === true ? false : cur === false ? null : true;
+    const nextAll = { ...storage, [k]: next };
+    setStorage(nextAll);
+    saveStorage(nextAll);
   };
 
   const labels = selectedLabels(profile, lang);
@@ -70,6 +89,29 @@ export default function ProfileSheet({ compact = false }: { compact?: boolean })
                 </button>
               ))}
             </div>
+
+            <div className="profile-storage">
+              <h4>{lang === "zh" ? "这瓶/这些当前怎么放" : "How it's stored now"}</h4>
+              <p className="profile-storage-hint">{lang === "zh" ? "点按切换：是 / 否 / 未填。储存会改变结论（如「儿童可触及」+ 有儿童 → 风险升级）。" : "Tap to cycle yes/no/unset. Storage changes the verdict."}</p>
+              <div className="profile-chips">
+                {STORAGE_OPTS.map((s) => {
+                  const v = storage[s.key];
+                  const state = v === true ? "yes" : v === false ? "no" : "unset";
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      className={`profile-chip storage-chip is-${state}`}
+                      onClick={() => cycleStorage(s.key)}
+                    >
+                      {s[lang]}
+                      <span className="storage-state">{v === true ? (lang === "zh" ? "是" : "Y") : v === false ? (lang === "zh" ? "否" : "N") : "—"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <p className="profile-foot">{lang === "zh" ? "安全判定仍走规则库。未知一律「暂无法判断」，不是安全。" : "Safety calls still come from the rule engine. UNKNOWN ≠ safe."}</p>
             <button type="button" className="profile-done" onClick={() => setOpen(false)}>
               {lang === "zh" ? "好" : "Done"}

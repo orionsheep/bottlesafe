@@ -730,6 +730,13 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 .profile-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink)}
 .profile-chip.is-on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .profile-foot{margin:12px 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.profile-storage{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.profile-storage h4{font-size:14px;margin:0 0 4px}
+.profile-storage-hint{font-size:11.5px;color:var(--muted);margin:0 0 10px}
+.storage-chip{display:inline-flex;align-items:center;gap:6px}
+.storage-state{font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;border:1px solid currentColor}
+.storage-chip.is-yes{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.storage-chip.is-no{background:#fbe9e5;color:#c0503f;border-color:#c0503f}
 .profile-done{width:100%;border:0;background:var(--green);color:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:800}
 .profile-hint{margin:8px 0 10px;padding:10px 12px;background:rgba(216,106,61,.12);border:1px solid rgba(216,106,61,.35);border-radius:12px;font-size:13px;line-height:1.5;font-weight:700;color:#6a2c16}
 .mix-demo-card{margin:0 0 14px;padding:14px 16px;border-radius:16px;border:1px solid #c0301c;background:linear-gradient(180deg,rgba(192,48,28,.12),var(--paper) 60%)}

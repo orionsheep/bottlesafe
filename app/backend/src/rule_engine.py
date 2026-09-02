@@ -86,7 +86,14 @@ def evaluate(analysis: dict, context: dict | None = None) -> dict:
 
     Args:
         analysis: ChemicalAnalysis.model_dump() 的结果。
-        context: 可选 {"child": bool, "pet_cat": bool, "pregnant": bool}。
+        context: 可选 {
+            # 人群画像
+            "child": bool, "pet_cat": bool, "pregnant": bool, "elderly": bool,
+            # 储存情况（对齐 SafeNest 已验证有效的字段）
+            "child_accessible": bool,   # 儿童可触及
+            "near_food": bool,          # 靠近食品
+            "original_container": bool, # 保留原包装
+        }。
 
     Returns:
         {"risk_level": str, "findings": [...], "ingredient_labels": [...],
@@ -121,6 +128,17 @@ def evaluate(analysis: dict, context: dict | None = None) -> dict:
             continue
         if w.get("context_pet_cat") and not context.get("pet_cat"):
             continue
+        # 储存情况上下文（对齐 SafeNest 已验证有效字段）
+        # 注意：用户未填（None）不等于 False——只有用户明确给出布尔值才参与判定
+        if "context_child_accessible" in w:
+            if context.get("child_accessible") is None or bool(context.get("child_accessible")) != bool(w["context_child_accessible"]):
+                continue
+        if "context_near_food" in w:
+            if context.get("near_food") is None or bool(context.get("near_food")) != bool(w["context_near_food"]):
+                continue
+        if "context_original_container" in w:
+            if context.get("original_container") is None or bool(context.get("original_container")) != bool(w["context_original_container"]):
+                continue
         mf = w.get("missing_fields_any_of")
         if mf and not (missing & set(mf)):
             continue

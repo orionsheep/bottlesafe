@@ -40,6 +40,46 @@
     "action": "上锁或放至孩子够不到的高处，保持原包装与标签。"
   },
   {
+    "id": "STORAGE_CHILD_ACCESSIBLE_HAZARD",
+    "severity": "high",
+    "when": {"hazard_any_of": ["corrosive", "acute_toxicity", "irritant"], "context_child_accessible": true},
+    "title": "具危险属性的产品存放在儿童可触及位置",
+    "reason": "腐蚀性/毒性/刺激性产品若存放在儿童可触及处，存在误触误食与化学灼伤风险。",
+    "action": "立即移至儿童无法触及的高处或带锁柜内；保留原包装与标签。"
+  },
+  {
+    "id": "STORAGE_DECANTED_WITH_CHILD",
+    "severity": "high",
+    "when": {"context_original_container": false, "context_child": true},
+    "title": "有儿童家庭中产品被分装且缺原标签",
+    "reason": "分装会丢失警示标签，显著增加儿童误认误食风险，在有儿童家庭中风险被放大。",
+    "action": "尽量恢复原包装；必须分装时用专用容器并贴醒目标签；切勿用饮料瓶或食品容器分装。"
+  },
+  {
+    "id": "STORAGE_NON_ORIGINAL_CONTAINER",
+    "severity": "medium",
+    "when": {"context_original_container": false},
+    "title": "产品未使用原包装存放",
+    "reason": "分装会增加误认和误用风险，且丢失警示标签。",
+    "action": "优先保留或恢复原包装与原标签。"
+  },
+  {
+    "id": "STORAGE_NEAR_FOOD",
+    "severity": "medium",
+    "when": {"context_near_food": true},
+    "title": "化学品与食品存放过近",
+    "reason": "化学品与食品混放存在交叉污染与误拿误用风险。",
+    "action": "与食品分开存放，单独设清洁用品存放区。"
+  },
+  {
+    "id": "STORAGE_CHILD_ACCESSIBLE_ANY",
+    "severity": "medium",
+    "when": {"context_child_accessible": true, "context_child": true},
+    "title": "有儿童家庭 + 儿童可触及存放",
+    "reason": "即使非高危品，儿童可触及存放仍需警惕误食误触。",
+    "action": "评估是否需上移或加锁；养成用完即收的习惯。"
+  },
+  {
     "id": "CTX_PET_PYRETHROID",
     "severity": "high",
     "when": {"has_ingredients": ["pyrethroid"], "context_pet_cat": true},

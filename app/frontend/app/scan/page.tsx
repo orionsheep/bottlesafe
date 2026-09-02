@@ -5,6 +5,8 @@ import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
 import Assistant from "./assistant";
 import ReportPanel from "./report";
 import FeedbackBar from "./FeedbackBar";
+import ProfileSheet from "../m/ProfileSheet";
+import { loadProfile, loadStorage, toApiContext } from "../profile";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
@@ -96,6 +98,7 @@ export default function ScanPage() {
     try {
       const form = new FormData();
       form.append("image", file);
+      form.append("context", JSON.stringify(toApiContext(loadProfile(), loadStorage())));
       const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
@@ -148,6 +151,10 @@ export default function ScanPage() {
           MODEL / {status.status.toUpperCase()} — {statusText}
         </p>
       </header>
+
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 5vw" }}>
+        <ProfileSheet compact />
+      </div>
 
       <section className="scan-workbench">
         <div className="scan-upload">

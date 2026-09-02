@@ -7,7 +7,7 @@ import Assistant from "../../scan/assistant";
 import FeedbackBar from "../../scan/FeedbackBar";
 import { pushMixSession } from "../mix/session";
 import ProfileSheet from "../ProfileSheet";
-import { loadProfile, profileHints, toApiContext } from "../../profile";
+import { loadProfile, loadStorage, profileHints, toApiContext } from "../../profile";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -92,7 +92,7 @@ export default function MobileScanPage() {
     try {
       const form = new FormData();
       form.append("image", file);
-      form.append("context", JSON.stringify(toApiContext(loadProfile())));
+      form.append("context", JSON.stringify(toApiContext(loadProfile(), loadStorage())));
       const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);

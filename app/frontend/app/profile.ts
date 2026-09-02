@@ -30,6 +30,39 @@ export const PROFILE_LABELS: Record<ProfileKey, { zh: string; en: string }> = {
 };
 
 const KEY = "bottlesafe-household-profile";
+const STORAGE_KEY = "bottlesafe-household-storage";
+
+/** 储存情况（这瓶化学品当前怎么放）。三态：true/false/未填(null)。 */
+export type StorageContext = {
+  child_accessible: boolean | null;
+  near_food: boolean | null;
+  original_container: boolean | null;
+};
+
+export function emptyStorage(): StorageContext {
+  return { child_accessible: null, near_food: null, original_container: null };
+}
+
+export function loadStorage(): StorageContext {
+  const base = emptyStorage();
+  if (typeof window === "undefined") return base;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return base;
+    const parsed = JSON.parse(raw) as Partial<StorageContext>;
+    for (const k of ["child_accessible", "near_food", "original_container"] as const) {
+      const v = parsed[k];
+      base[k] = v === true ? true : v === false ? false : null;
+    }
+  } catch { /* ignore */ }
+  return base;
+}
+
+export function saveStorage(s: StorageContext) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  window.dispatchEvent(new Event("bottlesafe-profile"));
+}
 
 export function emptyProfile(): HouseholdProfile {
   return {
@@ -66,9 +99,9 @@ export function saveProfile(p: HouseholdProfile) {
   window.dispatchEvent(new Event("bottlesafe-profile"));
 }
 
-/** 规则引擎 + /api/ask 用的 context。婴幼儿也算 child。 */
-export function toApiContext(p: HouseholdProfile): Record<string, boolean> {
-  return {
+/** 规则引擎 + /api/ask 用的 context。婴幼儿也算 child；并入储存情况。 */
+export function toApiContext(p: HouseholdProfile, s?: StorageContext): Record<string, unknown> {
+  const base: Record<string, unknown> = {
     child: p.infant || p.child,
     infant: p.infant,
     elderly: p.elderly,
@@ -80,6 +113,13 @@ export function toApiContext(p: HouseholdProfile): Record<string, boolean> {
     asthma: p.asthma,
     hypertension: p.hypertension,
   };
+  if (s) {
+    // 三态：仅当用户明确填了才传（null 不传，避免被规则当成 false）
+    if (s.child_accessible !== null) base.child_accessible = s.child_accessible;
+    if (s.near_food !== null) base.near_food = s.near_food;
+    if (s.original_container !== null) base.original_container = s.original_container;
+  }
+  return base;
 }
 
 export function selectedLabels(p: HouseholdProfile, lang: "zh" | "en"): string[] {
