@@ -56,10 +56,13 @@ export function stopTour() {
 export default function TourGuide() {
   const { lang } = useLang();
   const [state, setState] = useState<TourState | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
-    const sync = () => setState(read());
+    const sync = () => {
+      setState(read());
+      setNow(Date.now());
+    };
     sync();
     window.addEventListener("bottlesafe-tour", sync);
     window.addEventListener("pageshow", sync);
@@ -117,7 +120,7 @@ export default function TourGuide() {
   if (!state) return null;
   const step = STEPS[state.i];
   if (!step) return null;
-  const elapsed = Math.min(TOTAL, now - state.started);
+  const elapsed = now ? Math.min(TOTAL, Math.max(0, now - state.started)) : 0;
   const pct = Math.round((elapsed / TOTAL) * 100);
   const remain = Math.max(0, Math.ceil((TOTAL - elapsed) / 1000));
 

@@ -3,21 +3,26 @@
 import { useEffect, useState } from "react";
 import { useLang, HOME_COPY, HAZARDS } from "../i18n";
 import AppShell from "../AppShell";
-import { pickDaily } from "../knowledge";
-import { loadProfile, type HouseholdProfile } from "../profile";
+import { KNOWLEDGE, pickDaily, type KnowledgeItem } from "../knowledge";
+import { emptyProfile, loadProfile, type HouseholdProfile } from "../profile";
 import { startTour } from "./TourGuide";
 
 export default function MobileHome() {
   const { lang } = useLang();
   const t = HOME_COPY[lang];
   const [active, setActive] = useState<string | null>("01");
-  const [profile, setProfile] = useState<HouseholdProfile>(loadProfile);
+  const [profile, setProfile] = useState<HouseholdProfile>(emptyProfile);
+  const [tip, setTip] = useState<KnowledgeItem>(KNOWLEDGE[0]);
   useEffect(() => {
-    const sync = () => setProfile(loadProfile());
+    const sync = () => {
+      const p = loadProfile();
+      setProfile(p);
+      setTip(pickDaily(p));
+    };
+    sync();
     window.addEventListener("bottlesafe-profile", sync);
     return () => window.removeEventListener("bottlesafe-profile", sync);
   }, []);
-  const tip = pickDaily(profile);
   const tipCopy = tip[lang];
 
   return (

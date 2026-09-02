@@ -5,6 +5,7 @@ import { useLang } from "../i18n";
 import {
   PROFILE_KEYS,
   PROFILE_LABELS,
+  emptyProfile,
   loadProfile,
   saveProfile,
   selectedLabels,
@@ -14,10 +15,11 @@ import {
 export default function ProfileSheet({ compact = false }: { compact?: boolean }) {
   const { lang } = useLang();
   const [open, setOpen] = useState(false);
-  const [profile, setProfile] = useState<HouseholdProfile>(loadProfile);
+  const [profile, setProfile] = useState<HouseholdProfile>(emptyProfile);
 
   useEffect(() => {
     const sync = () => setProfile(loadProfile());
+    sync();
     window.addEventListener("bottlesafe-profile", sync);
     window.addEventListener("storage", sync);
     return () => {
