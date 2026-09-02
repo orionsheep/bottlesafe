@@ -111,6 +111,7 @@ export default function ReportPanel({
 
         {report && (
           <div className={`report-card risk-border-${report.overall_risk}`}>
+            {/* 简报头：一两行 + 点开详情 */}
             <header className="report-head">
               <div>
                 <span className="section-no">{t.overallRisk}</span>
@@ -126,6 +127,13 @@ export default function ReportPanel({
 
             <p className="report-overview">{report.overview}</p>
 
+            {/* 关键数字简报条（对齐成分说清楚三指标头卡） */}
+            <div className="brief-stats">
+              <div className="brief-stat"><b>{report.n_items}</b><span>{lang === "zh" ? "已分析" : "Scanned"}</span></div>
+              <div className="brief-stat"><b>{report.risk_count.high + report.risk_count.critical}</b><span>{lang === "zh" ? "需关注" : "Flagged"}</span></div>
+              <div className="brief-stat"><b>{report.cross_risks.length}</b><span>{lang === "zh" ? "混用组合" : "Mix pairs"}</span></div>
+            </div>
+
             {!desk && report.cross_risks.some((c) => c.severity === "critical" || c.severity === "high") && (
               <div className="cross-alert-banner">
                 <span className="cross-alert-icon">☣</span>
@@ -136,6 +144,13 @@ export default function ReportPanel({
               </div>
             )}
 
+            {/* 详情折叠：点开看完整报告 */}
+            <details className="report-detail-fold">
+              <summary className="report-detail-toggle">
+                {lang === "zh" ? "查看详细报告" : "View full report"}
+                <span className="toggle-arrow">↓</span>
+              </summary>
+              <div className="report-detail-body">
             <div className="report-grid">
               <div className="radar-box">
                 <h4>{t.radarTitle}</h4>
@@ -241,6 +256,8 @@ export default function ReportPanel({
 
             {report.reassure && <p className="reassure">💛 {t.reassureLabel}：{report.reassure}</p>}
             <footer className="report-footer">{report.disclaimer || t.disclaimer}</footer>
+              </div>
+            </details>
           </div>
         )}
       </section>
