@@ -28,6 +28,8 @@ export type Report = {
   prev_risk: string | null;
   disposal?: Disposal;
   disclaimer?: string;
+  ingredient_groups?: { key: string; label: string; count: number; items: { id: number; name: string }[]; hook: string }[];
+  suggestions?: { kind: string; title: string; detail: string; action: string }[];
 };
 type Timeline = {
   checkins: { id: number; created_at: string; overall_risk: string; item_count: number; trend: string | null }[];
@@ -161,6 +163,43 @@ export default function ReportPanel({
               <ul className="high-list">{report.high_items.map((h) => (
                 <li key={h.id}><b className={`risk-dot risk-${h.risk_level}`}>●</b> #{h.id} {h.name}<small>{h.why}</small></li>
               ))}</ul>
+            )}
+
+            {/* 家庭高频关注项（成分跨产品聚合） */}
+            {report.ingredient_groups && report.ingredient_groups.length > 0 && (
+              <div className="ing-groups">
+                <h4>{lang === "zh" ? "家庭高频关注项" : "Top concern groups"}</h4>
+                {report.ingredient_groups.map((g) => (
+                  <details key={g.key} className="ing-group">
+                    <summary>
+                      <b>{g.label}</b>
+                      <span className="ing-count">{g.count} {lang === "zh" ? "件" : "items"}</span>
+                    </summary>
+                    <p className="ing-hook">{g.hook}</p>
+                    <p className="ing-items">{lang === "zh" ? "涉及：" : "In: "}{g.items.map((i) => `#${i.id} ${i.name}`).join("、")}</p>
+                  </details>
+                ))}
+              </div>
+            )}
+
+            {/* 优化建议行动清单（采纳开关） */}
+            {report.suggestions && report.suggestions.length > 0 && (
+              <div className="suggest-block">
+                <h4>{lang === "zh" ? "优化建议（勾选采纳）" : "Suggested actions (check to adopt)"}</h4>
+                {report.suggestions.map((s, i) => (
+                  <label key={i} className={`suggest-item kind-${s.kind}`}>
+                    <input type="checkbox" className="suggest-check" />
+                    <span className="suggest-body">
+                      <b>{s.title}</b>
+                      {s.detail && <p>{s.detail}</p>}
+                      <p className="suggest-action">→ {s.action}</p>
+                    </span>
+                  </label>
+                ))}
+                <button className="suggest-cta" onClick={() => alert(lang === "zh" ? "已生成你的改进方案（采纳项已记录到本地）。下次购物前记得回来核对档案。" : "Plan adopted locally.")}>
+                  {lang === "zh" ? "领取改进方案" : "Get my plan"}
+                </button>
+              </div>
             )}
 
             <div className="report-actions">

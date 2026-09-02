@@ -737,6 +737,39 @@ button.arc-stat.on{box-shadow:0 0 0 2px var(--ink),var(--shadow-sm)}
 .storage-state{font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;border:1px solid currentColor}
 .storage-chip.is-yes{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .storage-chip.is-no{background:#fbe9e5;color:#c0503f;border-color:#c0503f}
+/* 五档色标 + 评分（对齐成分说清楚） */
+.risk-band-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.risk-band{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.02em;padding:6px 14px;border-radius:100px}
+.risk-score{font-size:15px;font-weight:800;font-family:ui-monospace,monospace}
+.score-note{font-size:11px;color:var(--muted,#8d938f);font-style:italic;margin:4px 0 10px}
+/* 高频关注项聚合 */
+.ing-groups{margin-top:14px}
+.ing-groups h4{font-size:14px;margin:0 0 8px}
+.ing-group{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fffdf8}
+.ing-group summary{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;font-size:13px;list-style:none}
+.ing-group summary::-webkit-details-marker{display:none}
+.ing-count{font-family:ui-monospace,monospace;font-size:12px;color:var(--jade-d);font-weight:700}
+.ing-hook{font-size:12px;color:var(--ink2);padding:0 12px;margin:4px 0}
+.ing-items{font-size:11.5px;color:var(--muted,#8d938f);padding:0 12px 10px;margin:0}
+/* 优化建议采纳清单 */
+.suggest-block{margin-top:14px;padding:12px;background:var(--jade-l);border-radius:12px}
+.suggest-block h4{font-size:14px;margin:0 0 10px}
+.suggest-item{display:flex;gap:10px;padding:10px 12px;background:#fffdf8;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;align-items:flex-start}
+.suggest-item.kind-critical{border-left:3px solid #c0503f}
+.suggest-item.kind-replace{border-left:3px solid #c8842f}
+.suggest-item.kind-reduce{border-left:3px solid #2f8f70}
+.suggest-check{margin-top:3px;width:16px;height:16px;flex-shrink:0;accent-color:var(--jade,#2f8f70)}
+.suggest-body b{font-size:13px;display:block}
+.suggest-body p{font-size:12px;color:var(--ink2);margin:2px 0}
+.suggest-action{color:var(--jade-d);font-weight:600}
+.suggest-cta{margin-top:6px;width:100%;border:0;background:var(--jade,#2f8f70);color:#fff;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
+/* 最近分析 */
+.recent-box{margin-top:14px;padding:12px;background:#fffdf8;border:1px solid var(--line);border-radius:12px}
+.recent-label{font-size:11px;letter-spacing:.08em;color:var(--muted,#8d938f);text-transform:uppercase;margin:0 0 8px}
+.recent-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.recent-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.recent-name{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.archive-diff{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--jade-d);background:var(--jade-l);padding:5px 12px;border-radius:100px}
 .profile-done{width:100%;border:0;background:var(--green);color:#fff;border-radius:14px;padding:12px;font-size:15px;font-weight:800}
 .profile-hint{margin:8px 0 10px;padding:10px 12px;background:rgba(216,106,61,.12);border:1px solid rgba(216,106,61,.35);border-radius:12px;font-size:13px;line-height:1.5;font-weight:700;color:#6a2c16}
 .mix-demo-card{margin:0 0 14px;padding:14px 16px;border-radius:16px;border:1px solid #c0301c;background:linear-gradient(180deg,rgba(192,48,28,.12),var(--paper) 60%)}

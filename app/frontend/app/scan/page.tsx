@@ -6,7 +6,7 @@ import Assistant from "./assistant";
 import ReportPanel from "./report";
 import FeedbackBar from "./FeedbackBar";
 import ProfileSheet from "../m/ProfileSheet";
-import { loadProfile, loadStorage, toApiContext } from "../profile";
+import { loadProfile, loadStorage, toApiContext, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../profile";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
@@ -206,9 +206,15 @@ export default function ScanPage() {
 
         {a && (
           <div className="scan-result">
-            <div className={`risk-badge risk-${a.risk_level}`} style={{ background: levelColor[a.risk_level], color: a.risk_level === "critical" ? "var(--coral,#c0503f)" : "#fff", borderColor: levelColor[a.risk_level] }}>
-              {lang === "zh" ? (riskLabelZh[a.risk_level] ?? a.risk_level) : (riskLabel[a.risk_level] ?? a.risk_level)}
+            <div className="risk-band-row">
+              <span className="risk-band" style={{ background: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.bg, color: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.color }}>
+                {RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.[lang]}
+              </span>
+              <span className="risk-score" style={{ color: levelColor[a.risk_level] }}>
+                {lang === "zh" ? "评分" : "Score"} {riskScore(a.risk_level)}
+              </span>
             </div>
+            <p className="score-note">{scoreNote(lang)}</p>
             {a.risk_level === "unknown" && (
               <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe. Please re-photograph the label."}</p>
             )}
@@ -365,14 +371,33 @@ export default function ScanPage() {
         {items.length === 0 ? (
           <p className="archive-empty">{t.archiveEmpty}</p>
         ) : (
-          <ul>
-            {items.map((it) => (
-              <li key={it.id}>
-                <span>#{it.id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
-                <button onClick={() => removeItem(it.id)} aria-label="删除档案">{t.remove}</button>
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* 最近分析（社会证明 + 回访入口） */}
+            <div className="recent-box">
+              <p className="recent-label">{lang === "zh" ? "最近分析" : "Recent scans"}</p>
+              <ul className="recent-list">
+                {[...items].slice(-3).reverse().map((it) => {
+                  const rl = ((it as { analysis?: { risk_level?: string } }).analysis?.risk_level) || "unknown";
+                  return (
+                    <li key={it.id} className="recent-item">
+                      <span className={`risk-band`} style={{ background: RISK_BAND[(rl as RiskBand)]?.bg, color: RISK_BAND[(rl as RiskBand)]?.color, fontSize: 10, padding: "2px 8px" }}>
+                        {riskScore(rl)}
+                      </span>
+                      <span className="recent-name">#{(it as { id?: number }).id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <ul>
+              {items.map((it) => (
+                <li key={it.id}>
+                  <span>#{it.id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
+                  <button onClick={() => removeItem(it.id)} aria-label="删除档案">{t.remove}</button>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 

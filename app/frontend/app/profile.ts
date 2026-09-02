@@ -64,6 +64,36 @@ export function saveStorage(s: StorageContext) {
   window.dispatchEvent(new Event("bottlesafe-profile"));
 }
 
+/* ---------------- 五档色标 + 0-100 评分（对齐「成分说清楚」） ---------------- */
+
+export type RiskBand = "critical" | "high" | "medium" | "low" | "unknown";
+
+export const RISK_BAND: Record<RiskBand, { zh: string; en: string; color: string; bg: string }> = {
+  critical: { zh: "建议优先处理", en: "Act now", color: "#fff", bg: "#1d211f" },
+  high: { zh: "建议重点关注", en: "High attention", color: "#fff", bg: "#c0503f" },
+  medium: { zh: "建议留意", en: "Worth noting", color: "#1d211f", bg: "#e8d27a" },
+  low: { zh: "暂无明显关注", en: "No major concern", color: "#fff", bg: "#2f8f70" },
+  unknown: { zh: "暂无法判断", en: "Cannot judge", color: "#1d211f", bg: "#e3ded2" },
+};
+
+/** 把 risk_level 转成 0-100 分（越高越安全；unknown 给中间偏下）。 */
+export function riskScore(riskLevel: string | undefined): number {
+  switch ((riskLevel || "unknown").toLowerCase()) {
+    case "low": return 88;
+    case "medium": return 68;
+    case "high": return 40;
+    case "critical": return 15;
+    default: return 50; // unknown
+  }
+}
+
+/** 评分旁注（诚实声明，对齐成分说清楚）。 */
+export function scoreNote(lang: "zh" | "en"): string {
+  return lang === "zh"
+    ? "评分为参考均值，非统一标准；末档「暂无法判断」不是「安全」。"
+    : "Score is a heuristic, not a standard; 'cannot judge' ≠ safe.";
+}
+
 export function emptyProfile(): HouseholdProfile {
   return {
     infant: false,

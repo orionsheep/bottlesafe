@@ -227,6 +227,11 @@ def household_report():
         prev = db.latest_checkin(HOUSEHOLD_ID, before_id=checkin_id)
     report["checkin_id"] = checkin_id
     report["prev_risk"] = prev["overall_risk"] if prev else None
+
+    # 高频关注项聚合 + 优化建议行动清单（对齐成分说清楚）
+    from ..insights import aggregate_ingredients, build_suggestions
+    report["ingredient_groups"] = aggregate_ingredients(items)
+    report["suggestions"] = build_suggestions(items, report.get("cross_risks") or [])
     return report
 
 

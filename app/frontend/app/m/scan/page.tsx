@@ -7,7 +7,7 @@ import Assistant from "../../scan/assistant";
 import FeedbackBar from "../../scan/FeedbackBar";
 import { pushMixSession } from "../mix/session";
 import ProfileSheet from "../ProfileSheet";
-import { loadProfile, loadStorage, profileHints, toApiContext } from "../../profile";
+import { loadProfile, loadStorage, profileHints, toApiContext, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../../profile";
 
 const API =
   typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -60,7 +60,12 @@ export default function MobileScanPage() {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [recentItems, setRecentItems] = useState<{ id: number; observed_name?: string; analysis?: { risk_level?: string } }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setRecentItems(d.items ?? [])).catch(() => {});
+  }, [saved]);
 
   useEffect(() => {
     const timer = window.setInterval(async () => {
@@ -195,6 +200,26 @@ export default function MobileScanPage() {
             </>
           )}
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
+
+          {/* 最近分析（社会证明 + 回访入口） */}
+          {recentItems.length > 0 && (
+            <div className="recent-box">
+              <p className="recent-label">{lang === "zh" ? "最近分析" : "Recent"}</p>
+              <ul className="recent-list">
+                {[...recentItems].slice(-3).reverse().map((it) => {
+                  const rl = it.analysis?.risk_level || "unknown";
+                  return (
+                    <li key={it.id} className="recent-item">
+                      <span className="risk-band" style={{ background: RISK_BAND[(rl as RiskBand)]?.bg, color: RISK_BAND[(rl as RiskBand)]?.color, fontSize: 10, padding: "2px 8px" }}>
+                        {riskScore(rl)}
+                      </span>
+                      <span className="recent-name">#{it.id} · {it.observed_name ?? (lang === "zh" ? "未命名" : "Unnamed")}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
 
         {!a && (
@@ -208,9 +233,15 @@ export default function MobileScanPage() {
 
         {a && (
           <div className="scan-result">
-            <div className={`risk-badge risk-${a.risk_level}`} style={{ background: levelColor[a.risk_level], color: a.risk_level === "critical" ? "var(--coral,#c0503f)" : "#fff", borderColor: levelColor[a.risk_level] }}>
-              {lang === "zh" ? (riskLabelZh[a.risk_level] ?? a.risk_level) : (riskLabel[a.risk_level] ?? a.risk_level)}
+            <div className="risk-band-row">
+              <span className="risk-band" style={{ background: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.bg, color: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.color }}>
+                {RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.[lang]}
+              </span>
+              <span className="risk-score" style={{ color: levelColor[a.risk_level] }}>
+                {lang === "zh" ? "评分" : "Score"} {riskScore(a.risk_level)}
+              </span>
             </div>
+            <p className="score-note">{scoreNote(lang)}</p>
             {a.risk_level === "unknown" && (
               <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe."}</p>
             )}

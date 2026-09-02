@@ -16,9 +16,22 @@ export default function MobileArchivePage() {
   const { lang } = useLang();
   const t = SCAN_COPY[lang];
   const [items, setItems] = useState<ArchiveItem[]>([]);
+  const [diff, setDiff] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setItems(d.items ?? [])).catch(() => {});
+    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => {
+      const list: ArchiveItem[] = d.items ?? [];
+      setItems(list);
+      // 跨会话 diff：相比上次查看新增了几件
+      try {
+        const KEY = "bottlesafe-archive-last-count";
+        const prev = Number(window.localStorage.getItem(KEY) || "NaN");
+        if (Number.isFinite(prev) && list.length !== prev) {
+          setDiff(list.length - prev);
+        }
+        window.localStorage.setItem(KEY, String(list.length));
+      } catch { /* ignore */ }
+    }).catch(() => {});
   }, []);
 
   const removeItem = async (id: number) => {
@@ -32,6 +45,13 @@ export default function MobileArchivePage() {
         <header className="page-head page-head--archive">
           <h1>{lang === "zh" ? "家庭档案" : "Household archive"}</h1>
           <p>{lang === "zh" ? "全家化学品台账 · 一眼看清风险分布" : "Your home chemical inventory at a glance."}</p>
+          {diff !== null && diff !== 0 && (
+            <p className="archive-diff">
+              {lang === "zh"
+                ? (diff > 0 ? `相比上次查看，新增 ${diff} 件` : `相比上次查看，减少 ${-diff} 件`)
+                : (diff > 0 ? `${diff} new since last visit` : `${-diff} removed since last visit`)}
+            </p>
+          )}
         </header>
         <ProfileSheet />
 

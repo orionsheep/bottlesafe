@@ -135,7 +135,7 @@ export const SCAN_COPY = {
     micStart: "Hold to speak", micListening: "Listening…", micUnsupported: "Voice input needs Chrome/Edge",
     askBtn: "Ask →", asking: "Thinking…",
     chipSymptom: "Symptom", chipScene: "Room", chipPeople: "Family",
-    chips: ["Skin red & itchy", "Coughing at home", "Kitchen risks", "Bathroom risks", "We have a baby", "Safe for pets?"],
+    chips: ["Skin red & itchy", "Coughing at home", "Kitchen risks", "Bathroom risks", "Is this safe for my home?", "Compare what I've scanned"],
     relatedItems: "Related items in your archive", noRelated: "No matching item in your archive yet.",
     speak: "Read aloud", stopSpeak: "Stop", graphFacts: "Knowledge-graph clues",
     // ---- 方向② 全屋报告 ----
@@ -200,7 +200,7 @@ export const SCAN_COPY = {
     micStart: "点我说话", micListening: "在听…请讲", micUnsupported: "语音识别需要 Chrome / Edge 浏览器",
     askBtn: "提问 →", asking: "思考中…",
     chipSymptom: "按症状", chipScene: "按空间", chipPeople: "按家人",
-    chips: ["皮肤发红还痒", "总在家咳嗉", "厨房有什么危险", "卫生间有什么危险", "家有宝宝", "养猫要注意什么"],
+    chips: ["皮肤发红还痒", "总在家咳嗉", "厨房有什么危险", "卫生间有什么危险", "结合我家情况这款能用吗", "对比我扫过的产品"],
     relatedItems: "家中相关物品", noRelated: "档案里还没有匹配的物品。",
     speak: "朗读回答", stopSpeak: "停止朗读", graphFacts: "知识图谱线索",
     // ---- 方向② 全屋报告 ----
