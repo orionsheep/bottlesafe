@@ -7,8 +7,10 @@ import ArchiveCenter, { type ArchiveItem } from "./ArchiveCenter";
 import CrossAlertHero, { pairIdsFromCross } from "./CrossAlertHero";
 
 const API =
-  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-    ? "http://127.0.0.1:8000"
+  typeof window !== "undefined"
+    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+        ? "http://127.0.0.1:8000"
+        : `http://${window.location.hostname}:8000`)
     : "";
 
 const RISK_ZH: Record<string, string> = { unknown: "未知", low: "低危", medium: "中危", high: "高危", critical: "危急" };

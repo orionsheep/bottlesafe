@@ -10,8 +10,10 @@ import { loadProfile, loadStorage, toApiContext, RISK_BAND, riskScore, scoreNote
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
-  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-    ? "http://127.0.0.1:8000"
+  typeof window !== "undefined"
+    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+        ? "http://127.0.0.1:8000"
+        : `http://${window.location.hostname}:8000`)
     : "";
 
 type Hazard = { type: string; severity: string; evidence: string; confidence: number };

@@ -10,8 +10,10 @@ import ProfileSheet from "../ProfileSheet";
 import { loadProfile, loadStorage, profileHints, toApiContext, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../../profile";
 
 const API =
-  typeof window !== "undefined" && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-    ? "http://127.0.0.1:8000"
+  typeof window !== "undefined"
+    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+        ? "http://127.0.0.1:8000"
+        : `http://${window.location.hostname}:8000`)
     : "";
 
 type Hazard = { type: string; severity: string; evidence: string; confidence: number };
