@@ -90,15 +90,26 @@ export default function MobileScanPage() {
     setError(null);
     setSaved(false);
     setPreview(URL.createObjectURL(f));
+    // 同步到 file input（让 analyze 能从 inputRef 取到）
+    if (inputRef.current) {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      inputRef.current.files = dt.files;
+    }
   };
 
   const analyze = async () => {
-    if (!file) return;
+    // 从 state 或 input 取文件
+    const currentFile = file || inputRef.current?.files?.[0];
+    if (!currentFile) return;
     setBusy(true);
     setError(null);
     try {
+      // 用 FileReader 读成 ArrayBuffer，再构造 Blob 发送（避免 DataTransfer 截断）
+      const buf = await currentFile.arrayBuffer();
+      const blob = new Blob([buf], { type: currentFile.type || "image/jpeg" });
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", blob, currentFile.name);
       form.append("context", JSON.stringify(toApiContext(loadProfile(), loadStorage())));
       const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form });
       const data = await res.json();
@@ -172,7 +183,18 @@ export default function MobileScanPage() {
                         try {
                           const r = await fetch(src);
                           const b = await r.blob();
-                          pick(new File([b], src.split("/").pop() as string, { type: "image/jpeg" }));
+                          const file = new File([b], src.split("/").pop() as string, { type: "image/jpeg" });
+                          // 直接存到 ref，不依赖 state（避免异步问题）
+                          if (inputRef.current) {
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            inputRef.current.files = dt.files;
+                          }
+                          setFile(file);
+                          setResult(null);
+                          setError(null);
+                          setSaved(false);
+                          setPreview(URL.createObjectURL(file));
                         } catch { /* sample fetch failed, ignore */ }
                       }}
                     >

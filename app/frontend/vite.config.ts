@@ -46,11 +46,19 @@ export default defineConfig(async () => {
   server: {
     host: '0.0.0.0',
     allowedHosts: ['.e2b.app'],
+    proxy: {
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/uploads': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+    },
     ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
   },
   preview: {
     host: '0.0.0.0',
     allowedHosts: ['.e2b.app'],
+    proxy: {
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/uploads': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+    },
   },
     plugins: [
       vinext(),
