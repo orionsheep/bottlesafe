@@ -91,6 +91,10 @@ export const HAZARDS = [
   { id: "03", name: "Drain opener", cn: "管道疏通剂", room: "BATHROOM", roomZh: "浴室", risk: "Chemical burn", riskZh: "化学灼伤", note: "Strong alkali; prefer physical unclogging.", noteZh: "强碱腐蚀，优先物理疏通替代。", image: "/img/cat-drain.jpg" },
   { id: "04", name: "Insect spray", cn: "杀虫喷雾", room: "KITCHEN", roomZh: "厨房", risk: "Inhalation", riskZh: "吸入", note: "Keep away from children, pets and food.", noteZh: "远离儿童、宠物与食物。", image: "/img/cat-spray.jpg" },
   { id: "05", name: "Detergent", cn: "日用洗涤剂", room: "HOME", roomZh: "全屋", risk: "Low", riskZh: "低风险", note: "Use in measured amounts; reduce waste.", noteZh: "按量使用，减少不必要排放。", image: "/img/cat-soap.jpg" },
+  { id: "06", name: "Children's toy", cn: "儿童玩具", room: "NURSERY", roomZh: "儿童房", risk: "Label", riskZh: "标签警示", note: "Read the hangtag. Not a lab test. Keep away from solvents and paint.", noteZh: "读吊牌警示。不是检测合格。勿与溶剂、涂料同放。", image: "/img/cat-toy.jpg" },
+  { id: "07", name: "Interior paint", cn: "装修涂料", room: "RENOVATION", roomZh: "装修", risk: "VOC", riskZh: "挥发性", note: "Ventilate new rooms. Do not put a crib in a room with wet paint.", noteZh: "新房通风后再入住。婴儿床不要放进未干的房间。", image: "/img/cat-paint.jpg" },
+  { id: "08", name: "Mothballs", cn: "萘丸 / 樟脑丸", room: "NURSERY", roomZh: "儿童房", risk: "Ingestion", riskZh: "误食", note: "Looks like candy. Keep away from children and the food cupboard.", noteZh: "长得像糖果。远离儿童与食品柜。", image: "/img/cat-mothballs.jpg" },
+  { id: "09", name: "Rice bag", cn: "米袋 / 食品储存", room: "KITCHEN", roomZh: "厨房", risk: "Low", riskZh: "低风险", note: "Food is not a chemical. Do not store insecticide or mothballs next to rice.", noteZh: "食品本身不是化学品。杀虫剂、萘丸不要和米同柜。", image: "/img/cat-rice.jpg" },
 ];
 
 /* ---------------- 识别页文案 ---------------- */

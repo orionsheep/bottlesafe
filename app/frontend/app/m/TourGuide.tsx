@@ -13,13 +13,13 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  { id: "guide", href: "/", target: "[data-tour=guide]", ms: 12000, zh: "家宅危害图鉴：先记住最常见的几瓶。含氯漂白剂绝不能碰上酸性洁厕剂。", en: "Hazard guide: bleach must never meet acid toilet cleaner." },
+  { id: "guide", href: "/", target: "[data-tour=guide]", ms: 12000, zh: "家宅危害图鉴：清洁剂之外还有玩具、涂料、萘丸和米袋。主线仍是含氯漂白剂绝不能碰上酸性洁厕剂。", en: "Hazard guide: toys, paint, mothballs and rice sit next to the cleaners. The core rule is still bleach vs acid toilet cleaner." },
   { id: "tip", href: "/", target: "[data-tour=tip]", ms: 10000, zh: "今日小知识会跟家庭画像走。家里有猫，会优先讲菊酯和酚。", en: "Daily tip follows your household profile — cats get pyrethroid / phenol notes first." },
   { id: "scan", href: "/scan", target: "[data-tour=samples]", ms: 12000, zh: "没有现成照片？点示例一键试用。识别走视觉模型，关键安全判定由规则引擎兜底。", en: "No photo? Tap a sample. Vision reads the label; the rule engine makes the safety call." },
   { id: "mix", href: "/mix", target: "[data-tour=mix-demo]", ms: 14000, zh: "混用页：选出两瓶再点。84 × 洁厕灵会主动预警氯气——本组合判定基于规则库，不是大模型猜的。", en: "Mix two bottles. Bleach × toilet cleaner warns of chlorine gas — ruled by the library, not the model." },
   { id: "archive", href: "/archive", target: "[data-tour=archive]", ms: 11000, zh: "档案留下每一次排查。家庭画像存在本机，不用注册。", en: "The archive keeps each scan. Household profile stays on-device. No account." },
   { id: "ask", href: "/scan", target: "[data-tour=assistant]", ms: 12000, zh: "语音问答：不识字也能开口问「能不能一起倒」。小安记得你扫过的瓶子。", en: "Voice Q&A: ask if two bottles can go together. The assistant remembers what you scanned." },
-  { id: "lang", href: "/", target: "[data-tour=lang]", ms: 8000, zh: "右上角可切中英。路演用中文即可。", en: "Switch language at the top. Chinese is fine for the pitch." },
+  { id: "lang", href: "/m/me", target: "[data-tour=lang]", ms: 8000, zh: "语言切换挪到了「我的 → 系统设置」。路演用中文即可。", en: "Language switch lives in Me → Settings. Chinese is fine for the pitch." },
   { id: "end", href: "/", target: "[data-tour=cta]", ms: 11000, zh: "瓶安不做医疗诊断、不下致癌结论、不替代实验室。拍一下，让瓶瓶罐罐安放妥当。", en: "No medical diagnosis, no cancer claims, not a lab. Snap it. Keep every bottle safe." },
 ];
 

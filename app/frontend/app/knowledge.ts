@@ -68,6 +68,24 @@ export const KNOWLEDGE: KnowledgeItem[] = [
     zh: { title: "暂无法判断 ≠ 安全", body: "拍不清、没成分表时，瓶安会说「暂无法判断」。这不是绿灯。补拍标签，确认前按危险品存放。" },
     en: { title: "Unknown is not safe", body: "If the label is unreadable we say UNKNOWN. That is not a green light. Store it as hazardous until confirmed." },
   },
+  {
+    id: "mothball-candy",
+    tags: ["infant", "child"],
+    zh: { title: "萘丸长得像糖果", body: "樟脑丸、萘丸是防蛀化学品，不是零食。放到儿童够不到的地方，也不要和米面同柜。" },
+    en: { title: "Mothballs look like candy", body: "Naphthalene mothballs are a pesticide, not a snack. Keep them away from children and the food cupboard." },
+  },
+  {
+    id: "paint-nursery",
+    tags: ["infant", "child", "pregnant"],
+    zh: { title: "未干的涂料房不要放婴儿床", body: "内墙漆会挥发。新刷的房间先通风，干透再让婴幼儿长时间停留。这不是检测合格结论。" },
+    en: { title: "No crib in a wet-paint room", body: "Interior paint off-gasses. Ventilate before a crib goes in. Reading the can is not a lab certificate." },
+  },
+  {
+    id: "food-vs-spray",
+    tags: ["general"],
+    zh: { title: "杀虫剂不要和米同柜", body: "食品本身不是化学品。瓶安读包装，是为了提醒：杀虫喷雾、萘丸不要和米面、零食放在同一层。" },
+    en: { title: "Keep spray off the rice shelf", body: "Food is not a chemical. We read the bag to remind you: insecticide and mothballs do not belong next to rice." },
+  },
 ];
 
 export function pickDaily(profile: HouseholdProfile, date = new Date()): KnowledgeItem {

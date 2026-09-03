@@ -46,6 +46,42 @@
         "do_not_mix_keywords": [],
         "hazard_keywords": []
       }
+    },
+    {
+      "image": "../../materials/演示素材/06_儿童玩具_邻苯抽检娃娃.jpg",
+      "expected": {
+        "category_keywords": ["玩具", "toy", "娃娃"],
+        "risk_level": "unknown",
+        "do_not_mix_keywords": [],
+        "hazard_keywords": []
+      }
+    },
+    {
+      "image": "../../materials/演示素材/07_装修涂料_BEHR内墙漆.jpg",
+      "expected": {
+        "category_keywords": ["涂料", "漆", "paint"],
+        "risk_level": "unknown",
+        "do_not_mix_keywords": [],
+        "hazard_keywords": ["挥发", "VOC"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/08_萘丸_双喜白臭丸.jpg",
+      "expected": {
+        "category_keywords": ["萘", "樟脑", "mothball", "naphthalene"],
+        "risk_level": "high",
+        "do_not_mix_keywords": [],
+        "hazard_keywords": ["误食", "儿童"]
+      }
+    },
+    {
+      "image": "../../materials/演示素材/09_食品储存_香米袋.jpg",
+      "expected": {
+        "category_keywords": ["米", "食品", "rice", "food"],
+        "risk_level": "unknown",
+        "do_not_mix_keywords": [],
+        "hazard_keywords": []
+      }
     }
   ]
 }
