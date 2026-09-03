@@ -13,8 +13,11 @@ struct RootView: View {
             Tab("识别", systemImage: "camera.viewfinder", value: .scan) {
                 ScanView()
             }
-            Tab("混用", systemImage: "flask.fill", value: .mix) {
-                MixView()
+            Tab("AI 助手", systemImage: "bubble.left.and.bubble.right.fill", value: .assistant) {
+                NavigationStack {
+                    AssistantView()
+                        .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
+                }
             }
             Tab("档案", systemImage: "archivebox.fill", value: .archive) {
                 ArchiveView()
@@ -44,19 +47,21 @@ struct RootView: View {
         }
         .onChange(of: app.tourStep) { _, step in
             guard let step else { return }
-            let tabs: [AppTab] = [.guide, .guide, .scan, .mix, .archive, .me, .guide]
+            // 对齐 Web TourGuide 8 步：图鉴 / 小知识 / 识别 / 混用(档案栈) / 档案 / AI助手 / 我的 / 收尾
+            let tabs: [AppTab] = [.guide, .guide, .scan, .archive, .archive, .assistant, .me, .guide]
             if tabs.indices.contains(step) {
                 app.selectedTab = tabs[step]
             }
+            app.showMix = (step == 3)
         }
         .task(id: app.tourStep) {
             guard app.tourStep != nil else { return }
-            let seconds: [Double] = [12, 10, 12, 14, 11, 12, 11]
+            let seconds: [Double] = [12, 10, 12, 14, 11, 12, 8, 11]
             while let step = app.tourStep {
                 let wait = seconds.indices.contains(step) ? seconds[step] : 10
                 try? await Task.sleep(for: .seconds(wait))
                 guard app.tourStep == step else { return }
-                if step >= 6 {
+                if step >= 7 {
                     app.tourStep = nil
                     return
                 }

@@ -17,6 +17,9 @@ struct FeedbackView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                Text("你的每一条反馈都会原样进入我们的改进清单与比赛评审材料。")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.muted)
                 if done {
                     thanksCard
                 } else {

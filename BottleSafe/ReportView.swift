@@ -14,6 +14,9 @@ struct ReportView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                Text("根据家庭档案自动生成：整体怎么样、哪些优先、具体哪几件、下一步怎么办。")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.muted)
                 if busy {
                     HStack {
                         ProgressView()
@@ -56,7 +59,7 @@ struct ReportView: View {
             .padding(.bottom, 28)
         }
         .background(Theme.cream)
-        .navigationTitle("全屋安全报告")
+        .navigationTitle("家庭成分报告")
         .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
         .task { await load() }
         .refreshable { await load() }

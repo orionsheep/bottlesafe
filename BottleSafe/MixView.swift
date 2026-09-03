@@ -23,12 +23,11 @@ struct MixView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Text("选出两瓶，点混合。不要真的倒在一起。")
-                        .foregroundStyle(Theme.muted)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+        ScrollView {
+            VStack(spacing: 16) {
+                Text("选出两瓶，只在这一页「混合」。不要真的倒在一起。")
+                    .foregroundStyle(Theme.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("演示组合 · 规则库")
@@ -77,9 +76,12 @@ struct MixView: View {
 
                     Text("候选瓶子").font(.headline).foregroundStyle(Theme.ink).frame(maxWidth: .infinity, alignment: .leading)
                     if tray.isEmpty {
-                        Text("先去识别拍两瓶，或把瓶子存进档案。")
+                        Text("先去识别拍两瓶，再回来混合")
                             .foregroundStyle(Theme.muted)
-                        Button("去识别") { app.selectedTab = .scan }
+                        Button("去识别 →") {
+                            app.showMix = false
+                            app.selectedTab = .scan
+                        }
                     } else {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 10) {
@@ -94,16 +96,15 @@ struct MixView: View {
                 .padding(16)
                 .padding(.bottom, 28)
             }
-            .background(Theme.cream)
-            .navigationTitle("合在一起，会怎样？")
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
-            .task { await refresh() }
-            .onChange(of: app.selectedTab) { _, tab in
-                if tab == .mix { Task { await refresh() } }
-            }
-            .onChange(of: app.pendingMixPrefill) { _, flag in
-                if flag { applyPrefill(); app.pendingMixPrefill = false }
-            }
+        .background(Theme.cream)
+        .navigationTitle("合在一起，会怎样？")
+        .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
+        .task { await refresh() }
+        .onChange(of: app.showMix) { _, on in
+            if on { Task { await refresh() } }
+        }
+        .onChange(of: app.pendingMixPrefill) { _, flag in
+            if flag { applyPrefill(); app.pendingMixPrefill = false }
         }
     }
 
@@ -211,12 +212,17 @@ struct MixView: View {
             riskCards(sorted, bA: bA, bB: bB)
         case .caution:
             VStack(alignment: .leading, spacing: 8) {
-                Text("保守提示：可能有相互影响")
+                Text("需注意的组合（非急性危险）")
                     .font(.caption.bold())
                     .padding(6)
                     .background(Theme.amber, in: Capsule())
                     .foregroundStyle(.white)
                 Text("\(titleA)  ×  \(titleB)").font(.title3.bold()).foregroundStyle(Theme.ink)
+                if let locRisk = sorted.first(where: { $0.same_location == true }) {
+                    Text("📍 这两瓶放在同一位置（\(locRisk.location?.nilIfEmpty ?? "同一处")），现在就分开")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Theme.coral)
+                }
                 Text("这对组合没有命中强禁忌，但有保守档的关注点。仍建议分开存放、以产品标签为准。")
                     .font(.subheadline)
                     .foregroundStyle(Theme.ink)

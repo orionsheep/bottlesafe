@@ -6,6 +6,7 @@ struct MeView: View {
     @State private var itemCount: Int?
     @State private var showProfile = false
     @State private var showPrivacy = false
+    @State private var showSettings = false
     @State private var firstOpen: Date = Self.loadFirstOpen()
 
     private static let firstOpenKey = "bottlesafe-first-open"
@@ -28,11 +29,6 @@ struct MeView: View {
                     header
                     preferenceCard
                     VStack(spacing: 10) {
-                        NavigationLink {
-                            AssistantView()
-                        } label: {
-                            row(icon: "bubble.left.and.text.bubble.right", title: "AI 安全管家", subtitle: "语音或打字，结合画像与档案回答")
-                        }
                         Button {
                             app.selectedTab = .archive
                         } label: {
@@ -55,12 +51,18 @@ struct MeView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 rowContent(icon: "lock.shield", title: "隐私政策", subtitle: showPrivacy ? "收起" : "展开")
                                 if showPrivacy {
-                                    Text("瓶安不注册、不追踪。家庭画像只存在这台手机本地；识别图片与分析结果只发往你自己配置的家庭后端，不上传任何第三方。你可以随时在档案页删除全部存档。")
+                                    Text("所有画像与档案数据仅保存在本机与你自己的后端服务中：不注册账号、不上传任何第三方。删除本机数据即可彻底清除。")
                                         .font(.caption)
                                         .foregroundStyle(Theme.ink)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
+                        }
+                        .buttonStyle(.plain)
+                        Button {
+                            showSettings = true
+                        } label: {
+                            row(icon: "gearshape", title: "系统设置", subtitle: "连接家里的识别服务器")
                         }
                         .buttonStyle(.plain)
                     }
@@ -78,6 +80,9 @@ struct MeView: View {
             .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
             .sheet(isPresented: $showProfile) {
                 ProfileEditor(profile: $app.profile)
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet()
             }
             .task {
                 itemCount = (try? await app.client.householdItems())?.count

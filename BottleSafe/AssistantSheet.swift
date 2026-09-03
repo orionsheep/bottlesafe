@@ -177,6 +177,15 @@ struct AssistantView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if !showsDismiss {
+                Text("语音或打字提问，结合你的家庭画像与档案回答")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
+            }
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 10) {

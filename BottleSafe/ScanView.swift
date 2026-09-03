@@ -11,7 +11,6 @@ struct ScanView: View {
     @State private var error: String?
     @State private var result: AnalyzeResponse?
     @State private var saved = false
-    @State private var showAssistant = false
     /// 分析四步进度：0-3 进行中，4 完成。
     @State private var analyzeStep = 0
     @State private var analyzeTask: Task<Void, Never>?
@@ -105,14 +104,6 @@ struct ScanView: View {
                     if let result {
                         resultCard(result)
                         FeedbackBar()
-                        Button {
-                            showAssistant = true
-                        } label: {
-                            Label("问一句", systemImage: "bubble.left.and.text.bubble.right")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(Theme.green)
                         VStack(spacing: 10) {
                             Button(saved ? "已入档案 ✓" : "存入家庭档案") {
                                 Task { await save(result) }
@@ -125,12 +116,9 @@ struct ScanView: View {
                             locationRow
 
                             HStack {
-                                Button("去混用") {
-                                    app.pendingMixPrefill = true
-                                    app.selectedTab = .mix
-                                }
+                                Button("去混用 →") { app.openMix(prefill: true) }
                                 if saved {
-                                    Button("去档案") { app.selectedTab = .archive }
+                                    Button("去档案 →") { app.selectedTab = .archive }
                                 }
                             }
                             .buttonStyle(.bordered)
@@ -145,9 +133,6 @@ struct ScanView: View {
             .toolbar { ToolbarItem(placement: .topBarTrailing) { APIBadge() } }
             .sheet(isPresented: $showCamera) {
                 CameraPicker(onImage: consume).ignoresSafeArea()
-            }
-            .sheet(isPresented: $showAssistant) {
-                AssistantSheet()
             }
             .onAppear {
                 if ProcessInfo.processInfo.arguments.contains("-fixture-scan") {
@@ -672,7 +657,7 @@ struct ScanView: View {
                     .background(Theme.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
                 }
                 if risks.count > 3 {
-                    Button("查看全部 \(risks.count) 组 →") { app.selectedTab = .mix }
+                    Button("查看全部 \(risks.count) 组 →") { app.openMix(prefill: true) }
                         .font(.caption.bold())
                         .foregroundStyle(Theme.green)
                 }

@@ -15,6 +15,8 @@ final class AppState {
     var lastPreview: UIImage?
     var savedLastScan = false
     var pendingMixPrefill = false
+    /// 混用不是 Tab，是档案栈上的子页（对齐手机 Web `/m/mix`，tab 高亮在档案）。
+    var showMix = false
     var archiveStamp = 0
     var selectedTab: AppTab = .guide
     var profile: HouseholdProfile = .load()
@@ -29,8 +31,14 @@ final class AppState {
         client = APIClient(baseURL: URL(string: initial) ?? URL(string: Self.defaultAPIBase)!)
         loadDrafts()
         let args = ProcessInfo.processInfo.arguments
-        if let i = args.firstIndex(of: "-tab"), i + 1 < args.count, let tab = AppTab(rawValue: args[i + 1]) {
-            selectedTab = tab
+        if let i = args.firstIndex(of: "-tab"), i + 1 < args.count {
+            let raw = args[i + 1]
+            if raw == "mix" {
+                selectedTab = .archive
+                showMix = true
+            } else if let tab = AppTab(rawValue: raw) {
+                selectedTab = tab
+            }
         }
     }
 
@@ -99,6 +107,12 @@ final class AppState {
         archiveStamp += 1
     }
 
+    func openMix(prefill: Bool = false) {
+        pendingMixPrefill = prefill
+        selectedTab = .archive
+        showMix = true
+    }
+
     func persistDrafts() {
         struct Disk: Codable {
             var id: String
@@ -132,5 +146,5 @@ final class AppState {
 }
 
 enum AppTab: String, Hashable {
-    case guide, scan, mix, archive, me
+    case guide, scan, assistant, archive, me
 }
