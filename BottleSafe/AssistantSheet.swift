@@ -405,7 +405,7 @@ struct AssistantView: View {
         Task {
             defer { busy = false }
             do {
-                let res = try await app.client.ask(question: question, history: history, context: app.profile.apiContext)
+                let res = try await app.client.ask(question: question, history: history, context: app.profile.askContext)
                 lastFacts = res.factLines
                 lastRelated = res.relatedLines
                 messages.append(AskTurn(role: "assistant", content: res.answer))

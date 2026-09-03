@@ -203,6 +203,7 @@ struct AskResponse: Codable, Sendable {
     var answer: String
     var graph: [String: JSONValue]?
     var related_items: [JSONValue]?
+    var llm_used: Bool?
 
     var factLines: [String] { graph?["facts"]?.stringArray ?? [] }
 

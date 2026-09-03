@@ -94,14 +94,14 @@ final class APIClient {
         try await get("/api/household/timeline")
     }
 
-    func ask(question: String, history: [AskTurn], context: [String: Bool]) async throws -> AskResponse {
+    func ask(question: String, history: [AskTurn], context: [String: JSONValue]) async throws -> AskResponse {
         struct Body: Codable {
             var question: String
             var mode: String
             var history: [AskTurn]
-            var context: [String: Bool]
+            var context: [String: JSONValue]
         }
-        return try await post("/api/ask", body: Body(question: question, mode: "auto", history: history, context: context))
+        return try await post("/api/ask", body: Body(question: question, mode: "auto", history: history, context: context), timeout: 180)
     }
 
     func submitFeedback(rating: String, comment: String, audience: String, page: String) async throws {
@@ -127,10 +127,10 @@ final class APIClient {
         return try await decode(req)
     }
 
-    private func post<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
+    private func post<T: Decodable, B: Encodable>(_ path: String, body: B, timeout: TimeInterval = 60) async throws -> T {
         var req = URLRequest(url: baseURL.appending(path: path))
         req.httpMethod = "POST"
-        req.timeoutInterval = 60
+        req.timeoutInterval = timeout
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONEncoder().encode(body)
         return try await decode(req)

@@ -89,6 +89,19 @@ struct HouseholdProfile: Codable, Equatable {
         [childAccessible, nearFood, originalContainer].compactMap { $0 }.count
     }
 
+    /// 问答管家 context：规则布尔 + 健康/过敏原等标签数组。
+    var askContext: [String: JSONValue] {
+        var out: [String: JSONValue] = [:]
+        for (key, value) in apiContext {
+            out[key] = .bool(value)
+        }
+        if !doctorFlags.isEmpty { out["doctor_flags"] = .array(doctorFlags.map { .string($0) }) }
+        if !allergens.isEmpty { out["allergens"] = .array(allergens.map { .string($0) }) }
+        if !diet.isEmpty { out["diet"] = .array(diet.map { .string($0) }) }
+        if !fitness.isEmpty { out["fitness"] = .array(fitness.map { .string($0) }) }
+        return out
+    }
+
     var selectedLabels: [String] {
         var out: [String] = []
         if infant { out.append("婴幼儿") }
