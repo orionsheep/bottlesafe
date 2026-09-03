@@ -10,6 +10,10 @@ struct GuideView: View {
         .init(id: "03", name: "管道疏通剂", room: "浴室", risk: "化学灼伤", note: "强碱腐蚀，优先物理疏通替代。", image: "cat-drain"),
         .init(id: "04", name: "杀虫喷雾", room: "厨房", risk: "吸入", note: "远离儿童、宠物与食物。", image: "cat-spray"),
         .init(id: "05", name: "日用洗涤剂", room: "全屋", risk: "低风险", note: "按量使用，减少不必要排放。", image: "cat-soap"),
+        .init(id: "06", name: "儿童玩具", room: "儿童房", risk: "标签警示", note: "读吊牌警示。不是检测合格。勿与溶剂、涂料同放。", image: "cat-toy"),
+        .init(id: "07", name: "装修涂料", room: "装修", risk: "挥发性", note: "新房通风后再入住。婴儿床不要放进未干的房间。", image: "cat-paint"),
+        .init(id: "08", name: "萘丸 / 樟脑丸", room: "儿童房", risk: "误食", note: "长得像糖果。远离儿童与食品柜。", image: "cat-mothballs"),
+        .init(id: "09", name: "米袋 / 食品储存", room: "厨房", risk: "低风险", note: "食品本身不是化学品。杀虫剂、萘丸不要和米同柜。", image: "cat-rice"),
     ]
 
     private let capabilities = ["拍照识别", "语音问答", "全屋报告", "知识图谱", "绿色处置"]

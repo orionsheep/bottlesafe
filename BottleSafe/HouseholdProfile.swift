@@ -188,6 +188,9 @@ enum DailyKnowledge {
         .init(id: "original-bottle", title: "不要倒进饮料瓶", body: "标签是安全系统的一部分。倒进矿泉水瓶，误食风险陡增。", tags: ["elderly", "child"]),
         .init(id: "asthma-aerosol", title: "哮喘遇上喷雾", body: "空气清新剂、杀虫气雾剂会诱发喘息。先开窗、人离开再喷。", tags: ["asthma"]),
         .init(id: "unknown-not-safe", title: "暂无法判断 ≠ 安全", body: "拍不清时瓶安会说「暂无法判断」。这不是绿灯。确认前按危险品存放。", tags: []),
+        .init(id: "mothball-candy", title: "萘丸长得像糖果", body: "樟脑丸、萘丸是防蛀化学品，不是零食。放到儿童够不到的地方，也不要和米面同柜。", tags: ["infant", "child"]),
+        .init(id: "paint-nursery", title: "未干的涂料房不要放婴儿床", body: "内墙漆会挥发。新刷的房间先通风，干透再让婴幼儿长时间停留。", tags: ["infant", "child", "pregnant"]),
+        .init(id: "food-vs-spray", title: "杀虫剂不要和米同柜", body: "食品本身不是化学品。杀虫喷雾、萘丸不要和米面、零食放在同一层。", tags: []),
     ]
 
     static func pick(profile: HouseholdProfile, date: Date = Date()) -> KnowledgeItem {
