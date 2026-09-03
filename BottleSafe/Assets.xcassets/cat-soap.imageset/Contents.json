@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "cat-soap.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -5,12 +5,14 @@ struct GuideView: View {
     @State private var openID: String? = "01"
 
     private let hazards: [HazardGuide] = [
-        .init(id: "01", name: "含氯漂白剂", room: "洗衣房", risk: "腐蚀性", note: "切勿与酸或氨水同用。"),
-        .init(id: "02", name: "酸性洁厕剂", room: "浴室", risk: "毒气", note: "与含氯产品相遇会生成氯气。"),
-        .init(id: "03", name: "管道疏通剂", room: "浴室", risk: "化学灼伤", note: "强碱腐蚀，优先物理疏通替代。"),
-        .init(id: "04", name: "杀虫喷雾", room: "厨房", risk: "吸入", note: "远离儿童、宠物与食物。"),
-        .init(id: "05", name: "日用洗涤剂", room: "全屋", risk: "低风险", note: "按量使用，减少不必要排放。"),
+        .init(id: "01", name: "含氯漂白剂", room: "洗衣房", risk: "腐蚀性", note: "切勿与酸或氨水同用。", image: "cat-bleach"),
+        .init(id: "02", name: "酸性洁厕剂", room: "浴室", risk: "毒气", note: "与含氯产品相遇会生成氯气。", image: "cat-acid"),
+        .init(id: "03", name: "管道疏通剂", room: "浴室", risk: "化学灼伤", note: "强碱腐蚀，优先物理疏通替代。", image: "cat-drain"),
+        .init(id: "04", name: "杀虫喷雾", room: "厨房", risk: "吸入", note: "远离儿童、宠物与食物。", image: "cat-spray"),
+        .init(id: "05", name: "日用洗涤剂", room: "全屋", risk: "低风险", note: "按量使用，减少不必要排放。", image: "cat-soap"),
     ]
+
+    private let capabilities = ["拍照识别", "语音问答", "全屋报告", "知识图谱", "绿色处置"]
 
     var body: some View {
         @Bindable var app = app
@@ -18,19 +20,43 @@ struct GuideView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 10) {
+                    ZStack(alignment: .bottomLeading) {
+                        Image("hero-home")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 196)
+                            .clipped()
                         Text("家庭化学品安全 AI")
                             .font(.caption.weight(.bold))
-                            .foregroundStyle(Theme.green)
-                        Text("拍一下，让瓶瓶罐罐安放妥当")
-                            .font(.title.bold())
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial, in: Capsule())
                             .foregroundStyle(Theme.ink)
-                        Text("读标签、辨风险、查禁忌混用，把一次排查变成长期家庭安全档案。")
-                            .foregroundStyle(Theme.muted)
+                            .padding(12)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .top, spacing: 12) {
+                            Image("mascot")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 56, height: 56)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("拍一下，让瓶瓶罐罐安放妥当")
+                                    .font(.title2.bold())
+                                    .foregroundStyle(Theme.ink)
+                                Text("读标签、辨风险、查禁忌混用，把一次排查变成长期家庭安全档案。")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.muted)
+                            }
+                        }
                         Button {
                             app.selectedTab = .scan
                         } label: {
-                            Text("开始识别")
+                            Text("开始识别 →")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -60,24 +86,48 @@ struct GuideView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
 
-                    Text("家宅危害图鉴").font(.headline).foregroundStyle(Theme.ink)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(capabilities, id: \.self) { cap in
+                                Text(cap)
+                                    .font(.caption.bold())
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Theme.green.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(Theme.green)
+                            }
+                        }
+                    }
+
+                    HStack {
+                        Text("家宅危害图鉴").font(.headline).foregroundStyle(Theme.ink)
+                        Spacer()
+                        Text("轻点查看").font(.caption).foregroundStyle(Theme.muted)
+                    }
 
                     ForEach(hazards) { item in
                         Button {
                             openID = openID == item.id ? nil : item.id
                         } label: {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text(item.id).font(.caption.monospaced()).foregroundStyle(Theme.muted)
-                                    Text(item.room).font(.caption).foregroundStyle(Theme.muted)
-                                    Spacer()
-                                    Text(item.risk)
-                                        .font(.caption.bold())
-                                        .foregroundStyle(item.risk == "低风险" ? Theme.green : Theme.coral)
-                                }
-                                Text(item.name).font(.title3.bold()).foregroundStyle(Theme.ink)
-                                if openID == item.id {
-                                    Text(item.note).font(.subheadline).foregroundStyle(Theme.muted)
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(item.image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text(item.id).font(.caption.monospaced()).foregroundStyle(Theme.muted)
+                                        Text(item.room).font(.caption).foregroundStyle(Theme.muted)
+                                        Spacer()
+                                        Text(item.risk)
+                                            .font(.caption.bold())
+                                            .foregroundStyle(item.risk == "低风险" ? Theme.green : Theme.coral)
+                                    }
+                                    Text(item.name).font(.title3.bold()).foregroundStyle(Theme.ink)
+                                    if openID == item.id {
+                                        Text(item.note).font(.subheadline).foregroundStyle(Theme.muted)
+                                    }
                                 }
                             }
                             .padding(16)
@@ -93,6 +143,26 @@ struct GuideView: View {
                         rule("02", "分置", "相克的化学品，分处而藏。切勿随手调配混合物——尤其是漂白剂。")
                         rule("03", "通风", "挥发之物，当于通风处使用；远热源，远孩童，远宠物。")
                     }
+
+                    Button {
+                        app.selectedTab = .scan
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("进入识别台")
+                                    .font(.headline)
+                                    .foregroundStyle(Theme.ink)
+                                Text("上传照片，得到产品、风险、禁忌混用、急救与绿色处置建议。")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.muted)
+                            }
+                            Spacer()
+                            Text("→").font(.title2.bold()).foregroundStyle(Theme.green)
+                        }
+                        .padding(16)
+                        .background(Theme.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(16)
                 .padding(.bottom, 28)

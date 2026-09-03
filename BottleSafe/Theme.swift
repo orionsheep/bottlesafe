@@ -10,6 +10,8 @@ enum Theme {
     static let amber = Color(red: 0.62, green: 0.42, blue: 0.08)
     /// 辅助说明：比正文浅，但仍需在米色底上可读。
     static let muted = Color(red: 0.28, green: 0.32, blue: 0.28)
+    /// 危急档评分环：比珊瑚更深一档的红。
+    static let deepRed = Color(red: 0.55, green: 0.12, blue: 0.10)
 }
 
 enum RiskLevel: String, Codable, Sendable {
@@ -17,11 +19,22 @@ enum RiskLevel: String, Codable, Sendable {
 
     var label: String {
         switch self {
-        case .unknown: "未知"
+        case .unknown: "暂无法判断"
         case .low: "低危"
         case .medium: "中危"
         case .high: "高危"
         case .critical: "危急"
+        }
+    }
+
+    /// 识别结果主标，对齐手机 Web `RISK_BAND`。
+    var bandLabel: String {
+        switch self {
+        case .unknown: "暂无法判断"
+        case .low: "暂无明显关注"
+        case .medium: "建议留意"
+        case .high: "建议重点关注"
+        case .critical: "建议优先处理"
         }
     }
 
@@ -31,6 +44,28 @@ enum RiskLevel: String, Codable, Sendable {
         case .low: Theme.green
         case .medium: Theme.amber
         case .high, .critical: Theme.coral
+        }
+    }
+
+    /// 安全评分（0-100），与手机 Web `riskScore` 对齐；未知给中间分，不是绿灯。
+    var safetyScore: Int {
+        switch self {
+        case .unknown: 50
+        case .low: 88
+        case .medium: 68
+        case .high: 40
+        case .critical: 15
+        }
+    }
+
+    /// 评分环用五档色（危急比高危更深）。
+    var scoreTint: Color {
+        switch self {
+        case .unknown: Theme.muted
+        case .low: Theme.green
+        case .medium: Theme.amber
+        case .high: Theme.coral
+        case .critical: Theme.deepRed
         }
     }
 }

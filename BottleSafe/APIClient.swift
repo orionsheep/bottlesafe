@@ -44,10 +44,27 @@ final class APIClient {
         return try await decode(req)
     }
 
-    func saveItem(analysis: ChemicalAnalysis, imagePath: String?) async throws {
-        struct Body: Codable { var analysis: ChemicalAnalysis; var image_path: String? }
+    /// 存档，返回后端分配的物品 id（用于后续补打位置）。
+    @discardableResult
+    func saveItem(analysis: ChemicalAnalysis, imagePath: String?, location: String? = nil) async throws -> Int {
+        struct Body: Codable { var analysis: ChemicalAnalysis; var image_path: String?; var location: String? }
         struct OK: Codable { var id: Int }
-        let _: OK = try await post("/api/household/items", body: Body(analysis: analysis, image_path: imagePath))
+        let ok: OK = try await post("/api/household/items", body: Body(analysis: analysis, image_path: imagePath, location: location))
+        return ok.id
+    }
+
+    /// 更新物品存放位置；传 nil 表示清除。显式编码 null，后端才能区分「清除」与「未提供」。
+    func patchLocation(id: Int, location: String?) async throws {
+        var req = URLRequest(url: baseURL.appending(path: "/api/household/items/\(id)"))
+        req.httpMethod = "PATCH"
+        req.timeoutInterval = 30
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["location": location as Any])
+        _ = try await send(req)
+    }
+
+    func feedbackStats() async throws -> FeedbackStats {
+        try await get("/api/feedback/stats")
     }
 
     func householdItems() async throws -> [HouseholdItem] {
@@ -75,6 +92,27 @@ final class APIClient {
 
     func timeline() async throws -> TimelinePayload {
         try await get("/api/household/timeline")
+    }
+
+    func ask(question: String, history: [AskTurn], context: [String: Bool]) async throws -> AskResponse {
+        struct Body: Codable {
+            var question: String
+            var mode: String
+            var history: [AskTurn]
+            var context: [String: Bool]
+        }
+        return try await post("/api/ask", body: Body(question: question, mode: "auto", history: history, context: context))
+    }
+
+    func submitFeedback(rating: String, comment: String, audience: String, page: String) async throws {
+        struct Body: Codable {
+            var rating: String
+            var comment: String
+            var audience: String
+            var page: String
+        }
+        struct OK: Codable { var ok: Bool? }
+        let _: OK = try await post("/api/feedback", body: Body(rating: rating, comment: comment, audience: audience, page: page))
     }
 
     func imageURL(_ path: String?) -> URL? {

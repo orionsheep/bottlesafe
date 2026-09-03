@@ -17,9 +17,10 @@ struct Card<Content: View>: View {
 
 struct RiskChip: View {
     var level: RiskLevel
+    var useBandLabel = false
     var body: some View {
         let onDark = level == .critical || level == .high || level == .medium
-        Text(level.label)
+        Text(useBandLabel ? level.bandLabel : level.label)
             .font(.caption.bold())
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
@@ -73,6 +74,58 @@ struct LabeledBlock: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.caption.bold()).foregroundStyle(danger ? Theme.coral : Theme.muted)
             Text(text).font(.subheadline).foregroundStyle(Theme.ink)
+        }
+    }
+}
+
+/// 安全评分圆环：Circle trim 自绘，未知显示「?」。
+struct ScoreRing: View {
+    var level: RiskLevel
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Theme.ink.opacity(0.08), lineWidth: 9)
+            Circle()
+                .trim(from: 0, to: CGFloat(level.safetyScore) / 100)
+                .stroke(level.scoreTint, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing: 0) {
+                Text("\(level.safetyScore)")
+                    .font(.title.bold())
+                    .foregroundStyle(level.scoreTint)
+                Text("/100")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.muted)
+            }
+        }
+        .frame(width: 92, height: 92)
+    }
+}
+
+/// 六维评分条形：risk 极性珊瑚色、safe 极性绿色。
+struct DimensionBar: View {
+    var dim: DimensionScore
+    private var barColor: Color { dim.isRiskPolarity ? Theme.coral : Theme.green }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(dim.displayLabel)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Text("\(Int(dim.clampedScore.rounded()))")
+                    .font(.caption.bold())
+                    .foregroundStyle(barColor)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Theme.ink.opacity(0.07))
+                    Capsule()
+                        .fill(barColor)
+                        .frame(width: max(geo.size.width * dim.clampedScore / 100, 4))
+                }
+            }
+            .frame(height: 8)
         }
     }
 }

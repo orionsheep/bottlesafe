@@ -13,7 +13,42 @@ struct HouseholdProfile: Codable, Equatable {
     var asthma = false
     var hypertension = false
 
+    /// 新增五维画像（健康关注/过敏原/饮食/运动），预设之外允许自定义标签。
+    var doctorFlags: [String] = []
+    var allergens: [String] = []
+    var diet: [String] = []
+    var fitness: [String] = []
+
+    /// 这瓶当前怎么放。三态：true / false / 未填(nil)。仅非 nil 才进规则引擎 context。
+    var childAccessible: Bool? = nil
+    var nearFood: Bool? = nil
+    var originalContainer: Bool? = nil
+
     static let storageKey = "householdProfile"
+
+    /// 自定义解码：旧版本 UserDefaults 数据没有新维度键，decodeIfPresent 兜底兼容。
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        infant = try c.decodeIfPresent(Bool.self, forKey: .infant) ?? false
+        child = try c.decodeIfPresent(Bool.self, forKey: .child) ?? false
+        elderly = try c.decodeIfPresent(Bool.self, forKey: .elderly) ?? false
+        pregnant = try c.decodeIfPresent(Bool.self, forKey: .pregnant) ?? false
+        tryingConceive = try c.decodeIfPresent(Bool.self, forKey: .tryingConceive) ?? false
+        petCat = try c.decodeIfPresent(Bool.self, forKey: .petCat) ?? false
+        petDog = try c.decodeIfPresent(Bool.self, forKey: .petDog) ?? false
+        allergy = try c.decodeIfPresent(Bool.self, forKey: .allergy) ?? false
+        asthma = try c.decodeIfPresent(Bool.self, forKey: .asthma) ?? false
+        hypertension = try c.decodeIfPresent(Bool.self, forKey: .hypertension) ?? false
+        doctorFlags = try c.decodeIfPresent([String].self, forKey: .doctorFlags) ?? []
+        allergens = try c.decodeIfPresent([String].self, forKey: .allergens) ?? []
+        diet = try c.decodeIfPresent([String].self, forKey: .diet) ?? []
+        fitness = try c.decodeIfPresent([String].self, forKey: .fitness) ?? []
+        childAccessible = try c.decodeIfPresent(Bool.self, forKey: .childAccessible)
+        nearFood = try c.decodeIfPresent(Bool.self, forKey: .nearFood)
+        originalContainer = try c.decodeIfPresent(Bool.self, forKey: .originalContainer)
+    }
+
+    init() {}
 
     static func load() -> HouseholdProfile {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
@@ -29,8 +64,10 @@ struct HouseholdProfile: Codable, Equatable {
         }
     }
 
+    /// 规则引擎 context：人群布尔 + 已填的储存三态。新维度（健康/过敏原/饮食/运动）不进 context，
+    /// 仅用于本地提示文案与反馈 audience；过敏原列表会合并进 allergy 布尔。
     var apiContext: [String: Bool] {
-        [
+        var ctx: [String: Bool] = [
             "child": infant || child,
             "infant": infant,
             "elderly": elderly,
@@ -38,10 +75,18 @@ struct HouseholdProfile: Codable, Equatable {
             "trying_conceive": tryingConceive,
             "pet_cat": petCat,
             "pet_dog": petDog,
-            "allergy": allergy,
+            "allergy": allergy || !allergens.isEmpty,
             "asthma": asthma,
             "hypertension": hypertension,
         ]
+        if let childAccessible { ctx["child_accessible"] = childAccessible }
+        if let nearFood { ctx["near_food"] = nearFood }
+        if let originalContainer { ctx["original_container"] = originalContainer }
+        return ctx
+    }
+
+    var storageFilledCount: Int {
+        [childAccessible, nearFood, originalContainer].compactMap { $0 }.count
     }
 
     var selectedLabels: [String] {
@@ -56,7 +101,16 @@ struct HouseholdProfile: Codable, Equatable {
         if allergy { out.append("过敏体质") }
         if asthma { out.append("哮喘") }
         if hypertension { out.append("高血压") }
+        out.append(contentsOf: doctorFlags)
+        out.append(contentsOf: allergens)
+        out.append(contentsOf: diet)
+        out.append(contentsOf: fitness)
         return out
+    }
+
+    /// 已选项总数（10 布尔 + 四维标签）。
+    var selectedCount: Int {
+        selectedLabels.count
     }
 
     func hints(for analysis: ChemicalAnalysis) -> [String] {
@@ -80,8 +134,26 @@ struct HouseholdProfile: Codable, Equatable {
         if elderly && (high || corrosive) {
             out.append("家有老人：原瓶原标、不要倒进饮料瓶；误食立即打 120，并带上包装。")
         }
+        let skinSensitive = allergy || !allergens.isEmpty || doctorFlags.contains { $0.contains("湿疹") || $0.contains("特应性皮炎") }
+        let hasFragrance = names.contains("香精") || names.contains("香料") || names.contains("防腐剂")
+            || names.contains("fragrance") || names.contains("parfum")
+        if skinSensitive && hasFragrance {
+            out.append("过敏/皮肤敏感：本品含香精、香料或防腐剂，可能诱发接触性过敏。留意成分表中的香料、MIT/CMIT；先在手臂内侧小面积试用，出现红痒立即停用。")
+        }
         return out
     }
+}
+
+/// 五维画像的预设标签。
+enum ProfileDimensions {
+    static let doctorFlags = ["高血压", "糖尿病", "高血脂", "痛风·高尿酸", "脂肪肝", "慢性肾病", "甲状腺疾病", "湿疹·特应性皮炎", "乳糖不耐受", "便秘", "蛀牙", "肠道敏感"]
+    static let allergens = ["牛奶·乳糖", "鸡蛋", "花生·坚果", "海鲜", "花粉", "尘螨"]
+    static let diet = ["素食", "纯素", "清真", "低糖", "低盐", "低脂", "生酮", "低碳水", "无麸质", "控卡减脂", "高蛋白", "忌辛辣"]
+    static let fitness = ["增肌期", "减脂期", "日常健身", "耐力训练", "康复训练", "久坐少动", "备赛·需查兴奋剂"]
+
+    /// 自定义标签上限：每条 ≤12 字，每维 ≤5 个。
+    static let customMaxLength = 12
+    static let customMaxCount = 5
 }
 
 struct KnowledgeItem: Identifiable {

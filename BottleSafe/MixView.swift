@@ -141,29 +141,66 @@ struct MixView: View {
         defer { busy = false }
         do {
             result = try await app.client.mix(
-                a: .init(analysis: slotA.analysis, name: slotA.name, image_path: slotA.imagePath),
-                b: .init(analysis: slotB.analysis, name: slotB.name, image_path: slotB.imagePath)
+                a: .init(analysis: slotA.analysis, name: slotA.name, image_path: slotA.imagePath, location: slotA.location),
+                b: .init(analysis: slotB.analysis, name: slotB.name, image_path: slotB.imagePath, location: slotB.location)
             )
         } catch {
             self.error = error.localizedDescription
         }
     }
 
+    private func severityRank(_ risk: CrossRisk) -> Int {
+        switch risk.severity {
+        case "critical": 0
+        case "high": 1
+        case "medium": 2
+        case "low": 3
+        default: 4
+        }
+    }
+
+    private func bottle(for out: MixItemOut?, slot: MixCandidate?) -> CrossRiskBottle {
+        let recognized = out?.matched?.map(\.name).nilIfEmpty
+            ?? slot.map { Array($0.analysis.ingredients.prefix(3)).map(\.name) }
+            ?? []
+        return CrossRiskBottle(
+            name: slot?.name ?? out?.name ?? "未命名",
+            category: slot?.analysis.product.category,
+            recognized: recognized,
+            jpeg: slot?.localJPEG,
+            imagePath: slot?.imagePath ?? out?.image_path
+        )
+    }
+
     @ViewBuilder
     private func outcome(_ r: MixResponse) -> some View {
         let titleA = slotA?.name ?? ""
         let titleB = slotB?.name ?? ""
+        let sorted = r.cross_risks.sorted { severityRank($0) < severityRank($1) }
+        let bA = bottle(for: r.items.first, slot: slotA)
+        let bB = bottle(for: r.items.count > 1 ? r.items[1] : nil, slot: slotB)
         switch r.kind {
         case .danger:
-            let hot = r.cross_risks.first { $0.severity == "critical" || $0.severity == "high" } ?? r.cross_risks.first
             VStack(alignment: .leading, spacing: 8) {
-                Text(gasTitle(hot?.reason ?? ""))
-                    .font(.caption.bold())
-                    .padding(6)
-                    .background(Theme.coral, in: Capsule())
-                    .foregroundStyle(.white)
+                HStack(spacing: 8) {
+                    Text(gasTitle(sorted.first?.reason ?? ""))
+                        .font(.caption.bold())
+                        .padding(6)
+                        .background(Theme.coral, in: Capsule())
+                        .foregroundStyle(.white)
+                    Text((sorted.first?.isLLM == true || r.verdict_source == "llm") ? "AI推测" : "基于规则库")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(((sorted.first?.isLLM == true) ? Theme.amber : Theme.green).opacity(0.16), in: Capsule())
+                        .foregroundStyle(sorted.first?.isLLM == true ? Theme.amber : Theme.green)
+                }
                 Text("\(titleA)  ×  \(titleB)").font(.title3.bold()).foregroundStyle(Theme.ink)
-                Text(hot?.reason ?? "").font(.subheadline).foregroundStyle(Theme.ink)
+                if let locRisk = sorted.first(where: { $0.same_location == true }) {
+                    Text("📍 这两瓶放在同一位置（\(locRisk.location?.nilIfEmpty ?? "同一处")），现在就分开")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Theme.coral)
+                }
                 Text("· 立刻把两瓶分开放进不同柜子").foregroundStyle(Theme.ink)
                 Text("· 开窗，离开这个房间").foregroundStyle(Theme.ink)
                 Text("· 不要倒进同一下水道").foregroundStyle(Theme.ink)
@@ -171,6 +208,23 @@ struct MixView: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.coral.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
+            riskCards(sorted, bA: bA, bB: bB)
+        case .caution:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("保守提示：可能有相互影响")
+                    .font(.caption.bold())
+                    .padding(6)
+                    .background(Theme.amber, in: Capsule())
+                    .foregroundStyle(.white)
+                Text("\(titleA)  ×  \(titleB)").font(.title3.bold()).foregroundStyle(Theme.ink)
+                Text("这对组合没有命中强禁忌，但有保守档的关注点。仍建议分开存放、以产品标签为准。")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.ink)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.amber.opacity(0.16), in: RoundedRectangle(cornerRadius: 18))
+            riskCards(sorted, bA: bA, bB: bB)
         case .unknown:
             VStack(alignment: .leading, spacing: 8) {
                 Text("混用结果未知")
@@ -197,6 +251,54 @@ struct MixView: View {
         }
     }
 
+    /// 最严重的一条用五件套卡展开，其余紧凑列出。
+    @ViewBuilder
+    private func riskCards(_ sorted: [CrossRisk], bA: CrossRiskBottle, bB: CrossRiskBottle) -> some View {
+        if let first = sorted.first {
+            CrossRiskCard(risk: first, bottleA: bA, bottleB: bB)
+        }
+        if sorted.count > 1 {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("其他关注点")
+                    .font(.caption.bold())
+                    .foregroundStyle(Theme.muted)
+                ForEach(Array(sorted.dropFirst().enumerated()), id: \.offset) { _, risk in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text(risk.isLLM ? "AI推测" : "基于规则库")
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background((risk.isLLM ? Theme.amber : Theme.green).opacity(0.16), in: Capsule())
+                                .foregroundStyle(risk.isLLM ? Theme.amber : Theme.green)
+                            RiskChip(level: risk.risk)
+                        }
+                        Text(risk.reason)
+                            .font(.caption)
+                            .foregroundStyle(Theme.ink)
+                        if let action = risk.action?.nilIfEmpty {
+                            Text("建议：\(action)")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.muted)
+                        }
+                        if risk.same_location == true {
+                            Text("📍 同一位置（\(risk.location?.nilIfEmpty ?? "同一处")），请分开")
+                                .font(.caption2.bold())
+                                .foregroundStyle(Theme.coral)
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.paper, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Theme.ink.opacity(0.08), lineWidth: 1)
+                    )
+                }
+            }
+        }
+    }
+
     private func gasTitle(_ reason: String) -> String {
         if reason.contains("氯气") { return "氯气" }
         let part = reason.split(separator: "：").last.map(String.init) ?? "禁忌反应"
@@ -212,6 +314,11 @@ struct MixView: View {
                 Text(title).font(.caption).foregroundStyle(Theme.muted)
                 Text(cand?.name ?? "点选一瓶").font(.headline).foregroundStyle(Theme.ink)
                 if let cand { RiskChip(level: RiskLevel(rawValue: cand.riskLevel) ?? .unknown) }
+                if let loc = cand?.location?.nilIfEmpty {
+                    Text("📍 \(loc)")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.muted)
+                }
             }
             Spacer()
             if cand != nil { Button("换掉", action: clear).font(.caption) }
@@ -245,6 +352,7 @@ struct MixView: View {
             riskLevel: item.analysis?.risk_level ?? "unknown",
             imagePath: item.image_path,
             localJPEG: nil,
+            location: item.location,
             analysis: item.analysis ?? ChemicalAnalysis(
                 product: ProductInfo(name: item.observed_name, brand: nil, category: nil, barcode: nil, manufacturer: nil),
                 visual_evidence: [], hazards: [], ingredients: [], signal_words: [],

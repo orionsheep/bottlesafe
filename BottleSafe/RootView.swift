@@ -19,6 +19,9 @@ struct RootView: View {
             Tab("档案", systemImage: "archivebox.fill", value: .archive) {
                 ArchiveView()
             }
+            Tab("我的", systemImage: "person.crop.circle.fill", value: .me) {
+                MeView()
+            }
         }
         .tint(Theme.green)
         .preferredColorScheme(.light)
@@ -41,17 +44,19 @@ struct RootView: View {
         }
         .onChange(of: app.tourStep) { _, step in
             guard let step else { return }
-            let tabs: [AppTab] = [.guide, .guide, .scan, .mix, .archive, .guide]
+            let tabs: [AppTab] = [.guide, .guide, .scan, .mix, .archive, .me, .guide]
             if tabs.indices.contains(step) {
                 app.selectedTab = tabs[step]
             }
         }
         .task(id: app.tourStep) {
             guard app.tourStep != nil else { return }
+            let seconds: [Double] = [12, 10, 12, 14, 11, 12, 11]
             while let step = app.tourStep {
-                try? await Task.sleep(for: .seconds(step == 3 ? 12 : 10))
+                let wait = seconds.indices.contains(step) ? seconds[step] : 10
+                try? await Task.sleep(for: .seconds(wait))
                 guard app.tourStep == step else { return }
-                if step >= 5 {
+                if step >= 6 {
                     app.tourStep = nil
                     return
                 }

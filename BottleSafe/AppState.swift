@@ -105,9 +105,10 @@ final class AppState {
             var name: String
             var riskLevel: String
             var imagePath: String?
+            var location: String?
             var analysis: ChemicalAnalysis
         }
-        let payload = drafts.map { Disk(id: $0.id, name: $0.name, riskLevel: $0.riskLevel, imagePath: $0.imagePath, analysis: $0.analysis) }
+        let payload = drafts.map { Disk(id: $0.id, name: $0.name, riskLevel: $0.riskLevel, imagePath: $0.imagePath, location: $0.location, analysis: $0.analysis) }
         if let data = try? JSONEncoder().encode(payload) {
             UserDefaults.standard.set(data, forKey: "mixDrafts")
         }
@@ -119,16 +120,17 @@ final class AppState {
             var name: String
             var riskLevel: String
             var imagePath: String?
+            var location: String?
             var analysis: ChemicalAnalysis
         }
         guard let data = UserDefaults.standard.data(forKey: "mixDrafts"),
               let payload = try? JSONDecoder().decode([Disk].self, from: data) else { return }
         drafts = payload.map {
-            MixCandidate(id: $0.id, name: $0.name, riskLevel: $0.riskLevel, imagePath: $0.imagePath, localJPEG: nil, analysis: $0.analysis)
+            MixCandidate(id: $0.id, name: $0.name, riskLevel: $0.riskLevel, imagePath: $0.imagePath, localJPEG: nil, location: $0.location, analysis: $0.analysis)
         }
     }
 }
 
 enum AppTab: String, Hashable {
-    case guide, scan, mix, archive
+    case guide, scan, mix, archive, me
 }
