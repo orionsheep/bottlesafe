@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
-import Assistant from "./assistant";
+import AssistantFab from "./AssistantFab";
 import ReportPanel from "./report";
 import FeedbackBar from "./FeedbackBar";
 import ProfileSheet from "../m/ProfileSheet";
-import { loadProfile, loadStorage, toApiContext, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../profile";
+import { loadProfile, loadStorage, toApiContext, profileHints, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../profile";
+import "./result-extra.css";
 
 // 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
@@ -37,6 +38,9 @@ type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: s
   evidence?: Evidence[];
   expiring_standards?: Evidence[];
   cross_risks?: { a: string; b: string; reason: string; severity: string }[];
+  dimension_scores?: { key: string; label: string; score: number; polarity: string }[];
+  coverage?: { matched: number; total: number; note?: string };
+  ingredient_warnings?: { name: string; tag?: string; text: string; severity: string }[];
 };
 type Evidence = { id: string; title: string; standard_no?: string | null; source_level?: string; source_level_label?: string; clause?: string; effective_from?: string | null; effective_to?: string | null; next_effective_from?: string | null; url?: string | null; summary?: string; note?: string | null };
 type HouseholdItem = { id: number; [k: string]: unknown };
@@ -49,6 +53,14 @@ const riskLabelZh: Record<string, string> = {
 };
 const levelColor: Record<string, string> = {
   unknown: "#8d938f", low: "#2f8f70", medium: "#c8842f", high: "#c0503f", critical: "#1d211f",
+};
+const SEV_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
+const WARN_TITLE: Record<string, { zh: string; en: string }> = {
+  critical: { zh: "严重成分警示", en: "Critical ingredient warnings" },
+  high: { zh: "高风险成分警示", en: "High-risk ingredient warnings" },
+  medium: { zh: "成分注意提示", en: "Ingredient cautions" },
+  low: { zh: "成分温和提示", en: "Ingredient notes" },
+  腐蚀: { zh: "腐蚀性警示", en: "Corrosion warning" },
 };
 
 export default function ScanPage() {
@@ -64,7 +76,10 @@ export default function ScanPage() {
   const [saved, setSaved] = useState(false);
   const [items, setItems] = useState<HouseholdItem[]>([]);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [step, setStep] = useState<number | null>(null); // 分析四步进度：当前进行中的步骤序号（4=全部完成），null=空闲
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const timersRef = useRef<number[]>([]);
 
   useEffect(() => {
     const timer = window.setInterval(async () => {
@@ -95,21 +110,37 @@ export default function ScanPage() {
 
   const analyze = async () => {
     if (!file) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setBusy(true);
     setError(null);
+    setStep(0);
+    // 纯前端 staged 进度：0s/1.2s/2.8s/5s 逐步推进，API 返回后统一收尾
+    timersRef.current = [1200, 2800, 5000].map((ms, i) => window.setTimeout(() => setStep(i + 1), ms));
     try {
       const form = new FormData();
       form.append("image", file);
       form.append("context", JSON.stringify(toApiContext(loadProfile(), loadStorage())));
-      const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form });
+      const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form, signal: controller.signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
+      setStep(4);
       setResult(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (!(e instanceof Error && e.name === "AbortError")) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
+      timersRef.current.forEach((t) => window.clearTimeout(t));
+      timersRef.current = [];
+      abortRef.current = null;
+      setStep(null);
       setBusy(false);
     }
+  };
+
+  const cancelAnalyze = () => {
+    abortRef.current?.abort(); // finally 里统一清理计时器与状态，取消本身不报错
   };
 
   const saveToHousehold = async () => {
@@ -122,12 +153,21 @@ export default function ScanPage() {
     if (res.ok) setSaved(true);
   };
 
-  const removeItem = async (id: number) => {
-    await fetch(`${API}/api/household/items/${id}`, { method: "DELETE" });
-    setItems((list) => list.filter((it) => it.id !== id));
-  };
-
   const a = result?.analysis;
+  const score = riskScore(a?.risk_level);
+  const ringColor = levelColor[a?.risk_level ?? "unknown"] ?? levelColor.unknown;
+  const RING_C = 2 * Math.PI * 46;
+  const warnings = result?.ingredient_warnings ?? [];
+  const topWarnSev = warnings.reduce((top, w) => ((SEV_RANK[w.severity] ?? 0) > (SEV_RANK[top] ?? 0) ? w.severity : top), warnings[0]?.severity ?? "low");
+  const warnTitle = warnings.length > 0 ? (WARN_TITLE[topWarnSev] ?? { zh: `${topWarnSev}警示`, en: `${topWarnSev} warning` }) : null;
+  const ANALYZE_STEPS = lang === "zh"
+    ? ["识别商品", "提取成分信息", "成分安全分析", "综合评估"]
+    : ["Identify product", "Extract ingredients", "Safety analysis", "Overall assessment"];
+  const stepStateText = {
+    wait: lang === "zh" ? "等待中" : "Waiting",
+    active: lang === "zh" ? "进行中" : "In progress",
+    done: lang === "zh" ? "完成" : "Done",
+  };
   const statusText = lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
   const errorText = error
     ? (lang === "zh" ? error : error.replace("识别结果未通过结构校验：", "Recognition failed schema validation: ").replace("不支持的图片格式", "Unsupported image format"))
@@ -136,8 +176,8 @@ export default function ScanPage() {
   return (
     <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
       <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/#method">{hn.navMethod}</a><a href="/scan">{hn.navScan}</a><a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a></div>
+        <a className="brand" href="/"><span className="brand-mark"><img src="/mascot.png" alt="" width={30} height={30} style={{ borderRadius: "50%", display: "block" }} /></span><span>HOME<br />HAZARD</span></a>
+        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/scan">{hn.navScan}</a><a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a></div>
         <div className="nav-right">
           <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
           <a className="menu" href="/"><span />{t.back}</a>
@@ -186,6 +226,27 @@ export default function ScanPage() {
             </div>
             <span className="sample-hint">{t.samplesHint}</span>
           </div>
+          <div className="sample-row">
+            <span className="sample-label">{t.samplesExpandTitle}</span>
+            <div className="sample-btns">
+              {["samples/toy.jpg", "samples/paint.jpg", "samples/mothballs.jpg", "samples/rice.jpg"].map((src, i) => (
+                <button
+                  key={src}
+                  className="sample-btn"
+                  disabled={busy || status.status !== "ready"}
+                  onClick={async () => {
+                    try {
+                      const r = await fetch(src);
+                      const b = await r.blob();
+                      pick(new File([b], src.split("/").pop() as string, { type: "image/jpeg" }));
+                    } catch { /* sample fetch failed, ignore */ }
+                  }}
+                >
+                  {t.samplesExpand[i]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="scan-actions">
             <button className="analyze-btn" onClick={analyze} disabled={!file || busy || status.status !== "ready"}>
               {busy ? t.busy : status.status === "ready" ? t.analyze : t.waiting}
@@ -195,7 +256,29 @@ export default function ScanPage() {
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
         </div>
 
-        {!a && (
+        {busy && (
+          <div className="analyzing-panel">
+            <div className="analyzing-top">
+              {preview && <img className="analyzing-thumb" src={preview} alt={lang === "zh" ? "待识别图片缩略图" : "scan thumbnail"} />}
+              <span className="analyzing-chip">{lang === "zh" ? "品类识别中" : "Identifying category"}</span>
+              <button type="button" className="analyzing-cancel" onClick={cancelAnalyze}>{lang === "zh" ? "取消分析" : "Cancel"}</button>
+            </div>
+            <ol className="analyzing-steps">
+              {ANALYZE_STEPS.map((label, i) => {
+                const state = step !== null && i < step ? "done" : step === i ? "active" : "wait";
+                return (
+                  <li key={label} className={`ana-step ${state}`}>
+                    <span className="ana-ico">{state === "done" ? "✓" : ""}</span>
+                    {label}
+                    <span className="ana-state">{stepStateText[state]}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
+
+        {!a && !busy && (
           <div className="scan-placeholder">
             <p className="section-no">{t.placeholderNo}</p>
             <h3>{t.placeholderTitle}</h3>
@@ -208,24 +291,67 @@ export default function ScanPage() {
 
         {a && (
           <div className="scan-result">
-            <div className="risk-band-row">
-              <span className="risk-band" style={{ background: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.bg, color: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.color }}>
-                {RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.[lang]}
-              </span>
-              <span className="risk-score" style={{ color: levelColor[a.risk_level] }}>
-                {lang === "zh" ? "评分" : "Score"} {riskScore(a.risk_level)}
-              </span>
+            <div className="score-hero">
+              <div className="score-ring" role="img" aria-label={`${lang === "zh" ? "安全评分" : "Safety score"} ${score}/100`}>
+                <svg viewBox="0 0 104 104">
+                  <circle className="ring-bg" cx="52" cy="52" r="46" />
+                  <circle className="ring-fg" cx="52" cy="52" r="46" stroke={ringColor} strokeDasharray={RING_C} strokeDashoffset={RING_C * (1 - score / 100)} />
+                </svg>
+                <div className="score-ring-center">
+                  <b style={{ color: ringColor }}>{score}</b>
+                  <span>{lang === "zh" ? "/100分" : "/100"}</span>
+                </div>
+              </div>
+              <div className="score-side">
+                <span className="risk-band" style={{ background: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.bg, color: RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.color }}>
+                  {RISK_BAND[(a.risk_level as RiskBand) ?? "unknown"]?.[lang]}
+                </span>
+                {result?.coverage?.note && <p className="coverage-note">{result.coverage.note}</p>}
+              </div>
             </div>
+            {result?.dimension_scores && result.dimension_scores.length > 0 && (
+              <div className="dim-block">
+                <p className="dim-caption">{lang === "zh" ? "六维安全评分" : "Dimension scores"}</p>
+                <ul className="dim-list">
+                  {result.dimension_scores.map((d) => (
+                    <li key={d.key} className="dim-row">
+                      <span className="dim-label">{d.label}</span>
+                      <span className="dim-track">
+                        <span className={`dim-fill ${d.polarity === "risk" ? "risk" : "safe"}`} style={{ width: `${Math.max(0, Math.min(100, d.score))}%` }} />
+                      </span>
+                      <span className="dim-score">{d.score}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="dim-hint">{lang === "zh" ? "珊瑚色为风险维度（分越高越危险），绿色为安全维度（分越高越好）。" : "Coral = risk (higher is worse), green = safety (higher is better)."}</p>
+              </div>
+            )}
             <p className="score-note">{scoreNote(lang)}</p>
             {a.risk_level === "unknown" && (
               <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe. Please re-photograph the label."}</p>
             )}
             <p className="confidence-note">{lang === "zh" ? "本结论基于包装识别与结构校验，非实验室成分检测。" : "Based on packaging recognition and schema validation — not a lab test."}</p>
+            {profileHints(a, loadProfile(), lang).map((hint) => (
+              <p key={hint} className="profile-hint"><span className="hint-badge">{lang === "zh" ? "规则命中" : "Rule-based"}</span>{hint}</p>
+            ))}
             <h2>{a.product.name ?? t.unnamedProduct}</h2>
             <p className="result-meta">
               {[a.product.brand, a.product.category, a.product.barcode].filter(Boolean).join(" · ") || t.noLabel}
             </p>
             <p className="result-summary">{a.summary}</p>
+
+            {warnings.length > 0 && warnTitle && (
+              <div className={`result-block${(SEV_RANK[topWarnSev] ?? 0) >= 2 ? " block-danger" : ""}`}>
+                <h3>{warnTitle[lang]}</h3>
+                <ol className="warn-list">
+                  {warnings.map((w, i) => (
+                    <li key={i} className="warn-item">
+                      <span><b>{w.name}{w.tag ? `（${w.tag}）` : ""}</b> <span className="warn-text">{w.text}</span></span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
             {a.hazards.length > 0 && (
               <div className="result-block">
@@ -365,47 +491,11 @@ export default function ScanPage() {
 
       <FeedbackBar page="scan" />
 
-      <Assistant />
-
-      <section className="household-archive">
-        <p className="section-no">{t.archiveNo}</p>
-        <h2>{t.archiveTitle}</h2>
-        {items.length === 0 ? (
-          <p className="archive-empty">{t.archiveEmpty}</p>
-        ) : (
-          <>
-            {/* 最近分析（社会证明 + 回访入口） */}
-            <div className="recent-box">
-              <p className="recent-label">{lang === "zh" ? "最近分析" : "Recent scans"}</p>
-              <ul className="recent-list">
-                {[...items].slice(-3).reverse().map((it) => {
-                  const rl = ((it as { analysis?: { risk_level?: string } }).analysis?.risk_level) || "unknown";
-                  return (
-                    <li key={it.id} className="recent-item">
-                      <span className={`risk-band`} style={{ background: RISK_BAND[(rl as RiskBand)]?.bg, color: RISK_BAND[(rl as RiskBand)]?.color, fontSize: 10, padding: "2px 8px" }}>
-                        {riskScore(rl)}
-                      </span>
-                      <span className="recent-name">#{(it as { id?: number }).id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            <ul>
-              {items.map((it) => (
-                <li key={it.id}>
-                  <span>#{it.id} · {(it as { observed_name?: string }).observed_name ?? t.unnamed}</span>
-                  <button onClick={() => removeItem(it.id)} aria-label="删除档案">{t.remove}</button>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
+      <AssistantFab />
 
       <ReportPanel nItems={items.length} />
 
-      <footer><a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
+      <footer><a className="brand" href="/"><span className="brand-mark"><img src="/mascot.png" alt="" width={30} height={30} style={{ borderRadius: "50%", display: "block" }} /></span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
     </main>
   );
 }

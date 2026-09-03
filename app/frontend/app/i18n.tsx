@@ -33,7 +33,7 @@ export function useLang() {
 /* ---------------- 首页文案 ---------------- */
 export const HOME_COPY = {
   en: {
-    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", navMix: "Do not mix", explore: "EXPLORE",
+    navIndex: "Hazard index", navMethod: "The method", navAction: "Safer home", navScan: "AI scan", navMix: "Do not mix", navAssistant: "AI assistant", explore: "EXPLORE",
     eyebrow: "The house is familiar. What lives inside it?",
     h1a: "0 hidden hazards", h1b: "for the next", h1c: "7 years",
     modeMorning: "Morning", modeNight: "Night",
@@ -58,7 +58,7 @@ export const HOME_COPY = {
     back: "BACK TO LIGHT ↑",
   },
   zh: {
-    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", navMix: "禁忌混用", explore: "探索",
+    navIndex: "危害图鉴", navMethod: "安全之道", navAction: "安家之策", navScan: "AI 识别", navMix: "禁忌混用", navAssistant: "AI 助手", explore: "探索",
     eyebrow: "屋舍寻常，内里藏着什么？",
     h1a: "0 处隐患", h1b: "藏于未来", h1c: "7 年",
     modeMorning: "清晨", modeNight: "入夜",
@@ -103,6 +103,8 @@ export const SCAN_COPY = {
     dropHint: ["Click to choose an image", "JPG · PNG · WEBP"],
     samplesTitle: "No photo handy? Try a sample",
     samples: ["Bleach", "Toilet cleaner", "Dataset sample"],
+    samplesExpandTitle: "Also in the brief · read the label, not a lab test",
+    samplesExpand: ["Toy", "Paint", "Mothballs", "Rice bag"],
     samplesHint: "Tap one — it scans instantly",
     analyze: "Start scan →", busy: "Scanning… (first run is slower)", waiting: "Waiting for model…",
     save: "Save to household archive", saved: "Saved to archive ✓",
@@ -174,6 +176,8 @@ export const SCAN_COPY = {
     dropHint: ["轻点选图", "JPG · PNG · WEBP"],
     samplesTitle: "没有现成照片？示例一键试用",
     samples: ["漂白剂", "洁厕剂", "数据集样图"],
+    samplesExpandTitle: "赛题拓展 · 读标签，不替代检测",
+    samplesExpand: ["玩具", "涂料", "萘丸", "米袋"],
     samplesHint: "点一张，立即识别",
     analyze: "开始识别 →", busy: "识别中…（首次稍慢）", waiting: "等待模型加载…",
     save: "存入家庭档案", saved: "已入档案 ✓",
