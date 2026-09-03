@@ -78,6 +78,20 @@ else:
     threading.Thread(target=_load_model, daemon=True).start()
 
 
+def _seed_expand_archive() -> None:
+    """启动时把玩具/涂料/萘丸/米袋写入档案并贴位置；已有则跳过。"""
+    try:
+        from ..seed_expand import ensure_expand_archive
+
+        with ChemicalDB(DB_PATH) as db:
+            ensure_expand_archive(db, HOUSEHOLD_ID, UPLOAD_DIR)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[seed_expand] skipped: {exc}")
+
+
+_seed_expand_archive()
+
+
 def _require_model():
     if BACKEND_MODE == "api":
         return None, None  # API 模式无本地模型
@@ -137,6 +151,11 @@ def analyze(image: UploadFile = File(...), context: str | None = Form(None)):
             ctx = {}
     rules = rules_evaluate(analysis_dict, context=ctx)
 
+    # ---- 提示性多维评分（纯规则派生，确定性，非安全判定；前端按可选字段处理）----
+    from .. import scoring
+
+    derived = scoring.enrich(analysis_dict, rules)
+
     # ---- 证据溯源：按规则引擎命中的成分标签匹配条款级证据 ----
     from .. import evidence as ev
 
@@ -157,17 +176,22 @@ def analyze(image: UploadFile = File(...), context: str | None = Form(None)):
     except Exception:
         cross_risks = []
 
+    from ..disposal import disposal_for
+
     return {"analysis": analysis_dict, "database_match": match,
             "image_path": f"uploads/{filename}",
             "rules": rules,
             "evidence": [ev.to_view(e) for e in matched_evidence],
             "expiring_standards": [ev.to_view(e) for e in expiring],
-            "cross_risks": cross_risks}
+            "cross_risks": cross_risks,
+            "disposal": disposal_for(analysis_dict),
+            **derived}
 
 
 class SaveItem(BaseModel):
     analysis: dict
     image_path: str | None = None
+    location: str | None = None          # 存放位置（可选，后端不做枚举校验）
 
 
 @app.post("/api/household/items")
@@ -176,8 +200,23 @@ def save_item(item: SaveItem):
     with ChemicalDB(DB_PATH) as db:
         match = db.match(analysis)
         item_id = db.add_to_household(HOUSEHOLD_ID, item.image_path or "", analysis,
-                                      match["id"] if match else None)
+                                      match["id"] if match else None,
+                                      location=(item.location or "").strip() or None)
     return {"id": item_id}
+
+
+class LocationPatch(BaseModel):
+    location: str | None = None          # null 表示清除
+
+
+@app.patch("/api/household/items/{item_id}")
+def patch_item(item_id: int, body: LocationPatch):
+    loc = (body.location or "").strip() or None
+    with ChemicalDB(DB_PATH) as db:
+        ok = db.set_item_location(item_id, loc)
+    if not ok:
+        raise HTTPException(status_code=404, detail="档案不存在")
+    return {"id": item_id, "location": loc}
 
 
 @app.get("/api/household/items")
@@ -223,7 +262,20 @@ def household_report():
         if not items:
             raise HTTPException(status_code=400, detail="家庭档案为空，先识别并存入几件物品再生成报告")
         report, local = generate_report(items, HOUSEHOLD_ID)
-        checkin_id = db.add_checkin(HOUSEHOLD_ID, report["overall_risk"], len(items), report)
+        # 快照去重：同一天内「风险等级 + 物品数」未变时不重复记录，避免时间线被无效快照刷屏
+        latest = db.latest_checkin(HOUSEHOLD_ID)
+        same_day = False
+        if latest:
+            try:
+                same_day = _dt.fromisoformat(latest["created_at"]).date() == _dt.now().date()
+            except ValueError:
+                same_day = False
+        if (latest and same_day
+                and latest["overall_risk"] == report["overall_risk"]
+                and latest["item_count"] == len(items)):
+            checkin_id = latest["id"]
+        else:
+            checkin_id = db.add_checkin(HOUSEHOLD_ID, report["overall_risk"], len(items), report)
         prev = db.latest_checkin(HOUSEHOLD_ID, before_id=checkin_id)
     report["checkin_id"] = checkin_id
     report["prev_risk"] = prev["overall_risk"] if prev else None
@@ -250,15 +302,34 @@ def household_timeline():
         n_items = db.count_items_newer_than(HOUSEHOLD_ID, None)
         n_new = db.count_items_newer_than(HOUSEHOLD_ID, latest["created_at"]) if latest else n_items
 
+    # 折叠连续重复快照（同一风险等级 + 同一物品数连记多次的，只保留最新一条）
+    collapsed: list[dict] = []
+    for c in checkins:  # 新→旧
+        if collapsed and collapsed[-1]["overall_risk"] == c["overall_risk"] \
+                and collapsed[-1]["item_count"] == c["item_count"]:
+            continue
+        collapsed.append(c)
+
     timeline = []
     prev_risk = None
-    for c in reversed(checkins):  # 旧→新，便于计算趋势
+    prev_count = None
+    for c in reversed(collapsed):  # 旧→新，便于计算趋势与变化量
         trend = None
         if prev_risk is not None and c["overall_risk"] in _RISK_ORDER and prev_risk in _RISK_ORDER:
             diff = _RISK_ORDER[c["overall_risk"]] - _RISK_ORDER[prev_risk]
             trend = "up" if diff > 0 else ("down" if diff < 0 else "flat")
-        timeline.append({**c, "trend": trend})
+        # 从存档的报告里取「发现几组混用风险」，让每条快照有实质内容；report_json 体积大，取出后即丢弃
+        n_pairs = None
+        raw = c.pop("report_json", None)
+        if raw:
+            try:
+                n_pairs = len(json.loads(raw).get("cross_risks") or [])
+            except (TypeError, ValueError):
+                n_pairs = None
+        item_delta = c["item_count"] - prev_count if prev_count is not None else None
+        timeline.append({**c, "trend": trend, "n_pairs": n_pairs, "item_delta": item_delta})
         prev_risk = c["overall_risk"]
+        prev_count = c["item_count"]
     timeline.reverse()  # 新→旧
 
     reminders = []
@@ -298,6 +369,7 @@ class MixItemIn(BaseModel):
     analysis: dict
     name: str | None = None
     image_path: str | None = None
+    location: str | None = None          # 在档物品的存放位置（用于同位置预警）
 
 
 class MixBody(BaseModel):
@@ -321,9 +393,13 @@ def mix_check(body: MixBody):
             "observed_name": name,
             "analysis": analysis.model_dump(),
             "image_path": it.image_path,
+            "location": (it.location or "").strip() or None,
         })
     result = kg_query("auto", "", packed)
     cross = result["cross_risks"]
+    # 规则库结论统一标注来源（kg.query 已带 source，这里兜底补标，双保险）
+    for p in cross:
+        p.setdefault("source", "rules")
     annotated = []
     for row in packed:
         ings = matched_ingredients(row)
@@ -336,18 +412,60 @@ def mix_check(body: MixBody):
             "unknown": len(ings) == 0,
         })
     unknown_names = [x["name"] for x in annotated if x["unknown"]]
+    verdict_source = "rules"
     if any(p.get("severity") in ("critical", "high") for p in cross):
         verdict = "danger"
+    elif cross:
+        # 只有 medium 级命中（功效抵消/配方未知的保守提示）→ caution，可展示但不报警
+        verdict = "caution"
     elif unknown_names:
         verdict = "unknown"
     else:
         verdict = "no_edge"
+
+    # ---- LLM 兜底判定：规则未命中（no_edge/unknown）且两端有可描述信息时 ----
+    # 任何失败（无 key/超时/解析失败）都静默降级为原 verdict，绝不影响接口可用性。
+    llm_used = False
+    if verdict in ("no_edge", "unknown"):
+        try:
+            from .. import mix_llm
+
+            if mix_llm.available():
+                guess = mix_llm.judge_pair(packed[0], packed[1])
+            else:
+                guess = None
+        except Exception:  # noqa: BLE001 - LLM 层整体不可信时降级
+            guess = None
+        if guess and guess["verdict"] in ("danger", "caution"):
+            entry = {
+                "a": f"#{packed[0]['id']} {packed[0]['observed_name']}",
+                "b": f"#{packed[1]['id']} {packed[1]['observed_name']}",
+                "reason": guess["reason"],
+                "action": guess["action"],
+                "severity": "high" if guess["verdict"] == "danger" else "medium",
+                "source": "llm",
+            }
+            cross.append(entry)
+            llm_used = True
+            verdict_source = "llm"
+            verdict = "danger" if guess["verdict"] == "danger" else "caution"
+
+    # ---- 同位置预警：两瓶记在同一存放位置且有混用禁忌时，逐条标注 ----
+    loc_a = packed[0].get("location")
+    loc_b = packed[1].get("location")
+    if loc_a and loc_a == loc_b:
+        for p in cross:
+            p["same_location"] = True
+            p["location"] = loc_a
+
     return {
         "n_items": 2,
         "items": annotated,
         "cross_risks": cross,
         "has_critical": verdict == "danger",
         "verdict": verdict,
+        "verdict_source": verdict_source,
+        "llm_used": llm_used,
         "unknown_names": unknown_names,
     }
 
