@@ -11,9 +11,19 @@
 
 from __future__ import annotations
 
+import re
+
 from . import kg
 from .disposal import disposal_summary
 from .llm import chat_json
+
+_PAIR_ID_RE = re.compile(r"#(\d+)")
+
+
+def _pair_id(label: str) -> int | None:
+    """从 cross_risk 的 "#12 洁厕灵" 形式里解析物品 id；同瓶组合等非物品标签返回 None。"""
+    m = _PAIR_ID_RE.match(label or "")
+    return int(m.group(1)) if m else None
 
 _RISK_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
 _SEV_OF = _RISK_ORDER
@@ -69,6 +79,19 @@ def _local_analysis(items: list[dict]) -> dict:
                 scene_items.setdefault(scene_node.name, []).append(it["id"])
 
     cross = kg.query("auto", "", items)["cross_risks"]
+
+    # 位置联动：混用禁忌组合的两件物品记在同一存放位置时标注，并排最前
+    loc_of = {it["id"]: (it.get("location") or "").strip() for it in items}
+    for p in cross:
+        ia = _pair_id(p.get("a", ""))
+        ib = _pair_id(p.get("b", ""))
+        if ia is None or ib is None:
+            continue
+        la, lb = loc_of.get(ia, ""), loc_of.get(ib, "")
+        if la and la == lb:
+            p["same_location"] = True
+            p["location"] = la
+    cross.sort(key=lambda p: 0 if p.get("same_location") else 1)
 
     # 总体等级：任一 critical → critical；有 cross 高危或 ≥1 high → high；≥1 medium → medium；其余 low/unknown
     if any(it_risk == "critical" for it_risk in risk_count) or any(p["severity"] == "critical" for p in cross):
@@ -149,65 +172,139 @@ def generate_report(items: list[dict], household_id: str) -> tuple[dict, dict]:
 
 # ---------------- 问答（方向①的文本侧：语音转文字后进入这里） ----------------
 
-_ASK_SYSTEM = """你是家庭化学品安全助手「瓶安」。用户可能描述症状、询问某个场景的风险、或关心家里特定人群。
+_ASK_SYSTEM = """你是家庭化学品安全助手「瓶安」。用户问的是「这一户人家」的具体情况，不是抽象百科。
 回答规则：
-1. 优先依据提供的【知识图谱线索】与【家中在档物品】作答，点明具体是哪一件物品、哪个成分。
-2. 不确定就说不确定，建议用户拍照识别或查看标签；绝不编造家中不存在的物品。
-3. 语气平和、通俗、不制造恐慌；给出 2-4 条立刻可做的行动。
-4. 涉及急性暴露（大量接触、误食、呼吸困难）时，第一句先提醒联系急救/中毒咨询机构。
-5. 用不超过 200 字的中文短段落回答，不要用 Markdown 标题。"""
+1. 必须依据【家庭档案】（含存放位置）与【家庭画像】作答；点名具体是哪一瓶、放在哪、什么成分。
+2. 同一位置放了相克的两瓶，必须主动点名「现在就分开」。
+3. 知识图谱只是辅助线索，档案里没有的物品不要编造。
+4. 不确定就说不确定，建议补拍标签；绝不把「暂无法判断」说成安全。
+5. 语气平和、通俗；给出 2-4 条立刻可做的行动。
+6. 涉及急性暴露（大量接触、误食、呼吸困难）时，第一句先提醒打 120 / 当地中毒咨询。
+7. 保持原瓶原标，不要建议把化学品倒进饮料瓶或其他容器。
+8. 用不超过 280 字的中文短段落回答，不要用 Markdown 标题。"""
+
+_RISK_ZH = {"unknown": "暂无法判断", "low": "低风险", "medium": "需要注意",
+            "high": "高风险", "critical": "严重风险"}
+
+
+def _item_name(it: dict) -> str:
+    a = it.get("analysis") or {}
+    prod = a.get("product") if isinstance(a.get("product"), dict) else {}
+    return (it.get("observed_name") or prod.get("name") or "未命名").strip() or "未命名"
+
+
+def _format_household(items: list[dict]) -> str:
+    """把整份家庭档案（名称 / 风险 / 位置 / 成分 / 切忌混用）写成模型可读的台账。"""
+    if not items:
+        return "【家庭档案】目前还是空的。还没识别并存档任何化学品。"
+
+    from collections import defaultdict
+
+    by_loc: dict[str, list[str]] = defaultdict(list)
+    lines: list[str] = []
+    for it in items:
+        a = it.get("analysis") or {}
+        prod = a.get("product") if isinstance(a.get("product"), dict) else {}
+        name = _item_name(it)
+        loc = (it.get("location") or "").strip() or "未标记位置"
+        risk = _RISK_ZH.get(str(a.get("risk_level") or "unknown"), str(a.get("risk_level") or "unknown"))
+        cat = (prod.get("category") or "").strip()
+        ings = [str(g.get("name")).strip() for g in (a.get("ingredients") or [])
+                if isinstance(g, dict) and g.get("name")][:6]
+        mix = [str(x).strip() for x in (a.get("do_not_mix_with") or []) if str(x).strip()][:4]
+        bits = [f"#{it.get('id')} {name}", risk, f"放在{loc}"]
+        if cat:
+            bits.append(cat)
+        if ings:
+            bits.append("成分：" + "、".join(ings))
+        if mix:
+            bits.append("切忌混用：" + "、".join(mix))
+        lines.append("- " + " · ".join(bits))
+        by_loc[loc].append(f"#{it.get('id')} {name}")
+
+    same = [f"{loc}：{'、'.join(names)}" for loc, names in by_loc.items()
+            if loc != "未标记位置" and len(names) >= 2]
+    out = [f"【家庭档案】共 {len(items)} 件：", *lines]
+    if same:
+        out.append("【同处存放】以下位置放了不止一瓶，回答时检查是否相克：")
+        out.extend(f"- {s}" for s in same)
+    return "\n".join(out)
+
+
+def _format_profile(context: dict | None) -> str:
+    """家庭画像 + 储存三态 + 健康/过敏原等标签。"""
+    if not context:
+        return "【家庭画像】未设置，按普通家庭回答。"
+    people = []
+    flags = [
+        ("infant", "有婴幼儿"), ("child", "有儿童"), ("elderly", "有老人"),
+        ("pregnant", "有孕妇"), ("trying_conceive", "备孕"),
+        ("pet_cat", "养猫"), ("pet_dog", "养狗"),
+        ("allergy", "过敏体质"), ("asthma", "有哮喘"), ("hypertension", "有高血压"),
+    ]
+    for key, label in flags:
+        if context.get(key):
+            people.append(label)
+
+    def _yesno(v):
+        if v is True:
+            return "是"
+        if v is False:
+            return "否"
+        return None
+
+    storage = []
+    for key, label in (("child_accessible", "儿童可触及"),
+                       ("near_food", "靠近食品"),
+                       ("original_container", "保留原包装")):
+        yn = _yesno(context.get(key)) if key in context else None
+        if yn:
+            storage.append(f"{label}={yn}")
+
+    extras = []
+    for key, label in (("doctor_flags", "健康关注"), ("allergens", "过敏原"),
+                       ("diet", "饮食"), ("fitness", "运动")):
+        raw = context.get(key) or []
+        if isinstance(raw, str):
+            raw = [raw]
+        tags = [str(x).strip() for x in raw if str(x).strip()]
+        if tags:
+            extras.append(f"{label}：" + "、".join(tags))
+
+    if not people and not storage and not extras:
+        return "【家庭画像】未设置，按普通家庭回答。"
+    parts = ["【家庭画像】"]
+    if people:
+        parts.append("人群：" + "、".join(people) + "。回答必须针对这些成员给差异化提示。")
+    if storage:
+        parts.append("这瓶/当前存放：" + "，".join(storage) + "。")
+    if extras:
+        parts.append("；".join(extras) + "。")
+    return "".join(parts) if len(parts) == 1 else "\n".join(parts)
 
 
 def answer_question(question: str, mode: str, items: list[dict],
                     history: list | None = None, context: dict | None = None) -> dict:
-    """多轮语音问答：支持 history（多轮）+ 记忆开场（最近扫描）+ 画像（context）。"""
+    """多轮问答：把完整家庭档案（含位置）+ 画像喂给 LLM；失败再走图谱兜底。"""
     sub = kg.query(mode, question, items)
-    facts = "\n".join(["- " + f for f in sub["facts"][:10]] +
-                      ["- 家中相关在档物品：" + (", ".join(f"#{i['id']}{i['name']}" for i in sub["related_items"][:6]) or "（无匹配项）")] +
-                      ["- 交叉混用风险：" + p["reason"] for p in sub["cross_risks"][:5]])
+    household = _format_household(items)
+    profile = _format_profile(context)
+    facts = "\n".join(
+        ["- " + f for f in sub["facts"][:8]]
+        + ["- 图谱相关物品：" + (", ".join(f"#{i['id']} {i['name']}" for i in sub["related_items"][:6]) or "无")]
+        + ["- 交叉混用：" + p["reason"] for p in sub["cross_risks"][:5]]
+    )
 
-    # 记忆开场：把最近扫描的产品注入 system，让 AI 能"记得"
-    memory = ""
-    if items:
-        recent = [f"#{i['id']} {i.get('observed_name') or '未命名'}"
-                  for i in items[-5:]]
-        memory = "用户最近扫描并建档的物品：" + "、".join(recent) + "。"
-
-    # 画像：把家庭成员/人群注入
-    profile = ""
-    if context:
-        tags = []
-        if context.get("infant"):
-            tags.append("有婴幼儿")
-        if context.get("child"):
-            tags.append("有儿童")
-        if context.get("pet_cat"):
-            tags.append("养猫")
-        if context.get("pet_dog"):
-            tags.append("养狗")
-        if context.get("pregnant"):
-            tags.append("有孕妇")
-        if context.get("trying_conceive"):
-            tags.append("备孕")
-        if context.get("elderly"):
-            tags.append("有老人")
-        if context.get("allergy"):
-            tags.append("过敏体质")
-        if context.get("asthma"):
-            tags.append("有哮喘")
-        if context.get("hypertension"):
-            tags.append("有高血压")
-        if tags:
-            profile = "家庭画像：" + "、".join(tags) + "。回答需针对这些人群给出差异化提示。"
-
-    system = _ASK_SYSTEM + ("\n\n" + memory if memory else "") + ("\n" + profile if profile else "")
-    user = f"用户问题：{question}\n\n【知识图谱线索】\n{facts}"
+    system = _ASK_SYSTEM + "\n\n" + household + "\n\n" + profile
+    user = f"用户问题：{question}\n\n【知识图谱线索】（仅辅助，以档案为准）\n{facts or '（无线索）'}"
 
     ans = None
+    llm_used = False
     from .llm import chat_multi
-    raw = chat_multi(system, history, user, max_tokens=500, temperature=0.4)
+    raw = chat_multi(system, history, user, max_tokens=700, temperature=0.3)
     if raw:
         ans = raw.strip()
+        llm_used = True
     if not ans:
         lines = []
         if sub["advice"]:
@@ -217,10 +314,14 @@ def answer_question(question: str, mode: str, items: list[dict],
             lines.append(f"你家的这些物品可能相关：{names}。")
         if sub["cross_risks"]:
             lines.append(f"注意：{sub['cross_risks'][0]['reason']}。")
+        same = [ln for ln in household.splitlines() if ln.startswith("- ") and "放在" in ln]
+        if same:
+            lines.append("家中在档：" + "；".join(same[:6]).replace("- ", ""))
         if not lines:
             lines.append("暂时没有找到直接相关的记录。建议拍一张产品标签的照片，我来帮你具体分析；如症状持续，请及时就医。")
         lines.append("以上仅为家庭安全参考，不能替代专业医疗意见。")
         ans = "\n".join(lines)
-    return {"answer": ans, "graph": {"matched_nodes": sub["matched_nodes"], "facts": sub["facts"],
-                                     "advice": sub["advice"], "cross_risks": sub["cross_risks"]},
+    return {"answer": ans, "llm_used": llm_used,
+            "graph": {"matched_nodes": sub["matched_nodes"], "facts": sub["facts"],
+                      "advice": sub["advice"], "cross_risks": sub["cross_risks"]},
             "related_items": sub["related_items"]}

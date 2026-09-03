@@ -14,7 +14,40 @@ export const PROFILE_KEYS = [
 ] as const;
 
 export type ProfileKey = (typeof PROFILE_KEYS)[number];
-export type HouseholdProfile = Record<ProfileKey, boolean>;
+
+/** 数组维度（对齐「成分说清楚」的健康偏好）：自定义标签也直接进对应 string[]。 */
+export type ArrayDim = "doctor_flags" | "allergens" | "diet" | "fitness";
+export const ARRAY_DIMS: ArrayDim[] = ["doctor_flags", "allergens", "diet", "fitness"];
+
+/** 每维度元信息：图标 + 名称 + 副标题 + 预设标签。 */
+export const DIM_META: Record<ArrayDim, { icon: string; zh: string; en: string; sub_zh: string; sub_en: string; presets: string[] }> = {
+  doctor_flags: {
+    icon: "🩺", zh: "医生已提醒", en: "Doctor flagged",
+    sub_zh: "仅用于生成成分提示，不构成医疗建议", sub_en: "For ingredient hints only, not medical advice",
+    presets: ["高血压", "糖尿病", "高血脂", "痛风·高尿酸", "脂肪肝", "慢性肾病", "甲状腺疾病", "湿疹·特应性皮炎", "乳糖不耐受", "便秘", "蛀牙", "肠道敏感"],
+  },
+  allergens: {
+    icon: "🤧", zh: "过敏", en: "Allergies",
+    sub_zh: "已确认或怀疑的过敏原", sub_en: "Confirmed or suspected allergens",
+    presets: ["牛奶·乳糖", "鸡蛋", "花生·坚果", "海鲜", "花粉", "尘螨"],
+  },
+  diet: {
+    icon: "🥗", zh: "饮食习惯", en: "Diet",
+    sub_zh: "日常饮食偏好与忌口", sub_en: "Everyday diet preferences",
+    presets: ["素食", "纯素", "清真", "低糖", "低盐", "低脂", "生酮", "低碳水", "无麸质", "控卡减脂", "高蛋白", "忌辛辣"],
+  },
+  fitness: {
+    icon: "🏃", zh: "运动健身", en: "Fitness",
+    sub_zh: "当前的训练状态与目标", sub_en: "Current training status & goals",
+    presets: ["增肌期", "减脂期", "日常健身", "耐力训练", "康复训练", "久坐少动", "备赛·需查兴奋剂"],
+  },
+};
+
+/** 每维度自定义标签上限 / 单标签字数上限。 */
+export const CUSTOM_TAG_MAX = 5;
+export const CUSTOM_TAG_LEN = 12;
+
+export type HouseholdProfile = Record<ProfileKey, boolean> & Record<ArrayDim, string[]>;
 
 export const PROFILE_LABELS: Record<ProfileKey, { zh: string; en: string }> = {
   infant: { zh: "婴幼儿", en: "Infant" },
@@ -106,6 +139,10 @@ export function emptyProfile(): HouseholdProfile {
     allergy: false,
     asthma: false,
     hypertension: false,
+    doctor_flags: [],
+    allergens: [],
+    diet: [],
+    fitness: [],
   };
 }
 
@@ -117,6 +154,11 @@ export function loadProfile(): HouseholdProfile {
     if (!raw) return base;
     const parsed = JSON.parse(raw) as Partial<HouseholdProfile>;
     for (const k of PROFILE_KEYS) base[k] = Boolean(parsed[k]);
+    // 旧数据没有数组维度：缺省给 []；非字符串项丢弃
+    for (const k of ARRAY_DIMS) {
+      const v = parsed[k];
+      base[k] = Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+    }
   } catch {
     /* ignore */
   }
@@ -139,10 +181,13 @@ export function toApiContext(p: HouseholdProfile, s?: StorageContext): Record<st
     trying_conceive: p.trying_conceive,
     pet_cat: p.pet_cat,
     pet_dog: p.pet_dog,
-    allergy: p.allergy,
+    // 旧布尔 allergy 与新过敏原列表合并成一个布尔键——规则引擎只认布尔键，数组不传进来
+    allergy: p.allergy || p.allergens.length > 0,
     asthma: p.asthma,
     hypertension: p.hypertension,
   };
+  // 新维度（doctor_flags/allergens/diet/fitness）不进 context：
+  // 仅用于提示文案与问答画像，不参与安全判定。
   if (s) {
     // 三态：仅当用户明确填了才传（null 不传，避免被规则当成 false）
     if (s.child_accessible !== null) base.child_accessible = s.child_accessible;
@@ -152,8 +197,21 @@ export function toApiContext(p: HouseholdProfile, s?: StorageContext): Record<st
   return base;
 }
 
+/** 问答管家用的 context：规则布尔 + 储存三态 + 健康/过敏原等标签（数组仅 ask 使用）。 */
+export function toAskContext(p: HouseholdProfile, s?: StorageContext): Record<string, unknown> {
+  return {
+    ...toApiContext(p, s),
+    doctor_flags: p.doctor_flags,
+    allergens: p.allergens,
+    diet: p.diet,
+    fitness: p.fitness,
+  };
+}
+
 export function selectedLabels(p: HouseholdProfile, lang: "zh" | "en"): string[] {
-  return PROFILE_KEYS.filter((k) => p[k]).map((k) => PROFILE_LABELS[k][lang]);
+  const bools = PROFILE_KEYS.filter((k) => p[k]).map((k) => PROFILE_LABELS[k][lang]);
+  // 新维度的选中项（预设/自定义原文）也纳入画像摘要
+  return bools.concat(ARRAY_DIMS.flatMap((d) => p[d]));
 }
 
 type Hintable = {
@@ -192,6 +250,14 @@ export function profileHints(analysis: Hintable | null | undefined, p: Household
       ? "家有哮喘：喷雾/挥发物先开窗，人离开房间再使用。"
       : "Asthma: spray/volatiles — open windows and leave the room while using.");
   }
+  // 过敏/湿疹 × 香精防腐剂：接触致敏有明确循证关联，才给提示。
+  const eczema = p.doctor_flags.some((f) => f.includes("湿疹"));
+  if ((p.allergy || p.allergens.length > 0 || eczema) && /(香精|香料|防腐剂|fragrance|parfum|perfume|preserv)/.test(names)) {
+    out.push(lang === "zh"
+      ? "家有过敏/湿疹：香精与防腐剂是常见致敏原，留意成分表中的香料、MIT/CMIT。"
+      : "Allergy/eczema at home: fragrance & preservatives are common sensitizers — check for parfum, MIT/CMIT.");
+  }
+  // 其余新维度（饮食/运动/其他医生提醒）与家用化学品无直接循证关联，不硬凑提示。
   if (p.elderly && (high || corrosive)) {
     out.push(lang === "zh"
       ? "家有老人：原瓶原标、不要倒进饮料瓶；误食立即打 120，并带上包装。"
