@@ -43,7 +43,7 @@ final class AppState {
     }
 
     /// 模拟器走电脑回环；真机必须走 Mac 局域网 IP，127.0.0.1 是手机自己。
-    static let macLANAPIBase = "http://192.168.3.110:8000"
+    static let macLANAPIBase = "http://192.168.1.171:8000"
     static let simulatorAPIBase = "http://127.0.0.1:8000"
     static var defaultAPIBase: String {
         #if targetEnvironment(simulator)
