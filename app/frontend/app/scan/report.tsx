@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { SCAN_COPY, useLang } from "../i18n";
+import "./report-extra.css";
 
 const API =
   typeof window !== "undefined"
@@ -25,7 +26,7 @@ export type Report = {
   risk_count: Record<string, number>;
   radar: { dim: string; value: number }[];
   high_items: { id: number; name: string; risk_level: string; why: string }[];
-  cross_risks: { a: string; b: string; reason: string; severity: string }[];
+  cross_risks: { a: string; b: string; reason: string; severity: string; source?: string }[];
   overview: string; top_actions: string[]; quick_wins: string[]; reassure: string;
   prev_risk: string | null;
   disposal?: Disposal;
@@ -34,9 +35,20 @@ export type Report = {
   suggestions?: { kind: string; title: string; detail: string; action: string }[];
 };
 type Timeline = {
-  checkins: { id: number; created_at: string; overall_risk: string; item_count: number; trend: string | null }[];
+  checkins: { id: number; created_at: string; overall_risk: string; item_count: number; trend: string | null; n_pairs: number | null; item_delta: number | null }[];
   reminders: string[];
   n_items: number;
+};
+
+/** 家庭档案物品（仅取对比卡需要的字段）。导出给电脑端混用页复用。 */
+export type HouseItem = {
+  id: number;
+  observed_name?: string;
+  analysis?: {
+    product?: { name?: string | null; category?: string | null };
+    ingredients?: { name?: string }[];
+    risk_level?: string;
+  };
 };
 
 const RISK_LABEL_EN: Record<string, string> = { unknown: "?", low: "LOW", medium: "MED", high: "HIGH", critical: "CRIT" };
@@ -49,6 +61,7 @@ export default function ReportPanel({
   onGenerate,
   busy: busyProp,
   error: errorProp,
+  defaultOpen = false,
 }: {
   nItems: number;
   variant?: "phone" | "desk";
@@ -56,6 +69,8 @@ export default function ReportPanel({
   onGenerate?: () => void;
   busy?: boolean;
   error?: string | null;
+  /** 独立报告页用：详情折叠默认展开 */
+  defaultOpen?: boolean;
 }) {
   const { lang } = useLang();
   const t = SCAN_COPY[lang];
@@ -64,6 +79,7 @@ export default function ReportPanel({
   const [innerBusy, setInnerBusy] = useState(false);
   const [innerError, setInnerError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
+  const [houseItems, setHouseItems] = useState<HouseItem[]>([]);
   const controlledMode = controlled !== undefined;
   const report = controlledMode ? controlled ?? null : inner;
   const busy = controlledMode ? !!busyProp : innerBusy;
@@ -74,6 +90,11 @@ export default function ReportPanel({
     fetch(`${API}/api/household/timeline`).then((r) => r.json()).then(setTimeline).catch(() => {});
   };
   useEffect(loadTimeline, [report]);
+
+  // 对比卡需要品名以外的成分线索：拉一次档案，按名字匹配 cross_risks 的 a/b
+  useEffect(() => {
+    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setHouseItems(d.items ?? [])).catch(() => {});
+  }, []);
 
   const generate = async () => {
     if (onGenerate) { onGenerate(); return; }
@@ -147,57 +168,50 @@ export default function ReportPanel({
             )}
 
             {/* 详情折叠：点开看完整报告 */}
-            <details className="report-detail-fold">
+            <details className="report-detail-fold" open={defaultOpen || undefined}>
               <summary className="report-detail-toggle">
                 {lang === "zh" ? "查看详细报告" : "View full report"}
                 <span className="toggle-arrow">↓</span>
               </summary>
               <div className="report-detail-body">
             <div className="report-grid">
-              <div className="radar-box">
-                <h4>{t.radarTitle}</h4>
-                <RadarChart dims={report.radar} />
+              <div className="report-side">
+                <div className="radar-box">
+                  <h4>{t.radarTitle}</h4>
+                  <RadarChart dims={report.radar} />
+                </div>
+                {report.high_items.length > 0 && (
+                  <ul className="high-list">{report.high_items.map((h) => (
+                    <li key={h.id}><b className={`risk-dot risk-${h.risk_level}`}>●</b> #{h.id} {h.name}<small>{h.why}</small></li>
+                  ))}</ul>
+                )}
+
+                {/* 家庭高频关注项（成分跨产品聚合） */}
+                {report.ingredient_groups && report.ingredient_groups.length > 0 && (
+                  <div className="ing-groups">
+                    <h4>{lang === "zh" ? "家庭高频关注项" : "Top concern groups"}</h4>
+                    {report.ingredient_groups.map((g) => (
+                      <details key={g.key} className="ing-group">
+                        <summary>
+                          <b>{g.label}</b>
+                          <span className="ing-count">{g.count} {lang === "zh" ? "件" : "items"}</span>
+                        </summary>
+                        <p className="ing-hook">{g.hook}</p>
+                        <p className="ing-items">{lang === "zh" ? "涉及：" : "In: "}{g.items.map((i) => `#${i.id} ${i.name}`).join("、")}</p>
+                      </details>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="cross-box">
                 <h4>{t.crossTitle}{report.cross_risks.length > 0 ? ` · ${report.cross_risks.length}` : ""}</h4>
                 {report.cross_risks.length === 0 ? <p className="cross-empty">✓ {t.noCross}</p> : (
-                  <ul className="cross-list">{report.cross_risks.map((c, i) => (
-                    <li key={i} className={`cross-pair sev-${c.severity}`}>
-                      <div className="cross-head">
-                        <span className={`cross-sev-tag sev-tag-${c.severity}`}>
-                          {c.severity === "critical" ? "☣ 危急" : c.severity === "high" ? "⚠ 高危" : "注意"}
-                        </span>
-                        <b>{c.a} <span className="cross-x">✕</span> {c.b}</b>
-                      </div>
-                      <span className="cross-reason">{c.reason}</span>
-                    </li>
-                  ))}</ul>
+                  <div className="xc-list">{report.cross_risks.map((c, i) => (
+                    <CrossCompareCard key={i} c={c} items={houseItems} lang={lang} />
+                  ))}</div>
                 )}
               </div>
             </div>
-
-            {report.high_items.length > 0 && (
-              <ul className="high-list">{report.high_items.map((h) => (
-                <li key={h.id}><b className={`risk-dot risk-${h.risk_level}`}>●</b> #{h.id} {h.name}<small>{h.why}</small></li>
-              ))}</ul>
-            )}
-
-            {/* 家庭高频关注项（成分跨产品聚合） */}
-            {report.ingredient_groups && report.ingredient_groups.length > 0 && (
-              <div className="ing-groups">
-                <h4>{lang === "zh" ? "家庭高频关注项" : "Top concern groups"}</h4>
-                {report.ingredient_groups.map((g) => (
-                  <details key={g.key} className="ing-group">
-                    <summary>
-                      <b>{g.label}</b>
-                      <span className="ing-count">{g.count} {lang === "zh" ? "件" : "items"}</span>
-                    </summary>
-                    <p className="ing-hook">{g.hook}</p>
-                    <p className="ing-items">{lang === "zh" ? "涉及：" : "In: "}{g.items.map((i) => `#${i.id} ${i.name}`).join("、")}</p>
-                  </details>
-                ))}
-              </div>
-            )}
 
             {/* 优化建议行动清单（采纳开关） */}
             {report.suggestions && report.suggestions.length > 0 && (
@@ -280,8 +294,21 @@ export default function ReportPanel({
               <li key={c.id}>
                 <span className={`tl-dot risk-bg-${c.overall_risk}`} />
                 <b className={`risk-${c.overall_risk}`}>{RISK_LABEL[c.overall_risk] ?? c.overall_risk}</b>
-                <span className="tl-date">{c.created_at.slice(0, 10)}</span>
-                <span className="tl-count">{c.item_count} {t.tlItems}</span>
+                <span className="tl-date">
+                  {c.created_at.slice(0, 10)}
+                  <em className="tl-time">{c.created_at.slice(11, 16)}</em>
+                </span>
+                {c.n_pairs != null && (
+                  <span className="tl-pairs">{lang === "zh" ? `混用风险 ${c.n_pairs} 组` : `${c.n_pairs} mix pairs`}</span>
+                )}
+                <span className="tl-count">
+                  {c.item_count} {t.tlItems}
+                  {c.item_delta != null && c.item_delta !== 0 && (
+                    <i className={`tl-delta ${c.item_delta > 0 ? "up" : "down"}`}>
+                      {c.item_delta > 0 ? `+${c.item_delta}` : c.item_delta}
+                    </i>
+                  )}
+                </span>
                 {c.trend && c.trend !== "flat" && (
                   <i className={c.trend === "down" ? "tl-trend good" : "tl-trend bad"}>
                     {c.trend === "down" ? "↓ ✓" : "↑ ⚠"}
@@ -296,6 +323,125 @@ export default function ReportPanel({
   );
 }
 
+/* 双瓶对比卡（五件套文案结构，对齐「成分说清楚」）：
+   两瓶并列 → 为什么被识别为组合关注 → 可能发生什么 → 两条行动卡 → 保守声明 + 依据。
+   导出给电脑端混用页（app/mix/page.tsx）复用。 */
+export function CrossCompareCard({
+  c,
+  items,
+  lang,
+}: {
+  c: { a: string; b: string; reason: string; severity: string; source?: string };
+  items: HouseItem[];
+  lang: "zh" | "en";
+}) {
+  // 按品名在档案里找对应物品，拿到品类标签与识别到的成分；找不到就只显示名字
+  const find = (name: string): HouseItem | undefined =>
+    items.find((it) => {
+      const n = it.observed_name || it.analysis?.product?.name || "";
+      return !!n && (n.includes(name) || name.includes(n));
+    });
+
+  const bottle = (name: string) => {
+    const it = find(name);
+    const category = it?.analysis?.product?.category || null;
+    const detected = (it?.analysis?.ingredients ?? [])
+      .map((g) => g.name)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("、");
+    return (
+      <div className="xc-bottle">
+        <b className="xc-bottle-name">{name}</b>
+        {category && <span className="xc-bottle-tag">{category}</span>}
+        {detected && (
+          <small className="xc-bottle-detected">
+            {lang === "zh" ? `识别到：${detected}` : `Detected: ${detected}`}
+          </small>
+        )}
+      </div>
+    );
+  };
+
+  const sentences = (c.reason.match(/[^。！？!?；;]+[。！？!?；;]?/g) ?? [c.reason]).map((s) => s.trim()).filter(Boolean);
+  const [whyText, mechText] = sentences.length >= 2
+    ? [sentences[0], sentences.slice(1).join("")]
+    : [c.reason, null];
+  const isAI = c.source === "llm";
+
+  return (
+    <div className={`xc-card sev-${c.severity}`}>
+      <div className="xc-head">
+        <span className={`cross-sev-tag sev-tag-${c.severity}`}>
+          {c.severity === "critical" ? "☣ 危急" : c.severity === "high" ? "⚠ 高危" : "注意"}
+        </span>
+        {isAI ? (
+          <span
+            className="xc-rule-badge"
+            style={{ background: "rgba(217,119,6,.14)", color: "#b45309", borderColor: "rgba(217,119,6,.45)" }}
+          >
+            {lang === "zh" ? "AI推测" : "AI guess"}
+          </span>
+        ) : (
+          <span className="xc-rule-badge">{lang === "zh" ? "基于规则库" : "Rule-based"}</span>
+        )}
+      </div>
+
+      {/* 1. 两瓶并列 */}
+      <div className="xc-duo">
+        {bottle(c.a)}
+        <span className="xc-coexist" aria-hidden="true">
+          {(lang === "zh" ? "同时存在" : "CO-FOUND").split("").map((ch, i) => <i key={i}>{ch}</i>)}
+        </span>
+        {bottle(c.b)}
+      </div>
+
+      {/* 2. 为什么被识别为组合关注（+ 3. 可能发生什么） */}
+      <div className="xc-why">
+        <h5>{lang === "zh" ? "为什么被识别为组合关注" : "Why flagged as a pair"}</h5>
+        <p>{whyText}</p>
+        {mechText && (
+          <>
+            <h5>{lang === "zh" ? "可能发生什么" : "What could happen"}</h5>
+            <p>{mechText}</p>
+          </>
+        )}
+      </div>
+
+      {/* 4. 两条行动卡 */}
+      <div className="xc-actions">
+        <div className="xc-action">
+          <b>{lang === "zh" ? "避免混用" : "Never mix"}</b>
+          <p>{lang === "zh"
+            ? "刷马桶时只用其中一种，用完充分冲水并通风后再考虑另一种。"
+            : "Use only one at a time; flush and ventilate well before considering the other."}</p>
+        </div>
+        <div className="xc-action">
+          <b>{lang === "zh" ? "分开存放" : "Store apart"}</b>
+          <p>{lang === "zh"
+            ? "建议分开存放，不要一起放在同一个角落。"
+            : "Store them separately — not side by side in the same corner."}</p>
+        </div>
+      </div>
+
+      {/* 5. 保守性诚实声明 + 依据 */}
+      {isAI && (
+        <p className="xc-source" style={{ color: "#b45309" }}>{lang === "zh"
+          ? "此组合由 AI 推断，非规则库结论，请以产品标签为准"
+          : "This pair was inferred by AI, not from the rule base — follow the product labels."}</p>
+      )}
+      <p className="xc-honest">{lang === "zh"
+        ? "本条按产品类型作出的保守提示，具体成分以产品标签为准；若其中一款明确标注为不适用配方，可忽略此项。"
+        : "A conservative, product-type–level hint; check the actual labels. If either product is explicitly labeled as an incompatible-formula-free version, you may ignore this."}</p>
+      <p className="xc-source">{isAI
+        ? (lang === "zh" ? "依据：AI 推断（非规则库）" : "Basis: AI inference (not rule-based)")
+        : (lang === "zh"
+          ? "依据：产品安全技术说明书（SDS）与规则库"
+          : "Basis: product Safety Data Sheets (SDS) and the rule base")}</p>
+    </div>
+  );
+}
+
 /* 五维雷达图：纯 SVG，无第三方依赖 */
 function RadarChart({ dims }: { dims: { dim: string; value: number }[] }) {
   const n = dims.length || 1;
@@ -307,7 +453,7 @@ function RadarChart({ dims }: { dims: { dim: string; value: number }[] }) {
   };
   const poly = dims.map((d, i) => pt(i, Math.min(d.value / max, 1)).join(",")).join(" ");
   return (
-    <svg viewBox="0 0 260 240" className="radar-svg" role="img">
+    <svg viewBox="-45 0 350 240" className="radar-svg" role="img">
       {[0.33, 0.66, 1].map((ratio) => (
         <polygon key={ratio} points={dims.map((_, i) => pt(i, ratio).join(",")).join(" ")}
                  fill="none" stroke="rgba(16,37,29,.25)" strokeWidth="1" />

@@ -105,7 +105,20 @@ def build_suggestions(items: list[dict], cross_risks: list[dict]) -> list[dict]:
                 "action": "寻找更低风险的替代品（如无氯消毒、中性配方）；过渡期务必上锁、原包装存放。",
             })
 
-    # 4. 减量（通用）
+    # 4. 高危品未填存放位置 → 补充位置（位置驱动同位置混用预警）
+    for it in items:
+        a = it.get("analysis") or {}
+        rl = (a.get("risk_level") or "").lower()
+        if rl in ("high", "critical") and not (it.get("location") or "").strip():
+            name = it.get("observed_name") or "未命名"
+            suggestions.append({
+                "kind": "locate",
+                "title": f"补充存放位置：{name}",
+                "detail": f"这件 {rl} 风险物品还没记录放在家里哪里。",
+                "action": "在档案卡片里标记存放位置；同一位置的混用禁忌组合会被优先预警。",
+            })
+
+    # 5. 减量（通用）
     if len(items) >= 8:
         suggestions.append({
             "kind": "reduce",

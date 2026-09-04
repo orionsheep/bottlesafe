@@ -2,7 +2,7 @@
   {
     "id": "hypochlorite",
     "label": "含氯漂白成分（次氯酸钠）",
-    "aliases": ["次氯酸", "84", "消毒液", "漂白", "bleach", "clorox", "含氯", "蓝月亮 84", "84消毒液"]
+    "aliases": ["次氯酸", "84", "漂白", "bleach", "clorox", "含氯", "蓝月亮 84", "84消毒液"]
   },
   {
     "id": "acid",
@@ -17,7 +17,7 @@
   {
     "id": "ammonia",
     "label": "氨水（玻璃/亮洁清洁剂）",
-    "aliases": ["氨", "玻璃水", "glass cleaner"]
+    "aliases": ["氨水", "氨水溶液", "玻璃水", "glass cleaner"]
   },
   {
     "id": "peroxide",
@@ -32,11 +32,66 @@
   {
     "id": "phenol",
     "label": "酚类/季铵盐消毒剂",
-    "aliases": ["酚", "滴露", "dettol", "来苏", "苯扎氯铵", "对氯间二甲苯酚"]
+    "aliases": ["苯酚", "甲酚", "酚类消毒", "滴露", "dettol", "来苏", "苯扎氯铵", "对氯间二甲苯酚"]
   },
   {
     "id": "alcohol",
     "label": "醇类（乙醇/异丙醇）",
-    "aliases": ["酒精", "乙醇", "异丙醇"]
+    "aliases": ["酒精", "乙醇", "异丙醇", "花露水"]
+  },
+  {
+    "id": "vinegar",
+    "label": "醋酸（食醋/白醋）",
+    "aliases": ["白醋", "食醋", "米醋", "醋酸", "乙酸", "醋精"]
+  },
+  {
+    "id": "iodine",
+    "label": "碘类消毒剂（碘伏/碘酒）",
+    "aliases": ["碘伏", "碘酒", "碘酊", "聚维酮碘", "povidone"]
+  },
+  {
+    "id": "merbromin",
+    "label": "汞溴红（红药水）",
+    "aliases": ["红药水", "汞溴红"]
+  },
+  {
+    "id": "permanganate",
+    "label": "高锰酸钾",
+    "aliases": ["高锰酸钾", "灰锰氧"]
+  },
+  {
+    "id": "glycerin",
+    "label": "甘油（丙三醇）",
+    "aliases": ["甘油", "丙三醇", "开塞露"]
+  },
+  {
+    "id": "oxalic",
+    "label": "草酸（乙二酸）",
+    "aliases": ["草酸", "乙二酸"]
+  },
+  {
+    "id": "sulfuric",
+    "label": "硫酸类",
+    "aliases": ["浓硫酸", "硫酸"]
+  },
+  {
+    "id": "methanol",
+    "label": "甲醇（木精）",
+    "aliases": ["甲醇", "木精", "methanol", "防冻玻璃水"]
+  },
+  {
+    "id": "quicklime",
+    "label": "生石灰（氧化钙干燥剂）",
+    "aliases": ["生石灰", "氧化钙", "石灰干燥剂"]
+  },
+  {
+    "id": "laundry",
+    "label": "衣物洗涤剂（洗衣液/粉）",
+    "aliases": ["洗衣液", "洗衣粉", "洗衣凝珠", "洗涤剂", "洗洁精"]
+  },
+  {
+    "id": "aluminum",
+    "label": "铝制品（铝锅/铝箔）",
+    "aliases": ["铝"]
   }
 ]

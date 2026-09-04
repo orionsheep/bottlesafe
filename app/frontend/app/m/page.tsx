@@ -33,6 +33,7 @@ export default function MobileHome() {
           <span className="hero-badge">{lang === "zh" ? "家庭化学品安全 AI" : "Household chemical safety AI"}</span>
         </div>
         <div className="hero-copy">
+          <img className="hero-mascot" src="/mascot.png" alt={lang === "zh" ? "瓶安吉祥物" : "BottleSafe mascot"} />
           <h1>{lang === "zh" ? "拍一下，让瓶瓶罐罐安放妥当" : "Snap it. Keep every bottle safe."}</h1>
           <p>{lang === "zh" ? "读标签、辨风险、查禁忌混用，把一次排查变成长期家庭安全档案。" : "Read labels, judge risks, flag dangerous mixes — one scan becomes a lasting home safety archive."}</p>
           <div className="hero-cta-row">

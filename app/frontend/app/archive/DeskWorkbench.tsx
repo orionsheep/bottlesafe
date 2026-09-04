@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HOME_COPY, SCAN_COPY, useLang } from "../i18n";
 import ReportPanel, { type Report } from "../scan/report";
+import AssistantFab from "../scan/AssistantFab";
+import ProfileSheet from "../m/ProfileSheet";
 import ArchiveCenter, { type ArchiveItem } from "./ArchiveCenter";
 import CrossAlertHero, { pairIdsFromCross } from "./CrossAlertHero";
 
@@ -67,6 +69,10 @@ export default function DeskWorkbench() {
     setItems((list) => list.filter((it) => it.id !== id));
   };
 
+  const setItemLocation = (id: number, location: string | null) => {
+    setItems((list) => list.map((it) => (it.id === id ? { ...it, location } : it)));
+  };
+
   const overall = report?.overall_risk || "unknown";
   const riskLabel = lang === "zh" ? RISK_ZH : RISK_EN;
   const pairIds = pairIdsFromCross(report?.cross_risks);
@@ -74,7 +80,7 @@ export default function DeskWorkbench() {
   return (
     <div className={`desk-root${lang === "zh" ? " lang-zh" : ""}`}>
       <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
+        <a className="brand" href="/"><span className="brand-mark"><img src="/mascot.png" alt="" width={30} height={30} style={{ borderRadius: "50%", display: "block" }} /></span><span>HOME<br />HAZARD</span></a>
         <div className="nav-links">
           <a href="/">{hn.navIndex}</a>
           <a href="/scan">{hn.navScan}</a>
@@ -91,10 +97,20 @@ export default function DeskWorkbench() {
       </nav>
 
       <div className="desk-bench">
+        {/* 画像入口（compact 横条，样式在 globals.css，与识别页一致） */}
+        <ProfileSheet compact />
         <CrossAlertHero items={items} cross={report?.cross_risks} api={API} pending={busy && !report} />
         <div className="desk-split">
           <aside className="desk-left">
-            <ArchiveCenter items={items} onRemove={removeItem} api={API} variant="desk" pairIds={pairIds} />
+            <a className="arc-mix-entry" href="/mix">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3h3v4L8 14h8l-3-7V3h3" /><path d="M9 20h6" /></svg>
+              <span className="arc-mix-text">
+                <b>{lang === "zh" ? "混用检查" : "Mix check"}</b>
+                <i>{lang === "zh" ? "任选两瓶，查能不能放在一起" : "Pick any two items and check compatibility"}</i>
+              </span>
+              <span className="arc-mix-arrow" aria-hidden="true">›</span>
+            </a>
+            <ArchiveCenter items={items} onRemove={removeItem} api={API} variant="desk" pairIds={pairIds} onLocationChange={setItemLocation} />
           </aside>
           <section className="desk-right">
             <ReportPanel
@@ -108,6 +124,8 @@ export default function DeskWorkbench() {
           </section>
         </div>
       </div>
+
+      <AssistantFab />
     </div>
   );
 }

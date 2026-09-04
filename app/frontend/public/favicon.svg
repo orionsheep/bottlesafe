@@ -1,6 +1,78 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M22 19.2727C22 20.779 20.779 22 19.2727 22H14.7273C13.221 22 12 20.779 12 19.2727V12H19.2727C20.779 12 22 13.221 22 14.7273V19.2727Z" fill="#68C4FF"/>
-<path d="M20 2C21.1046 2 22 2.89543 22 4V7C22 8.10457 21.1046 9 20 9H17C15.8954 9 15 8.10457 15 7V4C15 2.89543 15.8954 2 17 2H20Z" fill="#0C79D8"/>
-<path d="M7 15C8.10457 15 9 15.8954 9 17V20C9 21.1046 8.10457 22 7 22H4C2.89543 22 2 21.1046 2 20V17C2 15.8954 2.89543 15 4 15H7Z" fill="#0C79D8"/>
-<path d="M12 12H4.72727C3.22104 12 2 10.779 2 9.27273V4.72727C2 3.22104 3.22104 2 4.72727 2H9.27273C10.779 2 12 3.22104 12 4.72727V12Z" fill="#2E9EFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6f5e4"/>
+      <stop offset="1" stop-color="#c2efdb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 图标底板 -->
+  <rect x="0" y="0" width="1024" height="1024" rx="228" fill="url(#bg)"/>
+
+  <!-- 地面阴影 -->
+  <ellipse cx="512" cy="876" rx="170" ry="24" fill="#9bdcc0" opacity="0.55"/>
+
+  <!-- ===== 角色组 ===== -->
+  <g stroke="#2f6b76" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- 左臂（挥手） -->
+    <path d="M 364 648 C 318 640 288 612 272 570" fill="none" stroke-width="34"/>
+    <ellipse cx="262" cy="548" rx="32" ry="42" transform="rotate(-28 262 548)" fill="#dcedf7"/>
+
+    <!-- 右臂（伸向右后方，被盾牌部分遮挡） -->
+    <path d="M 668 660 C 700 650 720 636 736 616" fill="none" stroke-width="34"/>
+
+    <!-- 双脚 -->
+    <ellipse cx="456" cy="828" rx="46" ry="32" fill="#dcedf7"/>
+    <ellipse cx="576" cy="828" rx="46" ry="32" fill="#dcedf7"/>
+
+    <!-- 身体 -->
+    <path d="M 455 300 L 455 330 C 400 342 362 382 362 444 L 362 756 Q 362 812 420 812 L 612 812 Q 670 812 670 756 L 670 444 C 670 382 632 342 577 330 L 577 300 Z" fill="#dcedf7"/>
+
+    <!-- 瓶盖 -->
+    <rect x="420" y="214" width="192" height="92" rx="18" fill="#7fd6c2"/>
+    <line x1="478" y1="234" x2="478" y2="286" stroke-width="10"/>
+    <line x1="554" y1="234" x2="554" y2="286" stroke-width="10"/>
+
+    <!-- 标签带（脸） -->
+    <rect x="368" y="446" width="296" height="246" fill="#f2fafd" stroke="none"/>
+    <line x1="362" y1="446" x2="670" y2="446" stroke-width="16"/>
+    <line x1="362" y1="692" x2="670" y2="692" stroke-width="16"/>
+
+    <!-- 脸部 -->
+    <g stroke="none">
+      <circle cx="472" cy="556" r="27" fill="#2f6b76"/>
+      <circle cx="604" cy="556" r="27" fill="#2f6b76"/>
+      <circle cx="462" cy="546" r="9" fill="#ffffff"/>
+      <circle cx="594" cy="546" r="9" fill="#ffffff"/>
+      <ellipse cx="422" cy="618" rx="27" ry="15" fill="#f2994a" opacity="0.85"/>
+      <ellipse cx="648" cy="618" rx="27" ry="15" fill="#f2994a" opacity="0.85"/>
+      <!-- 张嘴笑 -->
+      <path d="M 506 604 Q 538 652 570 604 Q 538 626 506 604 Z" fill="#2f6b76"/>
+      <ellipse cx="538" cy="620" rx="13" ry="7" fill="#f2994a"/>
+    </g>
+
+    <!-- 玻璃高光 -->
+    <path d="M 414 372 C 400 402 396 420 400 452" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="456" cy="352" r="11" fill="#ffffff" stroke="none" opacity="0.9"/>
+  </g>
+
+  <!-- 盾牌（白对勾） -->
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 764 552
+             C 806 568 844 574 866 576
+             L 866 662
+             C 866 736 818 782 764 806
+             C 710 782 662 736 662 662
+             L 662 576
+             C 684 574 722 568 764 552 Z"
+          fill="#2bc48b" stroke="#2f6b76" stroke-width="14"/>
+    <path d="M 764 552
+             C 806 568 844 574 866 576
+             L 866 662
+             C 866 736 818 782 764 806
+             Z"
+          fill="#1fae7d" stroke="none" opacity="0.45"/>
+    <polyline points="716,664 748,698 812,614" fill="none" stroke="#ffffff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>

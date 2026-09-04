@@ -41,6 +41,10 @@ export default function MobileArchivePage() {
     setItems((list) => list.filter((it) => it.id !== id));
   };
 
+  const setItemLocation = (id: number, location: string | null) => {
+    setItems((list) => list.map((it) => (it.id === id ? { ...it, location } : it)));
+  };
+
   return (
     <AppShell active="archive">
       <div className={`scan-page${lang === "zh" ? " lang-zh" : ""}`} data-tour="archive">
@@ -57,7 +61,16 @@ export default function MobileArchivePage() {
         </header>
         <ProfileSheet />
 
-        <ArchiveCenter items={items} onRemove={removeItem} api={API} />
+        <a className="arc-mix-entry" href="/m/mix">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3h3v4L8 14h8l-3-7V3h3" /><path d="M9 20h6" /></svg>
+          <span className="arc-mix-text">
+            <b>{lang === "zh" ? "混用检查" : "Mix check"}</b>
+            <i>{lang === "zh" ? "任选两瓶，查能不能放在一起" : "Pick any two items and check compatibility"}</i>
+          </span>
+          <span className="arc-mix-arrow" aria-hidden="true">›</span>
+        </a>
+
+        <ArchiveCenter items={items} onRemove={removeItem} api={API} onLocationChange={setItemLocation} />
 
         <section className="arc-report-section">
           <details className="arc-report-fold">

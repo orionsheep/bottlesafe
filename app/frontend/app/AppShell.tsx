@@ -3,8 +3,9 @@
 import type { ReactNode } from "react";
 import { useLang } from "./i18n";
 import TourGuide from "./m/TourGuide";
+import "./scan/report-extra.css";
 
-type Tab = "home" | "scan" | "mix" | "archive";
+type Tab = "home" | "scan" | "assistant" | "archive" | "me";
 
 const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[] = [
   {
@@ -20,9 +21,9 @@ const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[
     ),
   },
   {
-    key: "mix", href: "/mix", zh: "混用", en: "Mix",
+    key: "assistant", href: "/m/assistant", zh: "AI 助手", en: "AI",
     icon: (
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3h3v4L8 14h8l-3-7V3h3" /><path d="M9 20h6" /></svg>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 21l2-5.6A8.5 8.5 0 1 1 21 11.5Z" /><circle cx="8.5" cy="11.5" r=".9" fill="currentColor" stroke="none" /><circle cx="12" cy="11.5" r=".9" fill="currentColor" stroke="none" /><circle cx="15.5" cy="11.5" r=".9" fill="currentColor" stroke="none" /></svg>
     ),
   },
   {
@@ -31,22 +32,20 @@ const TABS: { key: Tab; href: string; zh: string; en: string; icon: ReactNode }[
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="4" rx="1.2" /><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5" /><path d="M10 12.5h4" /></svg>
     ),
   },
+  {
+    key: "me", href: "/m/me", zh: "我的", en: "Me",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.6" /><path d="M5 20c1.2-3.4 3.9-5.2 7-5.2s5.8 1.8 7 5.2" /></svg>
+    ),
+  },
 ];
 
 /** 手机客户端外壳。只用于 /m/* ，导航不离开手机前端。 */
 export default function AppShell({ active, children }: { active: Tab; children: ReactNode }) {
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   return (
     <div className={`app-shell${lang === "zh" ? " lang-zh" : ""}`}>
       <div className="grain" aria-hidden="true" />
-      <header className="app-topbar">
-        <a className="app-brand" href="/"><span className="brand-dot" />瓶安 <i>BottleSafe</i></a>
-        <div className="app-topbar-end">
-          <button className="lang-chip" data-tour="lang" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">
-            {lang === "zh" ? "EN" : "中文"}
-          </button>
-        </div>
-      </header>
 
       <main className="app-body">{children}</main>
       <TourGuide />

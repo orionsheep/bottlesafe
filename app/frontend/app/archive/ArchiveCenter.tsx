@@ -5,6 +5,7 @@
 
 import { useMemo, useState } from "react";
 import { SCAN_COPY, useLang } from "../i18n";
+import { LOCATION_PRESETS, patchItemLocation } from "../locations";
 
 type Analysis = {
   product?: { name?: string | null; brand?: string | null; category?: string | null };
@@ -20,6 +21,7 @@ export type ArchiveItem = {
   observed_name?: string;
   image_path?: string;
   created_at?: string;
+  location?: string | null;
   analysis?: Analysis;
 };
 
@@ -44,12 +46,14 @@ export default function ArchiveCenter({
   api,
   variant = "phone",
   pairIds = [],
+  onLocationChange,
 }: {
   items: ArchiveItem[];
   onRemove: (id: number) => void;
   api: string;
   variant?: "phone" | "desk";
   pairIds?: number[];
+  onLocationChange?: (id: number, location: string | null) => void;
 }) {
   const { lang } = useLang();
   const t = SCAN_COPY[lang];
@@ -57,7 +61,25 @@ export default function ArchiveCenter({
   const [filter, setFilter] = useState<string>("all");
   const [sort, setSort] = useState<"new" | "risk" | "name">(variant === "desk" ? "risk" : "new");
   const [openId, setOpenId] = useState<number | null>(null);
+  const [locEditing, setLocEditing] = useState(false);
+  const [customLoc, setCustomLoc] = useState("");
   const openItem = openId == null ? null : items.find((it) => it.id === openId) || null;
+
+  // 打开抽屉时收起位置选择器（换一件物品也重置）
+  const openSheet = (id: number) => {
+    setOpenId(id);
+    setLocEditing(false);
+    setCustomLoc("");
+  };
+
+  const saveLocation = async (id: number, loc: string | null) => {
+    const ok = await patchItemLocation(api, id, loc);
+    if (ok) {
+      onLocationChange?.(id, loc);
+      setLocEditing(false);
+      setCustomLoc("");
+    }
+  };
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0, unknown: 0 };
@@ -117,7 +139,7 @@ export default function ArchiveCenter({
             const risk = a.risk_level || "unknown";
             return (
               <button key={it.id} className={`arc-wf-card risk-bd-${risk}${pairSet.has(it.id) ? " is-pair" : ""}`}
-                      onClick={() => setOpenId(it.id)} aria-label={itemName(it, t.unnamed)}>
+                      onClick={() => openSheet(it.id)} aria-label={itemName(it, t.unnamed)}>
                 <div className="arc-wf-media">
                   {it.image_path
                     ? <img src={`${api}/${it.image_path}`} alt="" loading="lazy" />
@@ -127,6 +149,7 @@ export default function ArchiveCenter({
                     <b className="arc-wf-title">{itemName(it, t.unnamed)}</b>
                     <span className="arc-wf-cat">{a.product?.category || "—"}</span>
                     <span className="arc-wf-date">{t.arcArchivedAt} {fmtDate(it.created_at)}</span>
+                    {it.location && <span className="arc-wf-loc">📍 {it.location}</span>}
                   </div>
                 </div>
               </button>
@@ -150,7 +173,7 @@ export default function ArchiveCenter({
             <h3>{t.arcTopRisk}</h3>
             <ul className="arc-top-list">
               {topRisk.map((it) => (
-                <li key={it.id} onClick={() => setOpenId(it.id)}>
+                <li key={it.id} onClick={() => openSheet(it.id)}>
                   <i className={`risk-dot-mini risk-bg-${it.analysis?.risk_level}`} />
                   <span>{itemName(it, t.unnamed)}</span>
                   <em>{riskName(lang, it.analysis?.risk_level || "unknown")}</em>
@@ -186,6 +209,42 @@ export default function ArchiveCenter({
                   </div>
 
                   <div className="arc-sheet-body">
+                    {/* 存放位置：当前值 + 点按展开预设 chips / 自定义输入，选中即保存 */}
+                    <div className="arc-loc">
+                      <button className="arc-loc-row" onClick={() => setLocEditing((v) => !v)}>
+                        <span className="arc-loc-label">{lang === "zh" ? "存放位置" : "Storage spot"}</span>
+                        <span className={`arc-loc-value${openItem.location ? "" : " is-empty"}`}>
+                          {openItem.location ? `📍 ${openItem.location}` : (lang === "zh" ? "未设置 · 点按选择" : "Not set · tap to choose")}
+                        </span>
+                        <span className={`arc-loc-arrow${locEditing ? " is-open" : ""}`} aria-hidden="true">›</span>
+                      </button>
+                      {locEditing && (
+                        <div className="arc-loc-picker">
+                          <div className="loc-chips">
+                            {LOCATION_PRESETS.map((p) => (
+                              <button key={p} className={`loc-chip${openItem.location === p ? " on" : ""}`}
+                                      onClick={() => void saveLocation(openItem.id, p)}>{p}</button>
+                            ))}
+                          </div>
+                          <form className="loc-custom"
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  const v = customLoc.trim().slice(0, 20);
+                                  if (v) void saveLocation(openItem.id, v);
+                                }}>
+                            <input value={customLoc} onChange={(e) => setCustomLoc(e.target.value)}
+                                   maxLength={20}
+                                   placeholder={lang === "zh" ? "自定义位置…" : "Custom spot…"} />
+                            <button type="submit">{lang === "zh" ? "保存" : "Save"}</button>
+                          </form>
+                          {openItem.location && (
+                            <button className="loc-clear" onClick={() => void saveLocation(openItem.id, null)}>
+                              {lang === "zh" ? "清除位置" : "Clear location"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     {a.summary && <p className="arc-sheet-summary">{a.summary}</p>}
                     {(a.hazards?.length ?? 0) > 0 && (
                       <div className="arc-detail-block">

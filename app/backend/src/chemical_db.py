@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS household_items (
   id INTEGER PRIMARY KEY, household_id TEXT NOT NULL, product_id INTEGER,
   observed_name TEXT, image_path TEXT, analysis_json TEXT NOT NULL,
+  location TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(product_id) REFERENCES products(id)
 );
@@ -33,6 +34,14 @@ class ChemicalDB:
         self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """幂等迁移：已有库缺列时补列（先查 PRAGMA，没有再 ALTER）。"""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(household_items)")}
+        if "location" not in cols:
+            self.conn.execute("ALTER TABLE household_items ADD COLUMN location TEXT")
+            self.conn.commit()
 
     def close(self) -> None:
         self.conn.close()
@@ -58,13 +67,30 @@ class ChemicalDB:
                 return dict(row)
         return None
 
-    def add_to_household(self, household_id: str, image_path: str, analysis: ChemicalAnalysis, product_id: int | None = None) -> int:
+    def add_to_household(self, household_id: str, image_path: str, analysis: ChemicalAnalysis, product_id: int | None = None, location: str | None = None) -> int:
         cur = self.conn.execute(
-            "INSERT INTO household_items(household_id, product_id, observed_name, image_path, analysis_json) VALUES(?,?,?,?,?)",
-            (household_id, product_id, analysis.product.name, image_path, analysis.model_dump_json()),
+            "INSERT INTO household_items(household_id, product_id, observed_name, image_path, analysis_json, location) VALUES(?,?,?,?,?,?)",
+            (household_id, product_id, analysis.product.name, image_path, analysis.model_dump_json(), location),
         )
         self.conn.commit()
         return int(cur.lastrowid)
+
+    def get_household_item(self, item_id: int) -> dict | None:
+        row = self.conn.execute("SELECT * FROM household_items WHERE id = ?", (item_id,)).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        try:
+            d["analysis"] = json.loads(d.pop("analysis_json"))
+        except json.JSONDecodeError:
+            d["analysis"] = {}
+        return d
+
+    def set_item_location(self, item_id: int, location: str | None) -> bool:
+        """更新/清除（None）存放位置。"""
+        cur = self.conn.execute("UPDATE household_items SET location = ? WHERE id = ?", (location, item_id))
+        self.conn.commit()
+        return cur.rowcount > 0
 
     def delete_household_item(self, item_id: int) -> bool:
         cur = self.conn.execute("DELETE FROM household_items WHERE id = ?", (item_id,))
@@ -98,7 +124,7 @@ class ChemicalDB:
 
     def list_checkins(self, household_id: str, limit: int = 50) -> list[dict]:
         rows = self.conn.execute(
-            "SELECT id, created_at, overall_risk, item_count FROM checkins "
+            "SELECT id, created_at, overall_risk, item_count, report_json FROM checkins "
             "WHERE household_id = ? ORDER BY id DESC LIMIT ?",
             (household_id, limit),
         ).fetchall()

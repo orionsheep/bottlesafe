@@ -21,13 +21,16 @@ type MixCandidate = {
   name: string;
   risk_level: string;
   image_path?: string;
+  location?: string | null;
   analysis: Analysis;
 };
-type CrossRisk = { a: string; b: string; reason: string; severity: string };
+type CrossRisk = { a: string; b: string; reason: string; severity: string; source?: "rules" | "llm"; same_location?: boolean; location?: string };
 type MixResp = {
   cross_risks: CrossRisk[];
   has_critical: boolean;
-  verdict?: "danger" | "unknown" | "no_edge";
+  verdict?: "danger" | "caution" | "unknown" | "no_edge";
+  verdict_source?: "rules" | "llm";
+  llm_used?: boolean;
   unknown_names?: string[];
 };
 
@@ -71,11 +74,12 @@ export default function MobileMixPage() {
       .then((d) => {
         const house: MixCandidate[] = (d.items ?? [])
           .filter((it: { analysis?: Analysis }) => it.analysis && Object.keys(it.analysis).length)
-          .map((it: { id: number; observed_name?: string; image_path?: string; analysis: Analysis }) => ({
+          .map((it: { id: number; observed_name?: string; image_path?: string; location?: string | null; analysis: Analysis }) => ({
             key: `house:${it.id}`,
             name: it.analysis?.product?.name || it.observed_name || t.unnamed,
             risk_level: it.analysis?.risk_level || "unknown",
             image_path: it.image_path,
+            location: it.location ?? null,
             analysis: it.analysis,
           }));
         const seen = new Set<string>();
@@ -135,8 +139,8 @@ export default function MobileMixPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: [
-            { analysis: slotA.analysis, name: slotA.name, image_path: slotA.image_path },
-            { analysis: slotB.analysis, name: slotB.name, image_path: slotB.image_path },
+            { analysis: slotA.analysis, name: slotA.name, image_path: slotA.image_path, location: slotA.location ?? null },
+            { analysis: slotB.analysis, name: slotB.name, image_path: slotB.image_path, location: slotB.location ?? null },
           ],
         }),
       });
@@ -153,9 +157,10 @@ export default function MobileMixPage() {
   const ready = Boolean(slotA && slotB);
   const hot = result?.cross_risks.find((c) => c.severity === "critical" || c.severity === "high") || result?.cross_risks[0];
   const verdict = result?.verdict || (hot ? "danger" : result ? "no_edge" : undefined);
+  const sameLoc = result?.cross_risks.find((c) => c.same_location)?.location;
 
   return (
-    <AppShell active="mix">
+    <AppShell active="archive">
       <div className="phone-mix">
         <header className="page-head">
           <h1>{t.h1}</h1>
@@ -183,13 +188,66 @@ export default function MobileMixPage() {
         {result && !busy && verdict === "danger" && hot && (
           <section className="phone-mix-outcome is-hot" aria-live="assertive">
             <em>{outcomeTitle(hot.reason, t.outcomeGas)}</em>
+            {hot.source === "llm" ? (
+              <span
+                className="xc-rule-badge"
+                style={{ background: "rgba(217,119,6,.14)", color: "#b45309", borderColor: "rgba(217,119,6,.45)" }}
+              >
+                {lang === "zh" ? "AI推测" : "AI guess"}
+              </span>
+            ) : (
+              <span className="xc-rule-badge">{lang === "zh" ? "基于规则库" : "Rule-based"}</span>
+            )}
             <b>{slotA?.name} ✕ {slotB?.name}</b>
+            {sameLoc && (
+              <p className="mix-same-loc">
+                📍 {lang === "zh" ? `这两瓶放在同一位置（${sameLoc}），现在就分开` : `Both are stored in the same spot (${sameLoc}) — separate them now`}
+              </p>
+            )}
             <p>{hot.reason}</p>
+            {hot.source === "llm" && (
+              <p style={{ fontSize: "0.78rem", color: "#b45309" }}>{lang === "zh"
+                ? "此组合由 AI 推断，非规则库结论，请以产品标签为准"
+                : "This pair was inferred by AI, not from the rule base — follow the product labels."}</p>
+            )}
             <ul>
               <li>{t.action1}</li>
               <li>{t.action2}</li>
               <li>{t.action3}</li>
             </ul>
+          </section>
+        )}
+        {result && !busy && verdict === "caution" && (
+          <section className="phone-mix-outcome is-unknown" aria-live="polite">
+            <em>{lang === "zh" ? "需注意的组合（非急性危险）" : "Pairs to note (not acute)"}</em>
+            <b>{slotA?.name} ✕ {slotB?.name}</b>
+            {sameLoc && (
+              <p className="mix-same-loc">
+                📍 {lang === "zh" ? `这两瓶放在同一位置（${sameLoc}），现在就分开` : `Both are stored in the same spot (${sameLoc}) — separate them now`}
+              </p>
+            )}
+            {result.cross_risks.map((c, i) => (
+              <div key={i}>
+                <p>
+                  {c.source === "llm" ? (
+                    <span
+                      className="xc-rule-badge"
+                      style={{ background: "rgba(217,119,6,.14)", color: "#b45309", borderColor: "rgba(217,119,6,.45)" }}
+                    >
+                      {lang === "zh" ? "AI推测" : "AI guess"}
+                    </span>
+                  ) : (
+                    <span className="xc-rule-badge">{lang === "zh" ? "基于规则库" : "Rule-based"}</span>
+                  )}{" "}
+                  {c.reason}
+                </p>
+                {c.source === "llm" && (
+                  <p style={{ fontSize: "0.78rem", color: "#b45309" }}>{lang === "zh"
+                    ? "此组合由 AI 推断，非规则库结论，请以产品标签为准"
+                    : "This pair was inferred by AI, not from the rule base — follow the product labels."}</p>
+                )}
+              </div>
+            ))}
           </section>
         )}
         {result && !busy && verdict === "unknown" && (
