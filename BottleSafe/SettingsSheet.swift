@@ -10,11 +10,11 @@ struct SettingsSheet: View {
         NavigationStack {
             Form {
                 Section("云端 API") {
-                    TextField("http://60.204.231.189:8000", text: $draft)
+                    TextField("https://bottlesafe.orionsheep.com", text: $draft)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
-                    Text("默认已指向云服务器 http://60.204.231.189:8000，任何网络可用。局域网联调时可改成 Mac 的 IP。")
+                    Text("默认已指向云服务器 https://bottlesafe.orionsheep.com（HTTPS 加密），任何网络可用。局域网联调时可改成 Mac 的 IP。")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
                     Button("填入云服务器") { draft = AppState.cloudAPIBase }
