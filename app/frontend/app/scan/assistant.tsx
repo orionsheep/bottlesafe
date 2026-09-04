@@ -10,12 +10,7 @@ import { SCAN_COPY, useLang } from "../i18n";
 import { emptyProfile, loadProfile, loadStorage, selectedLabels, toAskContext, type HouseholdProfile } from "../profile";
 import "./report-extra.css";
 
-const API =
-  typeof window !== "undefined"
-    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        ? "http://127.0.0.1:8000"
-        : `http://${window.location.hostname}:8000`)
-    : "";
+const API = "";
 
 type KgNode = { id: string; type: string; name: string };
 type AskMeta = {

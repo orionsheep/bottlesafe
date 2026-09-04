@@ -9,12 +9,7 @@ import AppShell from "../../AppShell";
 import { loadProfile, selectedLabels } from "../../profile";
 import "../../scan/report-extra.css";
 
-const API =
-  typeof window !== "undefined"
-    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        ? "http://127.0.0.1:8000"
-        : `http://${window.location.hostname}:8000`)
-    : "";
+const API = "";
 
 export default function MobileFeedbackPage() {
   const { lang } = useLang();

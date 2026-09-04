@@ -7,12 +7,7 @@ import ProfileSheet from "../ProfileSheet";
 import { ARRAY_DIMS, PROFILE_KEYS, emptyProfile, loadProfile, selectedLabels, type HouseholdProfile } from "../../profile";
 import "../../scan/report-extra.css";
 
-const API =
-  typeof window !== "undefined"
-    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        ? "http://127.0.0.1:8000"
-        : `http://${window.location.hostname}:8000`)
-    : "";
+const API = "";
 
 const FIRST_OPEN_KEY = "bottlesafe-first-open";
 

@@ -11,12 +11,7 @@ import { CrossCompareCard, type HouseItem } from "../scan/report";
 import AssistantFab from "../scan/AssistantFab";
 import "./mix-desk.css";
 
-const API =
-  typeof window !== "undefined"
-    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        ? "http://127.0.0.1:8000"
-        : `http://${window.location.hostname}:8000`)
-    : "";
+const API = "";
 
 type Analysis = {
   product?: { name?: string | null };

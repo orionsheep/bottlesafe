@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useLang, SCAN_COPY } from "../i18n";
 
-const API =
-  typeof window !== "undefined"
-    ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
-        ? "http://127.0.0.1:8000"
-        : `http://${window.location.hostname}:8000`)
-    : "";
+const API = "";
 
 export default function FeedbackBar({ page }: { page: string }) {
   const { lang } = useLang();
