@@ -196,12 +196,9 @@ struct ScanView: View {
 
     @ViewBuilder
     private var statusLine: some View {
-        if app.backend?.status == "ready" {
-            Text(app.backend?.detail ?? "后端已就绪")
-                .font(.footnote)
-                .foregroundStyle(Theme.green)
-        } else {
-            Text(app.backendError ?? app.backend?.detail ?? "后端未连接。点右上角填写服务器。真机用 http://192.168.3.110:8000")
+        // 连接正常时不显示任何状态文案（内部实现细节不上 UI）；仅离线时提示
+        if app.backend?.status != "ready" {
+            Text(app.backendError ?? app.backend?.detail ?? "后端未连接。点右上角填写服务器，默认云服务器 https://bottlesafe.orionsheep.com")
                 .font(.footnote)
                 .foregroundStyle(Theme.coral)
         }
