@@ -13,12 +13,16 @@ import urllib.request
 API_BASE = os.environ.get("CHEM_API_BASE", "https://api-inference.modelscope.cn/v1/chat/completions")
 API_KEY = os.environ.get("CHEM_API_KEY") or os.environ.get("MODELSCOPE_API_KEY", "")
 TEXT_MODEL = os.environ.get("CHEM_TEXT_MODEL") or os.environ.get("CHEM_API_MODEL", "Qwen/Qwen3-VL-8B-Instruct")
+# 纯文本对话（问答管家）可单独走一套端点/密钥/模型，默认同视觉模型配置。
+# 线上用硅基流动：CHEM_TEXT_API_BASE=https://api.siliconflow.cn/v1/chat/completions
+TEXT_API_BASE = os.environ.get("CHEM_TEXT_API_BASE", API_BASE)
+TEXT_API_KEY = os.environ.get("CHEM_TEXT_API_KEY", API_KEY)
 
 
 def chat(system: str, user: str, max_tokens: int = 1200, temperature: float = 0.4,
          timeout: int = 180) -> str | None:
     """返回模型回复文本；未配置 key 或请求/解析失败时返回 None（调用方走本地兜底）。"""
-    if not API_KEY:
+    if not TEXT_API_KEY:
         return None
     payload = {
         "model": TEXT_MODEL,
@@ -31,12 +35,37 @@ def chat(system: str, user: str, max_tokens: int = 1200, temperature: float = 0.
     }
     try:
         req = urllib.request.Request(
-            API_BASE, data=json.dumps(payload).encode(),
-            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"})
+            TEXT_API_BASE, data=json.dumps(payload).encode(),
+            headers={"Authorization": f"Bearer {TEXT_API_KEY}", "Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             body = json.loads(resp.read())
         return body["choices"][0]["message"]["content"]
     except Exception:  # noqa: BLE001 - 网络失败一律走兜底
+        return None
+
+
+def chat_multi(system: str, history: list | None, user: str,
+               max_tokens: int = 800, temperature: float = 0.4, timeout: int = 180) -> str | None:
+    """多轮对话：history 为 [{role, content}, ...]（按时间先后）。失败返回 None。"""
+    if not TEXT_API_KEY:
+        return None
+    messages = [{"role": "system", "content": system}]
+    for m in (history or [])[-12:]:  # 只保留最近 12 条，控制 token
+        role = m.get("role")
+        content = m.get("content")
+        if role in ("user", "assistant") and isinstance(content, str) and content.strip():
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user})
+    payload = {"model": TEXT_MODEL, "messages": messages,
+               "max_tokens": max_tokens, "temperature": temperature}
+    try:
+        req = urllib.request.Request(
+            TEXT_API_BASE, data=json.dumps(payload).encode(),
+            headers={"Authorization": f"Bearer {TEXT_API_KEY}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read())
+        return body["choices"][0]["message"]["content"]
+    except Exception:  # noqa: BLE001
         return None
 
 

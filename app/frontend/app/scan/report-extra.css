@@ -1,0 +1,170 @@
+/* ==== 报告对比卡 / 管家开场白 / 「我的」页 ==== */
+/* 由 app/scan/report.tsx、app/scan/assistant.tsx、app/AppShell.tsx、app/m/me/page.tsx 按需 import，勿并入 globals.css */
+
+/* ---- 0. 底部 tabbar：第 5 个 tab「我的」 ---- */
+.app-shell .app-tabbar{grid-template-columns:repeat(5,1fr)}
+
+/* ---- 1. 双瓶对比卡（cross_risks 五件套） ---- */
+.xc-list{display:flex;flex-direction:column;gap:16px;margin-top:10px}
+.xc-card{border:1px solid var(--line,rgba(30,61,47,.09));border-radius:16px;padding:16px;background:var(--paper,#fff)}
+.xc-card.sev-critical{border-color:rgba(192,48,28,.45);background:rgba(192,48,28,.04)}
+.xc-card.sev-high{border-color:rgba(224,114,31,.45);background:rgba(224,114,31,.04)}
+.xc-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.xc-rule-badge{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:rgba(79,157,106,.14);color:#3f7d55}
+
+.xc-duo{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:10px}
+.xc-bottle{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border-radius:14px;background:var(--cream,#F7F6F2);border:1px solid var(--line,rgba(30,61,47,.09));min-width:0}
+.xc-bottle-name{font-size:14px;font-weight:800;line-height:1.35;color:var(--ink,#1E3D2F);overflow-wrap:anywhere}
+.xc-bottle-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(216,106,61,.14);color:var(--coral,#D86A3D);overflow-wrap:anywhere}
+.xc-bottle-detected{font-size:11px;line-height:1.5;color:var(--muted,#6C7067);overflow-wrap:anywhere}
+.xc-coexist{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;align-self:center;padding:8px 5px;border-radius:999px;background:var(--ink,#1E3D2F);color:var(--cream,#F7F6F2)}
+.xc-coexist i{font-style:normal;font-size:10px;font-weight:700;line-height:1.15;letter-spacing:.03em}
+
+.xc-why{margin-top:12px}
+.xc-why h5{margin:10px 0 4px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#6C7067);font-weight:800}
+.xc-why h5:first-child{margin-top:0}
+.xc-why p{margin:0;font-size:13px;line-height:1.65;color:#3a4a40;overflow-wrap:anywhere}
+
+.xc-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.xc-action{padding:12px;border-radius:14px;background:rgba(79,157,106,.08);border-left:3px solid var(--green,#4F9D6A)}
+.xc-action b{display:block;font-size:13px;font-weight:800;color:var(--ink,#1E3D2F);margin-bottom:4px}
+.xc-action p{margin:0;font-size:12.5px;line-height:1.6;color:#3a4a40;overflow-wrap:anywhere}
+
+.xc-honest{margin:12px 0 0;font-size:11.5px;line-height:1.6;color:var(--muted,#6C7067);overflow-wrap:anywhere}
+.xc-source{margin:6px 0 0;font-size:10.5px;letter-spacing:.03em;color:var(--muted,#6C7067);opacity:.8}
+
+@media (max-width:420px){
+  .xc-actions{grid-template-columns:1fr}
+}
+
+/* ---- 2. AI 管家开场白 ---- */
+.butler-hello{display:flex;gap:12px;align-items:flex-start;margin:12px 0 14px;padding:14px 16px;border-radius:16px;background:rgba(79,157,106,.08);border:1px solid rgba(79,157,106,.22)}
+.butler-avatar{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--green,#4F9D6A);color:#fff;font-size:14px;font-weight:800}
+.butler-hello p{margin:0;font-size:13.5px;line-height:1.7;color:var(--ink,#1E3D2F);overflow-wrap:anywhere}
+
+/* ---- 3. 「我的」页：米色渐变底 + 留白分隔，不堆白卡 ---- */
+.me-page{min-height:100svh}
+.me-head{display:flex;align-items:center;gap:14px;padding:18px 2px 20px}
+.me-avatar{flex:none;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;overflow:hidden;background:transparent}
+.me-head-main h1{margin:0 0 6px;font-size:20px;font-weight:800;letter-spacing:-.01em;color:var(--ink,#1E3D2F)}
+.me-head-main p{margin:2px 0;font-size:12px;line-height:1.5;color:var(--muted,#6C7067)}
+
+.me-section{padding:16px 2px 20px;border-top:1px solid var(--line,rgba(30,61,47,.09))}
+.me-sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.me-sec-head h2{margin:0;font-size:15px;font-weight:800;color:var(--ink,#1E3D2F)}
+.me-sec-count{font-size:11px;font-weight:700;color:var(--muted,#6C7067)}
+.me-pref-summary{margin:0 0 12px;font-size:12.5px;line-height:1.7;color:#3a4a40;overflow-wrap:anywhere}
+
+.me-list{padding:4px 2px 12px;border-top:1px solid var(--line,rgba(30,61,47,.09))}
+.me-row{display:flex;align-items:center;gap:12px;padding:15px 2px;border-bottom:1px solid var(--line,rgba(30,61,47,.09));text-decoration:none;color:var(--ink,#1E3D2F);font-size:14px;font-weight:600;list-style:none;cursor:pointer}
+.me-row:last-child{border-bottom:0}
+.me-row-ico{flex:none;display:grid;place-items:center;width:22px;color:var(--muted,#6C7067)}
+.me-row-text{flex:1;min-width:0}
+.me-row-arrow{color:var(--muted,#6C7067);font-size:18px;line-height:1;transition:transform .2s}
+.me-row-fold{display:block;padding:0;cursor:default}
+.me-row-fold>summary{display:flex;align-items:center;gap:12px;padding:15px 2px;cursor:pointer;list-style:none;font-size:14px;font-weight:600;color:var(--ink,#1E3D2F)}
+.me-row-fold>summary::-webkit-details-marker{display:none}
+.me-row-fold[open]>summary .me-row-arrow{transform:rotate(90deg)}
+.me-row-body{padding:4px 2px 14px 34px}
+.me-row-body p{margin:0;font-size:13px;line-height:1.7;color:#3a4a40;font-weight:400;overflow-wrap:anywhere}
+.me-row-static{cursor:default}
+.me-lang-btn{flex:none;border:1px solid var(--line,rgba(30,61,47,.09));background:var(--paper,#fff);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:700;color:var(--ink,#1E3D2F);cursor:pointer;min-height:34px}
+
+.me-foot{padding:22px 2px 8px;text-align:center;background:transparent;color:var(--muted,#6C7067)}
+.me-foot p{margin:0;font-size:11px;line-height:1.6;color:var(--muted,#6C7067)}
+
+/* ---- 5. 反馈建议独立页（/m/feedback） ---- */
+.fbp-form h3{margin:18px 0 10px;font-size:14px;font-weight:800;color:var(--ink,#1E3D2F)}
+.fbp-form h3:first-child{margin-top:4px}
+.fbp-rating{display:flex;gap:10px}
+.fbp-rate{flex:1;border:1px solid var(--line,rgba(30,61,47,.12));background:var(--paper,#fff);border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:var(--ink,#1E3D2F);cursor:pointer;transition:.15s}
+.fbp-rate.is-on{border-color:var(--green,#4F9D6A);background:rgba(79,157,106,.12);box-shadow:0 0 0 1px var(--green,#4F9D6A)}
+.fbp-comment,.fbp-audience{width:100%;border:1px solid var(--line,rgba(30,61,47,.12));background:var(--paper,#fff);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6;color:var(--ink,#1E3D2F);font-family:inherit;resize:vertical}
+.fbp-comment:focus,.fbp-audience:focus{outline:none;border-color:var(--green,#4F9D6A)}
+.fbp-count{margin:4px 2px 0;font-size:11px;color:var(--muted,#6C7067);text-align:right}
+.fbp-submit{width:100%;margin-top:18px;border:0;background:var(--green,#4F9D6A);color:#fff;border-radius:14px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
+.fbp-submit:disabled{background:var(--paper,#fff);color:var(--muted,#6C7067);border:1px dashed var(--line,rgba(30,61,47,.2))}
+.fbp-hint{margin:8px 0 0;font-size:12px;color:var(--muted,#6C7067);text-align:center}
+.fbp-done{padding:28px 4px;text-align:left}
+.fbp-done b{display:block;font-size:18px;font-weight:900;color:var(--ink,#1E3D2F);margin-bottom:8px}
+.fbp-done p{margin:0 0 16px;font-size:13.5px;line-height:1.7;color:var(--muted,#6C7067)}
+.fbp-again{border:1px solid var(--green,#4F9D6A);background:rgba(79,157,106,.1);color:var(--green,#4F9D6A);border-radius:12px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer}
+.fbp-total{margin:22px 2px 0;font-size:12px;color:var(--muted,#6C7067)}
+
+/* ---- 6. 物品存放位置（档案位置行 / 位置 chips / 同位置混用预警） ---- */
+/* 由 ArchiveCenter、m/scan、mix 双端复用；留白分隔优先，不堆白卡，颜色走 CSS 变量 */
+
+/* 瀑布流卡片上的位置小标签：克制的小字，不加边框 */
+.arc-wf-loc{display:inline-block;margin-top:2px;font-size:11px;line-height:1.4;color:var(--muted,#6C7067);overflow-wrap:anywhere}
+
+/* 详情抽屉里的位置行 */
+.arc-loc{padding:14px 2px;border-bottom:1px solid var(--line,rgba(30,61,47,.09))}
+.arc-loc-row{display:flex;align-items:center;gap:10px;width:100%;padding:0;border:0;background:none;font:inherit;cursor:pointer;text-align:left}
+.arc-loc-label{flex:none;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted,#6C7067)}
+.arc-loc-value{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--ink,#1E3D2F);overflow-wrap:anywhere}
+.arc-loc-value.is-empty{font-weight:500;color:var(--muted,#6C7067)}
+.arc-loc-arrow{flex:none;font-size:16px;line-height:1;color:var(--muted,#6C7067);transition:transform .2s}
+.arc-loc-arrow.is-open{transform:rotate(90deg)}
+.arc-loc-picker{padding-top:12px}
+
+/* 位置 chips（档案抽屉 / 扫描存档后共用） */
+.loc-chips{display:flex;flex-wrap:wrap;gap:8px}
+.loc-chip{border:1px solid var(--line,rgba(30,61,47,.12));background:transparent;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--ink,#1E3D2F);cursor:pointer;transition:.15s;min-height:32px}
+.loc-chip.on{border-color:var(--green,#4F9D6A);background:rgba(79,157,106,.12);color:var(--green,#4F9D6A)}
+.loc-custom{display:flex;gap:8px;margin-top:10px}
+.loc-custom input{flex:1;min-width:0;border:1px solid var(--line,rgba(30,61,47,.12));background:transparent;border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit;color:var(--ink,#1E3D2F)}
+.loc-custom input:focus{outline:none;border-color:var(--green,#4F9D6A)}
+.loc-custom button{border:0;background:var(--green,#4F9D6A);color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer}
+.loc-clear{margin-top:10px;border:0;background:none;padding:0;font-size:12px;color:var(--muted,#6C7067);cursor:pointer;text-decoration:underline}
+
+/* 扫描页存档成功后的位置选择行 */
+.save-loc{margin-top:14px;padding-top:14px;border-top:1px solid var(--line,rgba(30,61,47,.09))}
+.save-loc-label{display:block;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--muted,#6C7067)}
+
+/* 混用结果区「同一位置」显著提示 */
+.mix-same-loc{margin:10px 0;padding:12px 14px;border-radius:12px;border-left:3px solid var(--coral,#D86A3D);background:rgba(216,106,61,.1);font-size:14px;font-weight:800;line-height:1.6;color:var(--ink,#1E3D2F);overflow-wrap:anywhere}
+
+/* ---- 6. 档案页混用检查入口（混用降级为档案子页） ---- */
+.arc-mix-entry{display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin:0 0 14px;box-shadow:var(--shadow-sm);text-decoration:none;color:var(--ink)}
+.arc-mix-entry svg{color:var(--green);flex:none}
+.arc-mix-text{flex:1;display:flex;flex-direction:column;gap:2px}
+.arc-mix-text b{font-size:14px;font-weight:800}
+.arc-mix-text i{font-style:normal;font-size:12px;color:var(--muted)}
+.arc-mix-arrow{font-size:20px;color:var(--muted);line-height:1}
+
+/* ---- 7. AI 管家微信式对话（/m/assistant 与桌面悬浮面板共用） ---- */
+.assistant-chat{display:flex;flex-direction:column;min-height:0}
+.chat-thread{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding:4px 2px;max-height:min(56vh,560px);scrollbar-width:thin}
+.msg-row{display:flex;gap:8px;align-items:flex-start}
+.msg-row.user{flex-direction:row-reverse}
+.msg-avatar{flex:none;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.msg-main{max-width:82%;display:flex;flex-direction:column;gap:4px}
+.msg-row.user .msg-main{align-items:flex-end}
+.msg-bubble{padding:10px 13px;border-radius:14px;border-top-left-radius:4px;font-size:14px;line-height:1.65;overflow-wrap:anywhere;background:var(--paper);border:1px solid var(--line);color:var(--ink)}
+.msg-row.user .msg-bubble{background:var(--green);border-color:var(--green);color:#fff;border-radius:14px;border-top-right-radius:4px}
+.msg-typing{opacity:.65;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.msg-side{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.msg-speak{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--ink)}
+.msg-facts summary{cursor:pointer;color:var(--muted)}
+.msg-facts ul{margin:6px 0 0;padding-left:16px;color:var(--muted)}
+.chat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-left:38px}
+.chat-chips button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer}
+.chat-chips button:active{background:rgba(111,168,96,.12);border-color:var(--green)}
+.chat-input-bar{display:flex;gap:8px;align-items:center;margin-top:12px}
+.chat-input-bar input{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:11px 16px;font-size:14px}
+.chat-input-bar input:focus{border-color:var(--green);outline:none}
+.chat-mic{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--green);background:rgba(111,168,96,.12);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chat-mic i{width:10px;height:10px;border-radius:50%;background:var(--green)}
+.chat-mic.listening{background:var(--warn);border-color:var(--warn)}
+.chat-mic.listening i{background:#fff;animation:pulse 1s infinite}
+.chat-send{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--green);color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+.chat-send:disabled{opacity:.4}
+
+/* ---- 8. 输入框钉底：手机页撑满视口，桌面面板内钉底 ---- */
+.app-shell .assistant-page{display:flex;flex-direction:column;height:calc(100svh - var(--tabbar-h,64px) - var(--safe-bottom,0px) - 32px);min-height:0}/* min-height:0 压过 .scan-page 的 min-height:100svh */
+.app-shell .assistant-page .assistant-chat{flex:1;min-height:0;display:flex;flex-direction:column}
+.app-shell .assistant-page .chat-thread{flex:1;max-height:none;overflow-y:auto}
+.assist-panel{display:flex;flex-direction:column;overflow:hidden}
+.assist-panel .assistant-chat{flex:1;min-height:0;display:flex;flex-direction:column}
+.assist-panel .chat-thread{flex:1;max-height:none;overflow-y:auto}

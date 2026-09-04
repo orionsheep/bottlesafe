@@ -2,10 +2,10 @@
 
 import { useEffect, useState, type CSSProperties, type MouseEvent } from "react";
 import { useLang, HOME_COPY, HAZARDS } from "./i18n";
-import DeskNav from "./DeskNav";
+import AssistantFab from "./scan/AssistantFab";
 
 export default function Home() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const t = HOME_COPY[lang];
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -34,7 +34,14 @@ export default function Home() {
   return (
     <main className={lang === "zh" ? "lang-zh" : ""}>
       <section className={`hero ${mode}`} id="top" onMouseMove={moveHouse} onMouseLeave={() => setTilt({ x: 0, y: 0 })} style={heroStyle}>
-        <DeskNav home onExplore={scrollToIndex} />
+        <nav className="nav" aria-label="Main navigation">
+          <a className="brand" href="#top" aria-label="Home Hazard home"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a>
+          <div className="nav-links"><a href="#index">{t.navIndex}</a><a href="/scan">{t.navScan}</a><a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a></div>
+          <div className="nav-right">
+            <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
+            <button className="menu" onClick={scrollToIndex} aria-label="Explore household hazards"><span />{t.explore}</button>
+          </div>
+        </nav>
 
         <div className="hero-copy">
           <p className="eyebrow"><span>HOME / HAZARD</span> {t.eyebrow}</p>
@@ -93,7 +100,9 @@ export default function Home() {
         ))}
       </section>
 
-      <footer><a className="brand" href="#top"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer[0]}<br />{t.footer[1]}</p><a href="#top" className="back">{t.back}</a></footer>
+      <footer><a className="brand" href="#top"><span className="brand-mark">H/H</span><span>HOME<br />HAZARD</span></a><p>{t.footer[0]}<br />{t.footer[1]}</p><span className="edition-links"><a href="/m">手机版</a><a href="#top" className="back">{t.back}</a></span></footer>
+
+      <AssistantFab />
     </main>
   );
 }

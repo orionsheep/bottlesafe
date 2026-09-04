@@ -1,5 +1,7 @@
 # 瓶安 BottleSafe · 两套前端，别搞混
 
+> 2026-09-03：desktop-mix 的前端已整体从 main 重新同步（rsync app/frontend，不含 node_modules/.vinext）。desktop-mix 自己的 5 个旧提交（DeskNav、独立混用/档案页）已被 main 的更新版取代——main 桌面页是同设计语言的全功能超集。今后桌面端改动直接在 main 做、再同步过来即可；仍不要把 desktop-mix merge 进 main。
+
 后端始终共享：`app/backend`，端口 **8000**。识别引擎和混用图谱两端一样。
 
 ---
@@ -47,15 +49,16 @@ PORT=3400 npx vinext dev -p 3400
 
 ## 混用怎么判
 
-`POST /api/mix` 只对两瓶做图谱交叉，**不写档案**。`verdict` 只有三种，页面必须三种样子：
+`POST /api/mix` 只对两瓶做图谱交叉，**不写档案**。`verdict` 有四种，页面必须四种样子：
 
 | verdict | 含义 | 界面 |
 |---|---|---|
-| `danger` | 命中禁忌边（如 84×洁厕灵→氯气） | 红/珊瑚对撞提示 |
+| `danger` | 命中禁忌边（如 84×洁厕灵→氯气），或规则未命中时 LLM 兜底判 danger | 红/珊瑚对撞提示 |
+| `caution` | 只命中 medium 级（功效抵消/配方未知的保守提示），或 LLM 兜底判 caution | 琥珀色「需注意的组合」 |
 | `unknown` | 至少一瓶对不上已知成分 | 琥珀色「混用结果未知，不要混合」 |
 | `no_edge` | 两瓶都对上了，但这一对比没有边 | 「已知禁忌表里没有这一对，仍不要混合」 |
 
-禁止写成「可以混合」「安全」。
+禁止写成「可以混合」「安全」。`source` 字段区分 `rules` / `llm`（LLM 兜底结论必须标「AI推测」并注明非规则库结论）；`location` 相同时附同位置预警。
 
 识别成功会写入浏览器 `sessionStorage`（`bottlesafe-mix-session`），**不必先存档**也能进混用候选。`/mix?prefill=1` 会预填本轮最近两瓶。存档成功后再给「去档案」。
 

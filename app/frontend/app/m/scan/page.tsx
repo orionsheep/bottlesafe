@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useLang, SCAN_COPY, HOME_COPY } from "../i18n";
-import AssistantFab from "./AssistantFab";
-import ReportPanel from "./report";
-import FeedbackBar from "./FeedbackBar";
-import ProfileSheet from "../m/ProfileSheet";
-import { loadProfile, loadStorage, toApiContext, profileHints, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../profile";
-import "./result-extra.css";
+import { useLang, SCAN_COPY } from "../../i18n";
+import AppShell from "../../AppShell";
+import FeedbackBar from "../../scan/FeedbackBar";
+import { pushMixSession } from "../mix/session";
+import ProfileSheet from "../ProfileSheet";
+import "../../scan/result-extra.css";
+import { loadProfile, loadStorage, profileHints, toApiContext, RISK_BAND, riskScore, scoreNote, type RiskBand } from "../../profile";
+import { LOCATION_PRESETS, patchItemLocation } from "../../locations";
 
-// 开发环境直连本地后端；生产环境走同源反代（nginx 把 /api、/uploads 转到 8000）。
 const API =
   typeof window !== "undefined"
     ? (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
@@ -33,7 +33,8 @@ type Analysis = {
   risk_level: string;
   summary: string;
 };
-type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string;
+type Disposal = { category: string; drain_safe: string; drain_safe_text: string; disposal_route: string; container: string; eco_tip: string; hazardous_waste: boolean; matched: boolean };
+type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: string]: unknown } | null; image_path: string; disposal?: Disposal;
   rules?: { risk_level: string; findings: { rule_id: string; severity: string; title: string; reason: string; action: string }[]; ingredient_labels: string[] };
   evidence?: Evidence[];
   expiring_standards?: Evidence[];
@@ -43,7 +44,6 @@ type AnalyzeResponse = { analysis: Analysis; database_match: { id: number; [k: s
   ingredient_warnings?: { name: string; tag?: string; text: string; severity: string }[];
 };
 type Evidence = { id: string; title: string; standard_no?: string | null; source_level?: string; source_level_label?: string; clause?: string; effective_from?: string | null; effective_to?: string | null; next_effective_from?: string | null; url?: string | null; summary?: string; note?: string | null };
-type HouseholdItem = { id: number; [k: string]: unknown };
 
 const riskLabel: Record<string, string> = {
   unknown: "UNKNOWN", low: "LOW", medium: "MEDIUM", high: "HIGH", critical: "CRITICAL",
@@ -63,23 +63,28 @@ const WARN_TITLE: Record<string, { zh: string; en: string }> = {
   腐蚀: { zh: "腐蚀性警示", en: "Corrosion warning" },
 };
 
-export default function ScanPage() {
-  const { lang, setLang } = useLang();
+export default function MobileScanPage() {
+  const { lang } = useLang();
   const t = SCAN_COPY[lang];
-  const hn = HOME_COPY[lang];
   const [status, setStatus] = useState<{ status: string; detail: string }>({ status: "checking", detail: "连接后端…" });
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [items, setItems] = useState<HouseholdItem[]>([]);
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [savedId, setSavedId] = useState<number | null>(null);
+  const [savedLoc, setSavedLoc] = useState<string | null>(null);
+  const [recentItems, setRecentItems] = useState<{ id: number; observed_name?: string; analysis?: { risk_level?: string } }[]>([]);
   const [step, setStep] = useState<number | null>(null); // 分析四步进度：当前进行中的步骤序号（4=全部完成），null=空闲
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const timersRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setRecentItems(d.items ?? [])).catch(() => {});
+  }, [saved]);
 
   useEffect(() => {
     const timer = window.setInterval(async () => {
@@ -95,21 +100,27 @@ export default function ScanPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    fetch(`${API}/api/household/items`).then((r) => r.json()).then((d) => setItems(d.items ?? [])).catch(() => {});
-  }, [saved]);
-
   const pick = (f: File | undefined | null) => {
     if (!f) return;
     setFile(f);
     setResult(null);
     setError(null);
     setSaved(false);
+    setSavedId(null);
+    setSavedLoc(null);
     setPreview(URL.createObjectURL(f));
+    // 同步到 file input（让 analyze 能从 inputRef 取到）
+    if (inputRef.current) {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      inputRef.current.files = dt.files;
+    }
   };
 
   const analyze = async () => {
-    if (!file) return;
+    // 从 state 或 input 取文件
+    const currentFile = file || inputRef.current?.files?.[0];
+    if (!currentFile) return;
     const controller = new AbortController();
     abortRef.current = controller;
     setBusy(true);
@@ -118,14 +129,23 @@ export default function ScanPage() {
     // 纯前端 staged 进度：0s/1.2s/2.8s/5s 逐步推进，API 返回后统一收尾
     timersRef.current = [1200, 2800, 5000].map((ms, i) => window.setTimeout(() => setStep(i + 1), ms));
     try {
+      // 用 FileReader 读成 ArrayBuffer，再构造 Blob 发送（避免 DataTransfer 截断）
+      const buf = await currentFile.arrayBuffer();
+      const blob = new Blob([buf], { type: currentFile.type || "image/jpeg" });
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", blob, currentFile.name);
       form.append("context", JSON.stringify(toApiContext(loadProfile(), loadStorage())));
       const res = await fetch(`${API}/api/analyze`, { method: "POST", body: form, signal: controller.signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `请求失败（${res.status}）`);
       setStep(4);
       setResult(data);
+      pushMixSession({
+        name: data.analysis?.product?.name || t.unnamedProduct,
+        risk_level: data.analysis?.risk_level || "unknown",
+        image_path: data.image_path,
+        analysis: data.analysis,
+      });
     } catch (e) {
       if (!(e instanceof Error && e.name === "AbortError")) {
         setError(e instanceof Error ? e.message : String(e));
@@ -150,7 +170,18 @@ export default function ScanPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ analysis: result.analysis, image_path: result.image_path }),
     });
-    if (res.ok) setSaved(true);
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setSaved(true);
+      setSavedId(typeof data.id === "number" ? data.id : null);
+    }
+  };
+
+  // 存档成功后顺手选存放位置（可跳过）：选中即 PATCH 保存
+  const saveLoc = async (loc: string) => {
+    if (savedId == null) return;
+    setSavedLoc(loc);
+    await patchItemLocation(API, savedId, loc);
   };
 
   const a = result?.analysis;
@@ -168,71 +199,124 @@ export default function ScanPage() {
     active: lang === "zh" ? "进行中" : "In progress",
     done: lang === "zh" ? "完成" : "Done",
   };
-  const statusText = lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
+  const statusText = status.status === "ready"
+    ? (lang === "zh" ? "已就绪，可以开始识别" : "Ready to scan")
+    : lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
   const errorText = error
     ? (lang === "zh" ? error : error.replace("识别结果未通过结构校验：", "Recognition failed schema validation: ").replace("不支持的图片格式", "Unsupported image format"))
     : null;
 
   return (
-    <main className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
-      <nav className="nav" aria-label="Main navigation">
-        <a className="brand" href="/"><span className="brand-mark"><img src="/mascot.png" alt="" width={30} height={30} style={{ borderRadius: "50%", display: "block" }} /></span><span>HOME<br />HAZARD</span></a>
-        <div className="nav-links"><a href="/">{hn.navIndex}</a><a href="/scan">{hn.navScan}</a><a href="/archive">{lang === "zh" ? "档案工作台" : "Archive desk"}</a></div>
-        <div className="nav-right">
-          <button className="lang-toggle" onClick={() => setLang(lang === "zh" ? "en" : "zh")} aria-label="Switch language">{lang === "zh" ? "EN" : "中文"}</button>
-          <a className="menu" href="/"><span />{t.back}</a>
-        </div>
-      </nav>
-
-      <header className="scan-top">
-        <div>
-          <p className="section-no">{t.headNo}</p>
-          <h1>{t.h1a} <i>{t.h1b}</i></h1>
-        </div>
-        <p className={`scan-status status-${status.status}`}>
-          MODEL / {status.status.toUpperCase()} — {statusText}
-        </p>
+    <AppShell active="scan">
+      <div className={`scan-page${lang === "zh" ? " lang-zh" : ""}`}>
+      <header className="page-head">
+        <h1>{lang === "zh" ? "拍照识别" : "Scan & identify"}</h1>
+        <p>{lang === "zh" ? "拍一张瓶身或标签，识别成分、风险与安全处置建议。" : "Snap a bottle or label to detect ingredients, risks and safe disposal."}</p>
       </header>
-
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 5vw" }}>
-        <ProfileSheet compact />
+      <ProfileSheet compact />
+      <div className="scan-status-bar">
+        <span className={`scan-status status-${status.status}`}>{statusText}</span>
       </div>
 
       <section className="scan-workbench">
         <div className="scan-upload">
-          <button className="drop-zone" onClick={() => inputRef.current?.click()} aria-label={lang === "zh" ? "选择图片" : "Choose image"}>
-            {preview ? <img src={preview} alt="待识别图片预览" /> : <span>{t.dropHint[0]}<br />{t.dropHint[1]}</span>}
-          </button>
           <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
-          <div className="sample-row">
-            <span className="sample-label">{t.samplesTitle}</span>
-            <div className="sample-btns">
-              {["samples/bleach.jpg", "samples/toilet.jpg", "samples/goods.jpg"].map((src, i) => (
-                <button
-                  key={src}
-                  className="sample-btn"
-                  disabled={busy || status.status !== "ready"}
-                  onClick={async () => {
-                    try {
-                      const r = await fetch(src);
-                      const b = await r.blob();
-                      pick(new File([b], src.split("/").pop() as string, { type: "image/jpeg" }));
-                    } catch { /* sample fetch failed, ignore */ }
-                  }}
-                >
-                  {t.samples[i]}
-                </button>
-              ))}
+          {!preview ? (
+            <div className="upload-card">
+              <div className="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5A2 2 0 0 1 6 6.5h1.2a1 1 0 0 0 .8-.4l1-1.4a1 1 0 0 1 .8-.4h4.4a1 1 0 0 1 .8.4l1 1.4a1 1 0 0 0 .8.4H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><circle cx="12" cy="12.5" r="3.4" /></svg>
+              </div>
+              <h3>{lang === "zh" ? "拍下或上传一张照片" : "Take or upload a photo"}</h3>
+              <p>{lang === "zh" ? "对准瓶身、标签或成分表，越清晰识别越准" : "Aim at the bottle, label or ingredient list"}</p>
+              <button className="upload-cta" onClick={() => inputRef.current?.click()}>
+                {lang === "zh" ? "拍照 / 选图" : "Camera / Gallery"}
+              </button>
+              <div className="sample-row" data-tour="samples" style={{ marginTop: 12, justifyContent: "center" }}>
+                <span className="sample-label">{t.samplesTitle}</span>
+                <div className="sample-btns">
+                  {["/samples/bleach.jpg", "/samples/toilet.jpg", "/samples/goods.jpg"].map((src, i) => (
+                    <button
+                      key={src}
+                      className="sample-btn"
+                      disabled={busy || status.status !== "ready"}
+                      onClick={async () => {
+                        try {
+                          const r = await fetch(src);
+                          const b = await r.blob();
+                          const file = new File([b], src.split("/").pop() as string, { type: "image/jpeg" });
+                          // 直接存到 ref，不依赖 state（避免异步问题）
+                          if (inputRef.current) {
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            inputRef.current.files = dt.files;
+                          }
+                          setFile(file);
+                          setResult(null);
+                          setError(null);
+                          setSaved(false);
+                          setSavedId(null);
+                          setSavedLoc(null);
+                          setPreview(URL.createObjectURL(file));
+                        } catch { /* sample fetch failed, ignore */ }
+                      }}
+                    >
+                      {t.samples[i]}
+                    </button>
+                  ))}
+                </div>
+                <span className="sample-hint" style={{ textAlign: "center" }}>{t.samplesHint}</span>
+              </div>
             </div>
-            <span className="sample-hint">{t.samplesHint}</span>
-          </div>
-          <div className="scan-actions">
-            <button className="analyze-btn" onClick={analyze} disabled={!file || busy || status.status !== "ready"}>
-              {busy ? t.busy : status.status === "ready" ? t.analyze : t.waiting}
-            </button>
-            {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
-          </div>
+          ) : (
+            <>
+              <button className="preview-frame" onClick={() => inputRef.current?.click()} aria-label={lang === "zh" ? "重新选择" : "Reselect"}>
+                <img src={preview} alt={lang === "zh" ? "待识别图片预览" : "preview"} />
+                <span className="preview-change">{lang === "zh" ? "点击更换" : "Change"}</span>
+              </button>
+              <div className="scan-actions">
+                {status.status === "ready" && (
+                  <button className="analyze-btn" onClick={analyze} disabled={busy}>
+                    {busy ? t.busy : t.analyze}
+                  </button>
+                )}
+                {result && <button className="save-btn" onClick={saveToHousehold} disabled={saved}>{saved ? t.saved : t.save}</button>}
+                {result && <a className="save-btn" href="/mix?prefill=1">{t.goMix}</a>}
+                {saved && <a className="save-btn" href="/archive">{t.goArchive}</a>}
+              </div>
+              {saved && savedId != null && (
+                <div className="save-loc">
+                  <span className="save-loc-label">{lang === "zh" ? "顺手标记它放在哪儿（可跳过）" : "Tag where it's stored (optional)"}</span>
+                  <div className="loc-chips">
+                    {LOCATION_PRESETS.map((p) => (
+                      <button key={p} className={`loc-chip${savedLoc === p ? " on" : ""}`}
+                              onClick={() => void saveLoc(p)}>{p}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           {errorText && <p className="scan-error">⚠ {errorText}</p>}
+
+          {/* 最近分析（社会证明 + 回访入口） */}
+          {recentItems.length > 0 && (
+            <div className="recent-box">
+              <p className="recent-label">{lang === "zh" ? "最近分析" : "Recent"}</p>
+              <ul className="recent-list">
+                {[...recentItems].slice(-3).reverse().map((it) => {
+                  const rl = it.analysis?.risk_level || "unknown";
+                  return (
+                    <li key={it.id} className="recent-item">
+                      <span className="risk-band" style={{ background: RISK_BAND[(rl as RiskBand)]?.bg, color: RISK_BAND[(rl as RiskBand)]?.color, fontSize: 10, padding: "2px 8px" }}>
+                        {riskScore(rl)}
+                      </span>
+                      <span className="recent-name">#{it.id} · {it.observed_name ?? (lang === "zh" ? "未命名" : "Unnamed")}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </div>
 
         {busy && (
@@ -259,12 +343,10 @@ export default function ScanPage() {
 
         {!a && !busy && (
           <div className="scan-placeholder">
-            <p className="section-no">{t.placeholderNo}</p>
             <h3>{t.placeholderTitle}</h3>
             <ul>
               {t.placeholderList.map((line) => <li key={line}>{line}</li>)}
             </ul>
-            <p>{t.placeholderModel}</p>
           </div>
         )}
 
@@ -307,9 +389,9 @@ export default function ScanPage() {
             )}
             <p className="score-note">{scoreNote(lang)}</p>
             {a.risk_level === "unknown" && (
-              <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe. Please re-photograph the label."}</p>
+              <p className="unknown-note">{lang === "zh" ? "信息不足 ≠ 安全。请补拍瓶身标签与成分表。" : "Not enough info — not the same as safe."}</p>
             )}
-            <p className="confidence-note">{lang === "zh" ? "本结论基于包装识别与结构校验，非实验室成分检测。" : "Based on packaging recognition and schema validation — not a lab test."}</p>
+            <p className="confidence-note">{lang === "zh" ? "本结论基于包装识别与结构校验，非实验室成分检测。" : "Based on packaging recognition, not a lab test."}</p>
             {profileHints(a, loadProfile(), lang).map((hint) => (
               <p key={hint} className="profile-hint"><span className="hint-badge">{lang === "zh" ? "规则命中" : "Rule-based"}</span>{hint}</p>
             ))}
@@ -357,9 +439,21 @@ export default function ScanPage() {
                 <div className="result-block"><h3>{t.safeStorage}</h3><ul>{a.safe_storage.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
               )}
               {a.do_not_mix_with.length > 0 && (
-                <div className="result-block"><h3>{t.doNotMix}</h3><ul>{a.do_not_mix_with.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+                <div className="result-block block-danger"><h3>⚠ {t.doNotMix}</h3><ul>{a.do_not_mix_with.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
               )}
             </div>
+
+            {result?.disposal && (
+              <div className={`result-block disposal-block${result.disposal.hazardous_waste ? " is-hazard" : ""}`}>
+                <h3>♻ {t.disposalTitle}{result.disposal.hazardous_waste ? ` · ${t.disposalHazard}` : ""}</h3>
+                <p className={`disposal-drain drain-${result.disposal.drain_safe}`}>{result.disposal.drain_safe_text}</p>
+                <ul>
+                  <li><b>{t.disposalRoute}：</b>{result.disposal.disposal_route}</li>
+                  <li><b>{t.disposalContainer}：</b>{result.disposal.container}</li>
+                  <li><b>🌱 {t.disposalEco}：</b>{result.disposal.eco_tip}</li>
+                </ul>
+              </div>
+            )}
 
             {(a.first_aid.ingestion || a.first_aid.inhalation || a.first_aid.eye_contact || a.first_aid.skin_contact) && (
               <div className="result-block">
@@ -374,24 +468,24 @@ export default function ScanPage() {
             )}
 
             {a.uncertainties.length > 0 && (
-              <div className="result-block"><h3>{t.uncertainties}</h3><ul>{a.uncertainties.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+              <div className="result-block block-uncertain"><h3>❓ {t.uncertainties}</h3><ul>{a.uncertainties.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
             )}
             {a.needs_more_images.length > 0 && (
-              <div className="result-block"><h3>{t.moreImages}</h3><ul>{a.needs_more_images.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
+              <div className="result-block block-retake"><h3>📷 {t.moreImages}</h3><ul>{a.needs_more_images.map((s, i) => <li key={i}>{s}</li>)}</ul></div>
             )}
 
             {result?.database_match && (
               <p className="db-match">{t.dbMatch} #{String(result.database_match.id)}</p>
             )}
 
-            {/* 规则引擎判定 + 依据抽屉 */}
+            {/* 规则引擎判定 + 依据 */}
             {result?.rules && (
               <div className="rules-block">
-                <h3>{lang === "zh" ? "规则引擎判定" : "Rule engine verdict"}</h3>
+                <h3>{lang === "zh" ? "规则引擎判定" : "Rule engine"}</h3>
                 <p className="rules-meta">
                   {lang === "zh"
-                    ? `命中规则 ${result.rules.findings.length} 条 · 成分标签 ${result.rules.ingredient_labels.length > 0 ? result.rules.ingredient_labels.join("、") : "无"} · 风险等级由规则引擎兜底（非大模型推测）`
-                    : `${result.rules.findings.length} rule(s) · labels: ${result.rules.ingredient_labels.join(", ") || "none"} · risk level ruled by engine, not LLM`}
+                    ? `命中规则 ${result.rules.findings.length} 条 · 风险等级由规则引擎兜底（非大模型推测）`
+                    : `${result.rules.findings.length} rule(s) · ruled by engine`}
                 </p>
                 {result.rules.findings.map((f) => (
                   <div key={f.rule_id} className={`rule-finding sev-${f.severity}`}>
@@ -407,9 +501,7 @@ export default function ScanPage() {
                 )}
                 {result.expiring_standards && result.expiring_standards.length > 0 && (
                   <p className="expiring-note">
-                    {lang === "zh"
-                      ? `⏳ 注意：${result.expiring_standards.map((e) => e.standard_no || e.title).join("、")} 即将换代`
-                      : `⏳ Upcoming standard changes: ${result.expiring_standards.map((e) => e.standard_no || e.title).join(", ")}`}
+                    {lang === "zh" ? `⏳ ${result.expiring_standards.map((e) => e.standard_no || e.title).join("、")} 即将换代` : `⏳ Standards expiring soon`}
                   </p>
                 )}
               </div>
@@ -419,16 +511,16 @@ export default function ScanPage() {
             {result?.cross_risks && result.cross_risks.length > 0 && (
               <div className="mix-alert">
                 <h3>{lang === "zh" ? "⚠ 主动混用预警" : "⚠ Mixing alert"}</h3>
-                <p className="mix-rule-tag">{lang === "zh" ? "基于规则库判定，非大模型推测" : "Ruled by rules, not LLM"}</p>
+                <p className="mix-rule-tag">{lang === "zh" ? "基于规则库判定，非大模型推测" : "Ruled by rules"}</p>
                 {result.cross_risks.slice(0, 3).map((c, i) => (
                   <div key={i} className="mix-pair">
                     <b>{c.a}</b> ✕ <b>{c.b}</b>
                     <p>{c.reason}</p>
-                    <p className="mix-action">{lang === "zh" ? "→ 分开存放、绝不混用；使用后充分通风。" : "→ Keep apart. Never mix. Ventilate after use."}</p>
+                    <p className="mix-action">{lang === "zh" ? "→ 分开存放、绝不混用；使用后充分通风。" : "→ Keep apart. Never mix."}</p>
                   </div>
                 ))}
                 {result.cross_risks.length > 3 && (
-                  <a className="mix-more" href="/mix">{lang === "zh" ? `查看全部 ${result.cross_risks.length} 组 →` : `See all ${result.cross_risks.length} →`}</a>
+                  <a className="mix-more" href="/mix">{lang === "zh" ? `查看全部 ${result.cross_risks.length} 组 →` : "See all →"}</a>
                 )}
               </div>
             )}
@@ -446,17 +538,13 @@ export default function ScanPage() {
             </div>
             {result.evidence.map((e) => (
               <div key={e.id} className="evidence-item">
-                <div className="evidence-title">
-                  {e.title}
-                  {e.standard_no && <span className="ev-no">{e.standard_no}</span>}
-                </div>
+                <div className="evidence-title">{e.title}{e.standard_no && <span className="ev-no">{e.standard_no}</span>}</div>
                 {e.source_level_label && <span className={`ev-level ev-${e.source_level}`}>{e.source_level_label}</span>}
                 {e.clause && <p className="ev-clause">{e.clause}</p>}
                 {e.summary && <p className="ev-summary">{e.summary}</p>}
                 {e.note && <p className="ev-note">{e.note}</p>}
                 <p className="ev-dates">
                   {e.effective_from && (lang === "zh" ? `生效 ${e.effective_from}` : `from ${e.effective_from}`)}
-                  {e.effective_to && (lang === "zh" ? ` 失效 ${e.effective_to}` : ` to ${e.effective_to}`)}
                   {e.next_effective_from && (lang === "zh" ? ` 换代 ${e.next_effective_from}` : ` next ${e.next_effective_from}`)}
                 </p>
                 {e.url && <a className="ev-url" href={e.url} target="_blank" rel="noreferrer">{lang === "zh" ? "查看原文" : "Source"}</a>}
@@ -466,15 +554,10 @@ export default function ScanPage() {
         </div>
       )}
 
-      <p className="scan-sub">{t.sub}</p>
+      <FeedbackBar page="m-scan" />
 
-      <FeedbackBar page="scan" />
-
-      <AssistantFab />
-
-      <ReportPanel nItems={items.length} />
-
-      <footer><a className="brand" href="/"><span className="brand-mark"><img src="/mascot.png" alt="" width={30} height={30} style={{ borderRadius: "50%", display: "block" }} /></span><span>HOME<br />HAZARD</span></a><p>{t.footer}</p><a href="/" className="back">{hn.back}</a></footer>
-    </main>
+      <footer className="scan-foot"><p>{t.footer}</p></footer>
+      </div>
+    </AppShell>
   );
 }

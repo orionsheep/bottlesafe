@@ -26,3 +26,9 @@ data/uploads/
 # 环境与密钥
 .env
 .env.*
+
+# UI 测试截图产物（Playwright 截图脚本与输出，勿提交）
+/app/frontend/_shot.cjs
+/app/frontend/public/_shots/
+/app/frontend/public/s?-*.png
+/app/frontend/public/shot*.png
