@@ -163,7 +163,6 @@ export default function ScanPage() {
     active: lang === "zh" ? "进行中" : "In progress",
     done: lang === "zh" ? "完成" : "Done",
   };
-  const statusText = lang === "zh" ? status.detail : (t.status[status.status] ?? status.detail);
   const errorText = error
     ? (lang === "zh" ? error : error.replace("识别结果未通过结构校验：", "Recognition failed schema validation: ").replace("不支持的图片格式", "Unsupported image format"))
     : null;
@@ -184,9 +183,6 @@ export default function ScanPage() {
           <p className="section-no">{t.headNo}</p>
           <h1>{t.h1a} <i>{t.h1b}</i></h1>
         </div>
-        <p className={`scan-status status-${status.status}`}>
-          MODEL / {status.status.toUpperCase()} — {statusText}
-        </p>
       </header>
 
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 5vw" }}>
