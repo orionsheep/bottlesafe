@@ -22,8 +22,7 @@ struct SettingsSheet: View {
                 }
                 Section("当前状态") {
                     if let b = app.backend {
-                        LabeledContent("后端", value: b.status)
-                        Text(b.detail).font(.footnote).foregroundStyle(Theme.ink)
+                        LabeledContent("后端", value: b.status == "ready" ? "已连接" : "未连接")
                     } else if let err = app.backendError {
                         Text(err).foregroundStyle(Theme.coral)
                     } else {
