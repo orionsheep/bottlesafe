@@ -42,25 +42,16 @@ final class AppState {
         }
     }
 
-    /// 模拟器走电脑回环；真机必须走 Mac 局域网 IP，127.0.0.1 是手机自己。
-    static let macLANAPIBase = "http://192.168.1.171:8000"
-    static let simulatorAPIBase = "http://127.0.0.1:8000"
-    static var defaultAPIBase: String {
-        #if targetEnvironment(simulator)
-        simulatorAPIBase
-        #else
-        macLANAPIBase
-        #endif
-    }
+    /// 云服务器后端：模拟器与真机的统一默认地址（任何网络可用）。
+    /// 局域网联调时在 App 设置页改回 Mac IP 即可（设置值优先于默认值）。
+    static let cloudAPIBase = "http://60.204.231.189:8000"
+    static var defaultAPIBase: String { cloudAPIBase }
 
     static func resolvedAPIBase(stored: String?) -> String {
-        let value = stored?.nilIfEmpty ?? defaultAPIBase
-        #if targetEnvironment(simulator)
+        guard let value = stored?.nilIfEmpty else { return defaultAPIBase }
+        // 旧版本的默认值（本机回环 / Mac 局域网 IP）平滑迁移到云端；用户自定义的其他地址不动
+        if value.contains("127.0.0.1") || value.contains("192.168.") { return cloudAPIBase }
         return value
-        #else
-        if value.contains("127.0.0.1") { return macLANAPIBase }
-        return value
-        #endif
     }
 
     var apiURL: URL {

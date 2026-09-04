@@ -10,17 +10,15 @@ struct SettingsSheet: View {
         NavigationStack {
             Form {
                 Section("云端 API") {
-                    TextField("http://192.168.3.110:8000", text: $draft)
+                    TextField("http://60.204.231.189:8000", text: $draft)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
-                    Text("真机填电脑局域网地址 http://192.168.3.110:8000（手机和 Mac 同一 Wi-Fi）。模拟器才用 http://127.0.0.1:8000。")
+                    Text("默认已指向云服务器 http://60.204.231.189:8000，任何网络可用。局域网联调时可改成 Mac 的 IP。")
                         .font(.footnote)
                         .foregroundStyle(Theme.muted)
-                    Button("填入电脑局域网") { draft = AppState.macLANAPIBase }
-                    Button("填入模拟器本机") { draft = AppState.simulatorAPIBase }
-                    Button("填入云服务器 80") { draft = "http://218.11.5.249" }
-                    Button("填入云服务器 10380") { draft = "http://218.11.5.249:10380" }
+                    Button("填入云服务器") { draft = AppState.cloudAPIBase }
+                    Button("填入本机（联调）") { draft = "http://127.0.0.1:8000" }
                 }
                 Section("当前状态") {
                     if let b = app.backend {
